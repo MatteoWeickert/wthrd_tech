@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- ICON -->
+        <title>Index-Grundgerüst</title>
+
+        <!--Imports:-->
+        <!--JS main script-->
+        <script defer src="js/main.js"></script>
+        <!--stylesheet-->
+        <link rel="stylesheet" href="style.css">
+        <!--bootstrap-->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </head>
+
+    <!-- IDs for JS and CSS:
+     [component]-[function]
+     i.e. sidebar-option
+     OR
+     [component]
+    -->
+
+    <body>
+            <div class="container-fluid">
+                <div class="row">
+
+                <!-- Sidebar-->
+                <nav id="sidebar" class="col-md-2 col-lg-3 d-md-block collapse">                  
+                        <div class="position-sticky">
+                            <ul class="nav flex-column">
+
+                        <!-- Sidebar: Topbar für Filterungsoptionen -->
+                        <div class="col-md-10 col-lg-9 d-flex px-0 py-3">
+
+                            <!-- Sidebar: Topbar Auswahlelement -->
+                            <a id="sidebar-topbaroption" href="#" class="border border-2 border-dark rounded-3 text-dark text-decoration-none px-1 py-1 fs-6">
+                                Option 1
+                            </a>
+                        </div>
+                        <hr>
+        
+                                <!-- Sidebar: Gruppierungsüberschrift -->
+                                <h6 id="sidebar-groupheader" class="sidebar-heading d-flex align-items-center mt-4 mb-1 text-muted">
+                                    <span>Gruppierung</span>
+                                </h6>
+                                <!-- Sidebar: Gruppierungsitem -->
+                                <li class="nav-item">
+                                    <a id="sidebar-option" class="nav-link text-white" href="#">
+                                        Option 1
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>  
+
+                        <!-- Sidebar: Button zum schließen des Dropdownfenster bei sd/md -->
+                        <button class="d-md-none position-absolute top-0 end-0 m-2 btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle Sidebar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-x-lg" viewBox="0 0 16 16">
+                                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                            </svg>
+                        </button>
+
+                </nav>
+
+                <!-- Topbar für Mainsite -->
+                <div id="topbar" class="col-md-10 col-lg-9 ms-sm-auto px-md-4 d-flex align-items-center bg-light">
+
+                    <!-- Topbar: Text- oder Symbolelement -->
+                    <span id="topbar-symbol" class="text-dark text-decoration-none fw-bold px-3 py-2">
+
+                        <!-- Button für das Zusammenklappen der Sidebar -->
+                        <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+                                </svg>
+                            </span>
+                        </button>
+                    </span>
+
+                    <!-- Topbar: Linkelement -->
+                    <a id="topbar-option" href="#" class="text-dark text-decoration-none fw-bold px-3 py-2">
+                        Option 1
+                    </a>
+
+                    <!-- Topbar: Loginelement -->
+                    <span id="topbar-login" class="text-dark text-decoration-none fw-bold px-3 py-2 d-flex ms-auto">
+                        <!-- Loginbutton -->
+                        <button class="d-none d-md-block border-0 bg-transparent" type="button" id="login-button">
+                            <span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                                </svg>
+                            </span>
+                        </button>
+                    </span>
+
+                </div>
+
+                <main id="main" class="col-md-10 col-lg-9 ms-sm-auto px-md-4">
+                    <!-- Overlay für Ladeanzeige, Popups etc. -->
+                    <div id="main-loadoverlay">
+
+                        <!-- Titelcontainer -->
+                        <div class="container mt-5">
+                            <h1 id="main-title" class="text-center mb-4">Titel</h1>
+                            <hr>
+                        </div>
+
+                        <!-- Alert Container -->
+                        <div id="main-alert"></div>
+
+                        <!-- Main Container -->
+                        <div id="main-content"></div>
+                        
+                        <!-- Footer Container -->
+                        <div id="main-footer"></div>
+                    </div>
+                </main>
+
+            </div>
+        </div>
+    </body>
+</html>
