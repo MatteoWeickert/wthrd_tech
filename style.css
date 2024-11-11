@@ -6,3 +6,11 @@
     color: #414243;
     height: 100vh;
   }
+
+  #footer-links{
+    float: right;
+  }
+
+  #footer-linkoption{
+    color:#6c757d;
+  }
