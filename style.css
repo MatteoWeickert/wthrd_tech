@@ -1,16 +1,116 @@
-  
+/*SIDEBAR*/
   #sidebar {
-    background-color: #6c757d;
+    background-color: #B2C9AB;
     position: fixed;
     z-index: 1000;
-    color: #414243;
     height: 100vh;
   }
 
+  #sidebar-option{
+    color:  #414243 
+  }
+
+  #sidebar-option:hover{
+    color: #a1a2a3; 
+  }
+
+  #sidebar-footerlink{
+    color:  #414243 
+  }
+
+  #sidebar-footerlink:hover{
+    color: #a1a2a3; 
+  }
+
+  #sidebar-topbaroption{
+    border-color: none;
+    background-color:none;
+    color: #414243;
+    font-size: small;
+    margin: 10px;
+    margin-bottom: -25px;
+  }
+
+  #sidebar-topbaroption:hover, #sidebar-topbaroption:active {
+    border-color: #cfd1d4;
+    background-color: #cfd1d4;
+    padding: 10px;
+    color: #a1a2a3;
+    font-size: small;
+    margin-bottom: -25px;
+  }
+
+  #sidebar-footerlink{
+    color: #414243;
+  }
+
+  /*TOPBAR*/
+
+  #topbar{
+    height: 50px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  #topbar-option{
+    color: #414243;
+  }
+
+  #topbar-option:hover, #topbar-option:active {
+    color: #a1a2a3;
+    background-color:  #cfd1d4;
+    padding: 5px;
+  }
+
+  #topbar-logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /*MAIN*/
+
+  #modell-itemleft{
+    color:#414243;
+    border: 2px solid;
+    border-color: #414243;
+    border-radius: 10px;
+  }
+
+  #modell-itemleft:hover{
+    color: #a1a2a3;
+    border: solid 2px;
+    border-color: #414243;
+    background-color: #e9ebef;
+    padding: 10px;
+  }
+
+  #modell-itemright{
+    color:#414243;
+    border: 2px solid;
+    border-color: #414243;
+    border-radius: 10px;
+  }
+
+  #modell-itemright:hover{
+    color: #a1a2a3;
+    border: solid 2px;
+    border-color: #414243;
+    background-color: #e9ebef;
+    padding: 10px;
+  }
+
+
+  /*FOOTER*/
   #footer-links{
     float: right;
   }
 
   #footer-linkoption{
-    color:#6c757d;
+    color: #414243;
+  }
+
+  #footer-linkoption:hover, #footer-linkoption:active {
+    color: #a1a2a3;
   }
