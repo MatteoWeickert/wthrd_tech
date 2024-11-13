@@ -71,29 +71,23 @@
 
   /*MAIN*/
 
-  #modell-itemleft{
+  #modell{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  #modell-item{
     color:#414243;
     border: 2px solid;
     border-color: #414243;
     border-radius: 10px;
+    flex: 0 2 49%;
+    min-width: 300px; 
   }
 
-  #modell-itemleft:hover{
-    color: #a1a2a3;
-    border: solid 2px;
-    border-color: #414243;
-    background-color: #e9ebef;
-    padding: 10px;
-  }
-
-  #modell-itemright{
-    color:#414243;
-    border: 2px solid;
-    border-color: #414243;
-    border-radius: 10px;
-  }
-
-  #modell-itemright:hover{
+  #modell-item:hover{
     color: #a1a2a3;
     border: solid 2px;
     border-color: #414243;
