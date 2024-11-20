@@ -58,12 +58,12 @@
   }
 
   #topbar-option{
-    color: #414243;
+    color: #1C3D86;
   }
 
   #topbar-option:hover, #topbar-option:active {
-    color: #a1a2a3;
-    background-color:  #cfd1d4;
+    color: #1C3D86;
+    background-color:  #9ec4f2;
     padding: 5px;
   }
 
@@ -73,6 +73,68 @@
     left: 50%;
     transform: translate(-50%, -50%);
   }
+
+    /* TOPBAR LOGIN MODAL */
+  .nav-tabs {
+    border: none;
+    background-color: #9ec4f2;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .nav-tabs .nav-link {
+    color: #ffffff;
+    background-color: #9ec4f2;
+    font-weight: bold;
+    padding: 10px 20px;
+    border: none;
+    transition: background-color 0.3s ease;
+  }
+
+  .nav-tabs .nav-link.active {
+    background-color: #c6dbf7;
+    color: #333;
+  }
+
+  .nav-tabs .nav-link:hover {
+    background-color: #d9eafc;
+    color: #333;
+  }
+
+  .btn-login{
+    background-color: transparent;
+    border: none;
+  }
+
+  .btn-login:hover{
+    background-color: #c6dbf7;
+  }
+
+  #modal-logo{
+    position: fixed;
+    margin: 5px;
+  }
+
+  .form-control.overlay-input {
+    width: 100%;
+    padding: 10px 15px;
+    font-size: 16px;
+    font-weight: 700;
+    border: 2px solid #9ec4f2;
+    border-radius: 8px;
+    background-color: #c6dbf7;
+    color: #d4d4d4;
+    outline: none;
+    transition: border-color 0.3s ease;
+  }
+
+  .form-control.overlay-input:focus {
+    border-color: #c6dbf7;
+    background-color: #f7faff;
+  }
+
+
+
 
   /*MAIN*/
 
@@ -102,14 +164,37 @@
 
 
   /*FOOTER*/
-  #footer-links{
-    float: right;
-  }
+.footer-content {
+  overflow: hidden;
+}
 
-  #footer-linkoption{
-    color: #414243;
-  }
+#footer-logo {
+  float: left;
+  margin-right: 20px; 
+}
 
-  #footer-linkoption:hover, #footer-linkoption:active {
-    color: #a1a2a3;
-  }
+#footer-links {
+  float: right;
+  text-align: left;
+  margin: 15px;
+}
+
+.footer-group {
+  display: block;
+  font-size: 15px;
+  font-weight: bold;
+  color:  #c6dbf7;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+#footer-linkoption {
+  color: #979ca1;
+  font-size: 13px;
+  display: block;
+  margin: 5px 0;
+}
+
+#footer-linkoption:hover,#footer-linkoption:active {
+  color: #ededed;
+}

@@ -4,7 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!-- ICON -->
-        <title>Index-Grundgerüst</title>
+        <title>!!TEMPLATEONLY</title>
+        <link rel="icon" type="image/x-icon" href="wthrdicon.svg">
 
         <!--Imports:-->
         <!--JS main script-->
@@ -25,62 +26,67 @@
     -->
      
     <body>
-            <!-- Modal Structure -->
-                <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-body">
-                                <!-- Nav tabs -->
-                                <ul class="nav nav-tabs nav-justified" id="authTab" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Anmelden</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Registrieren</button>
-                                    </li>
-                                </ul>
-                                <!-- Tab Content -->
-                                    <div class="tab-content mt-3" id="authTabContent">
-                                        <!-- Login Form -->
-                                        <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
-                                            <form id="loginForm">
-                                                <div class="mb-3">
-                                                    <label for="login-username" class="form-label">Nutzername</label>
-                                                    <input type="text" class="form-control" id="login-username" placeholder="@Nutzername">                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="login-password" class="form-label">Passwort</label>
-                                                    <input type="password" class="form-control" id="login-password" placeholder="Passwort">
-                                                </div>
-                                                <button type="submit" class="btn w-100">Anmelden</button>
-                                            </form>
+            <!-- Overlayfenster -->
+            <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <!-- Nav tabs innerhalb des Overlays -->
+                            <ul class="nav nav-tabs nav-justified" id="authTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Anmelden</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Registrieren</button>
+                                </li>
+                            </ul>
+                            <!-- Tab Content -->
+                            <div class="tab-content mt-3" id="authTabContent">
+                                <!-- Login Form -->
+                                <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                                    <form id="loginForm">
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="login-username" placeholder="Nutzername">
                                         </div>
+                                        <div class="mb-3">
+                                            <input type="password" class="form-control overlay-input" id="login-password" placeholder="Passwort">
+                                        </div>
+                                        <button type="submit" class="btn-login p-2 w-100">Anmelden</button>
+                                    </form>
+                                    <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
+                                        <span>Made by <img href="#" src="wthrdicon.svg" width="30px" height="30px"></span>
+                                    </div>
+                                </div>
 
-                                        <!-- Register Form -->
-                                        <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
-                                            <form id="registerForm">
-                                                <div class="mb-3">
-                                                    <label for="register-username" class="form-label">Nutzername</label>
-                                                    <input type="text" class="form-control" id="register-username" placeholder="Wähle einen Nutzernamen..">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="register-email" class="form-label">E-Mail Adresse</label>
-                                                    <input type="email" class="form-control" id="register-email" placeholder="E-Mail">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="register-password" class="form-label">Passwort</label>
-                                                    <input type="password" class="form-control" id="register-password" placeholder="Passwort">
-                                                </div>
-                                                <button type="submit" class="btn w-100">Registrieren</button>
-                                            </form>
+                                <!-- Register Form -->
+                                <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
+                                    <form id="registerForm">
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Vorname">
                                         </div>
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nachname">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nutzername">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="email" class="form-control overlay-input" id="register-email" placeholder="E-Mail">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="password" class="form-control overlay-input" id="register-password" placeholder="Passwort">
+                                        </div>
+                                        <button type="submit" class="btn-login p-2 w-100">Registrieren</button>
+                                    </form>
+                                    <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
+                                        <span>Mit dem Registrieren bestätigt der Nutzer die geltenen <a href="#">AGB</a> sowie <a href="#">Nutzungsbedingungen</a> der jeweiligen Unterprodukte.</span><br>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-            </span>
-                        
-        
+                </div>
+            </div>
             <div class="container-fluid">
                 <div class="row">
 
@@ -119,7 +125,7 @@
                                 <div id="sidebar-footer" class="mt-auto">
                                     <hr>
                                     <li class="nav-item">
-                                        <a id="sidebar-footerlink" class="nav-link" href="#">
+                                        <a id="sidebar-footerlink" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
                                             Login
                                         </a>
                                     </li>
@@ -158,11 +164,17 @@
                     </span>
 
                     <!-- Topbar: Linkelement -->
-                    <a id="topbar-option" href="index.html" class="text-decoration-none fw-bold px-3 py-2">
-                        Option 1
+                    <a id="topbar-option" href="#" class="text-decoration-none fw-bold px-3 py-2">
+                        Modellkatalog
+                    </a>
+                    <a id="topbar-option" href="#" class="text-decoration-none fw-bold px-3 py-2">
+                        Modell hinzufügen
+                    </a>
+                    <a id="topbar-option" href="#" class="text-decoration-none fw-bold px-3 py-2">
+                        How-To
                     </a>
 
-                    <img id="topbar-logo" href="#" src="projectlogo.svg" height="40px" width="40px">
+                    <img id="topbar-logo" href="#" src="wthrdicon.svg" style="right:52%;"height="40px" width="40px">
 
                     <div id="topbar-menuoptions" class="ms-auto d-flex justify-content-end px-3 py-2">
                         <!-- Topbar: Loginelement -->
@@ -170,7 +182,7 @@
                             <!-- Login/Register Button -->
                             <button id="login-button" class="d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">
                                 <span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-person-circle" viewBox="0 0 16 16">
                                     <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
                                 <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
                                 </svg>
@@ -181,7 +193,7 @@
                             <!-- Settingsbutton -->
                             <button id="settings-button"class="d-none d-md-block border-0 bg-transparent" type="button">
                                 <span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
                                         <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
                                     </svg>
                                 </span>
@@ -224,29 +236,35 @@
                                 </div>
                         </div>
                         
-                        <!-- Footer Container -->
+                        <!-- FOOTER -->
                         <div id="main-footer" class="container mt-5">
                             <hr>
-                            <img id="footer-logo" href="#" src="wthrdlogo.svg" width="200px" height="100px">
-                            <div id="footer-links">
-                                <a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">
-                                    Dokumentation
-                                </a><br>
-                                <a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">
-                                    Impressum
-                                </a><br>
-                                <a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">
-                                    Kontakt
-                                </a><br>
-                                <a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">
-                                    wthrd.tech
-                                </a>                         
+                            <div class="footer-content">
+                                <!-- Logo -->
+                                <img id="footer-logo" src="wthrdlogo.svg" alt="Footer Logo" width="200" height="100">
+                                <!-- Footer Links -->
+                                <div id="footer-links">
+                                    <span class="footer-group">Company</span>
+                                    <ul class="footer-links list-unstyled">
+                                        <li><a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">wthrd.tech</a></li>
+                                        <li><a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">Impressum</a></li>
+                                        <li><a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">AGB</a></li>
+                                        <li><a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">Nutzungs-<br>bedingungen</a></li>
+                                    </ul>
+                                </div>
+                                <div id="footer-links">
+                                    <span class="footer-group">Resources</span>
+                                    <ul class="footer-links list-unstyled">
+                                        <li><a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">How-To</a></li>
+                                        <li><a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">Dokumentation</a></li>
+                                    </ul>
+                                </div>
                             </div>
-                            
+                            </div>
+                        </div>      
                         </div>
                     </div>
                 </main>
-
             </div>
         </div>
     </body>
