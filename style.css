@@ -1,6 +1,6 @@
 /*SIDEBAR*/
   #sidebar {
-    background-color: #B2C9AB;
+    background-color: #9ec4f2;
     position: fixed;
     z-index: 1000;
     height: 100vh;
@@ -20,6 +20,10 @@
 
   #sidebar-footerlink:hover{
     color: #a1a2a3; 
+  }
+
+  #sidebar-topbar{
+    margin-top: -10px;
   }
 
   #sidebar-topbaroption{
@@ -50,6 +54,7 @@
     height: 50px;
     position: relative;
     flex-shrink: 0;
+    background-color: #c6dbf7;
   }
 
   #topbar-option{
@@ -91,7 +96,7 @@
     color: #a1a2a3;
     border: solid 2px;
     border-color: #414243;
-    background-color: #e9ebef;
+    background-color: #c6dbf7;
     padding: 10px;
   }
 
