@@ -1,1 +1,0 @@
-# wthrd_tech
