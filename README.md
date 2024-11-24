@@ -1,8 +1,8 @@
-# wthrd_tec
+# wthrd_tech
 
 This README provides instructions on how to start, connect to, and stop the Docker container for the `wthrd_tech` project.
 
-### 1: Clone the Repository:
+### 1: Clone the Repository
 First, clone the `wthrd_tech` repository to your local machine and navigate to the backend branch:
 ```bash
 git clone https://github.com/MatteoWeickert/wthrd_tech.git
@@ -12,7 +12,15 @@ Navigate to the project directory:
 cd wthrd_tech/STAC_catalog
 ```
 
-### 2: Start the Container
+### 2: Set Up the .env File 
+Create a .env file in the root of the project directory to store environment variables. The .env file should include the database connection details and any other sensitive configuration. Here's an example:
+```makefile
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=enterYourPasswordHere
+POSTGRES_DB=metadata_database
+```
+
+### 3: Start the Container
 
 In your project directory, run:
 
@@ -20,7 +28,17 @@ In your project directory, run:
 docker-compose up -d --build
 ```
 
-### 3: Connect to the Database Manually
+### 4: Access the Server
+
+To access the server, open your web browser and navigate to:
+
+```
+http://localhost:8080
+```
+
+This will bring up the application interface where you can interact with the server.
+
+### 5 (Optional): Connect to the Database Manually 
 
 Run this command to connect to the database:
 
@@ -42,17 +60,7 @@ Use:
 
 to quit the connection to the database.
 
-### 4: Access the Server
-
-To access the server, open your web browser and navigate to:
-
-```
-http://localhost:8080
-```
-
-This will bring up the application interface where you can interact with the server.
-
-### 5: Stopping the Container
+### 6: Stopping the Container
 
 When you are done and want to stop the Docker container, run:
 
