@@ -4,7 +4,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from models import Item
 import os
-from crud import get_items
+from crud import get_items, add_item
+from schemas import ItemCreate, ItemResponse
 
 # Get database connection info from environment variables
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@db/metadata_database")
@@ -40,3 +41,8 @@ def get_item(item_id: int):
     if item is None:
         return {"error": "Item not found"}
     return item
+
+@app.post("/items/", response_model = ItemResponse)
+def add_new_item(item: ItemCreate):
+    db = SessionLocal()
+    new_item = add_item(db, item.dict())
