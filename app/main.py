@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from models import Item
 import os
+from crud import get_items
 
 # Get database connection info from environment variables
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@db/metadata_database")
@@ -22,10 +23,15 @@ def read_root():
 
 # Example database operation
 @app.get("/items")
-def get_items():
+def get_all_items():
     db = SessionLocal()
-    items = db.query(Item).all()
-    return items
+    try:
+        items = get_items(db)
+        return items
+    except Exception as e:
+        return {"error: " + str(e)}
+    finally:
+        db.close()
 
 @app.get("/items/{item_id}")
 def get_item(item_id: int):
