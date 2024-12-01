@@ -7,16 +7,16 @@ CREATE TABLE catalogs (
     description TEXT NOT NULL,                      -- Eine detaillierte Beschreibung des Katalogs
     links JSONB,                                    -- Eine Liste von Links (Referenzen zu anderen Dokumenten)
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Katalogs
-    updated_at TIMESTAMPTZ DEFAULT NOW(),             -- Letztes Update des Katalogs
-    CONSTRAINT links_href_rel_check CHECK (
-        NOT EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements(links) AS link  -- Zerlegt das JSON-Array in einzelne Link-Objekte
-            WHERE 
-                link->>'href' IS NULL OR            -- Überprüft, ob 'href' null ist
-                link->>'rel' IS NULL                -- Überprüft, ob 'rel' null ist
-        )
-    )
+    updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update des Katalogs
+    -- CONSTRAINT links_href_rel_check CHECK (
+    --     NOT EXISTS (
+    --         SELECT 1
+    --         FROM jsonb_array_elements(links) AS link  -- Zerlegt das JSON-Array in einzelne Link-Objekte
+    --         WHERE 
+    --             link->>'href' IS NULL OR            -- Überprüft, ob 'href' null ist
+    --             link->>'rel' IS NULL                -- Überprüft, ob 'rel' null ist
+    --     )
+    -- )
 );
 
 CREATE TABLE collections (
@@ -30,18 +30,18 @@ CREATE TABLE collections (
     extent JSONB NOT NULL,                          -- Spatial und Temporal Extent (als JSON-Objekt)
     -- summaries JSONB,                                -- Eine Karte von Zusammenfassungen als JSON-Objekt
     links JSONB,                                    -- Eine Liste von Links im JSON-Format (required: href und rel)
-    catalog_ID INTEGER FOREIGN KEY REFERENCES catalog(id),                                -- Die ID des Katalogs, zu dem diese Collection gehört
+    catalog_ID INTEGER REFERENCES catalogs(id),                                -- Die ID des Katalogs, zu dem diese Collection gehört
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum der Collection
-    updated_at TIMESTAMPTZ DEFAULT NOW(),             -- Letztes Update der Collection
-    CONSTRAINT links_href_rel_check CHECK (
-        NOT EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements(links) AS link  -- Zerlegt das JSON-Array in einzelne Link-Objekte
-            WHERE 
-                link->>'href' IS NULL OR            -- Überprüft, ob 'href' null ist
-                link->>'rel' IS NULL                -- Überprüft, ob 'rel' null ist
-        )
-    )
+    updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update der Collection
+    -- CONSTRAINT links_href_rel_check CHECK (
+    --     NOT EXISTS (
+    --         SELECT 1
+    --         FROM jsonb_array_elements(links) AS link  -- Zerlegt das JSON-Array in einzelne Link-Objekte
+    --         WHERE 
+    --             link->>'href' IS NULL OR            -- Überprüft, ob 'href' null ist
+    --             link->>'rel' IS NULL                -- Überprüft, ob 'rel' null ist
+    --     )
+    -- )
 );
 
 CREATE TABLE items (
@@ -54,26 +54,26 @@ CREATE TABLE items (
     properties JSONB NOT NULL,                       -- Ein JSONB-Objekt, das zusätzliche Metadaten enthält
     links JSONB NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     assets JSONB NOT NULL,                          -- Eine Karte von Asset-Objekten (im JSON-Format) (required: href)
-    collection_ID INTEGER FOREIGN KEY REFERENCES collection(id),                                -- Die ID der Collection, auf die dieses Item verweist
+    collection_ID INTEGER REFERENCES collections(id),                                -- Die ID der Collection, auf die dieses Item verweist
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Items
-    updated_at TIMESTAMPTZ DEFAULT NOW(),             -- Letztes Update des Items
-    CONSTRAINT assets_href_check CHECK (
-        -- Überprüfen, ob jedes Asset im 'assets'-JSON ein 'href'-Feld enthält
-        NOT EXISTS (
-            SELECT 1 
-            FROM jsonb_each(assets) AS asset(key, value) 
-            WHERE value->>'href' IS NULL
-        )
-    ),
-    CONSTRAINT links_href_rel_check CHECK (
-        NOT EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements(links) AS link  -- Zerlegt das JSON-Array in einzelne Link-Objekte
-            WHERE 
-                link->>'href' IS NULL OR            -- Überprüft, ob 'href' null ist
-                link->>'rel' IS NULL                -- Überprüft, ob 'rel' null ist
-        )
-    )
+    updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update des Items
+    -- CONSTRAINT assets_href_check CHECK (
+    --     -- Überprüfen, ob jedes Asset im 'assets'-JSON ein 'href'-Feld enthält
+    --     NOT EXISTS (
+    --         SELECT 1 
+    --         FROM jsonb_each(assets) AS asset(key, value) 
+    --         WHERE value->>'href' IS NULL
+    --     )
+    -- ),
+    -- CONSTRAINT links_href_rel_check CHECK (
+    --     NOT EXISTS (
+    --         SELECT 1
+    --         FROM jsonb_array_elements(links) AS link  -- Zerlegt das JSON-Array in einzelne Link-Objekte
+    --         WHERE 
+    --             link->>'href' IS NULL OR            -- Überprüft, ob 'href' null ist
+    --             link->>'rel' IS NULL                -- Überprüft, ob 'rel' null ist
+    --     )
+    -- )
 );
 
 -- Create the `items` table
@@ -96,7 +96,7 @@ CREATE TABLE properties (
     input JSONB NOT NULL,                              -- REQUIRED: JSON object describing model input
     output JSONB NOT NULL,                             -- REQUIRED: JSON object describing model output
     hyperparameters JSONB,                             -- Additional hyperparameters relevant for the model
-    item_id INTEGER FOREIGN KEY REFERENCES items(id),  -- Reference to the item that this record is associated with
+    item_id INTEGER REFERENCES items(id),  -- Reference to the item that this record is associated with
     created_at TIMESTAMP DEFAULT NOW(),                -- Timestamp for when the record was created
     updated_at TIMESTAMP DEFAULT NOW()                 -- Timestamp for when the record was last updated
 );

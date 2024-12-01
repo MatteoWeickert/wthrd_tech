@@ -12,7 +12,7 @@ services:
       - ./app:/app  # Mount the FastAPI app directory into the container
 
   db:
-    image: postgres:latest
+    image: postgis/postgis:15-3.3  # Use PostGIS image
     container_name: postgres-container
     environment:
       POSTGRES_USER: $POSTGRES_USER
