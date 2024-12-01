@@ -1,0 +1,7 @@
+- summaries in der collection tabelle
+- in welcher Form kommen die Links in die Tabelle
+- wie kann man die properties (mlm properties) abspeichern?
+    - als extra Tabelle und mit Verlinkung zur Items tabelle
+    - als JSONB in die Items Tabelle und Einschränkung durch Constraints
+- Welche mlm properties können auch weggelassen werden? Was beschreibt der mlm:input und mlm:output und wie speichert man das ab?
+

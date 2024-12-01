@@ -9,7 +9,7 @@ git clone https://github.com/MatteoWeickert/wthrd_tech.git
 ```
 Navigate to the project directory:
 ```bash
-cd wthrd_tech/STAC_catalog
+cd wthrd_tech
 ```
 
 ### 2: Set Up the .env File 
@@ -33,7 +33,7 @@ docker-compose up -d --build
 To access the server, open your web browser and navigate to:
 
 ```
-http://localhost:8080
+http://localhost:8000
 ```
 
 This will bring up the application interface where you can interact with the server.
