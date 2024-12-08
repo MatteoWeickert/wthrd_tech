@@ -1,5 +1,5 @@
 CREATE TABLE catalogs (
-    id SERIAL PRIMARY KEY,                          -- Eindeutige ID des Katalogs
+    id VARCHAR(50) PRIMARY KEY,                          -- Eindeutige ID des Katalogs
     type TEXT NOT NULL CHECK (type = 'Catalog'),     -- Der Typ des Katalogs, sollte immer 'Catalog' sein
     stac_version TEXT NOT NULL,                      -- Die STAC-Version, die der Katalog implementiert
     stac_extensions TEXT[],                          -- Eine Liste von Erweiterungs-IDs, die der Katalog implementiert
@@ -20,7 +20,7 @@ CREATE TABLE catalogs (
 );
 
 CREATE TABLE collections (
-    id SERIAL PRIMARY KEY,                          -- Eindeutige ID für die Collection
+    id VARCHAR(50) PRIMARY KEY,                          -- Eindeutige ID für die Collection
     type TEXT NOT NULL CHECK (type = 'Collection'),  -- Der Typ der Collection, sollte immer 'Collection' sein
     stac_version TEXT NOT NULL,                      -- Die STAC-Version, die von dieser Collection implementiert wird
     stac_extensions TEXT[],                          -- Eine Liste von Erweiterungs-IDs, die von dieser Collection implementiert werden
@@ -30,7 +30,7 @@ CREATE TABLE collections (
     extent JSONB NOT NULL,                          -- Spatial und Temporal Extent (als JSON-Objekt)
     -- summaries JSONB,                                -- Eine Karte von Zusammenfassungen als JSON-Objekt
     links JSONB,                                    -- Eine Liste von Links im JSON-Format (required: href und rel)
-    catalog_ID INTEGER REFERENCES catalogs(id),                                -- Die ID des Katalogs, zu dem diese Collection gehört
+    catalog_ID VARCHAR(50) REFERENCES catalogs(id),                                -- Die ID des Katalogs, zu dem diese Collection gehört
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum der Collection
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update der Collection
     -- CONSTRAINT links_href_rel_check CHECK (
@@ -45,7 +45,7 @@ CREATE TABLE collections (
 );
 
 CREATE TABLE items (
-    id SERIAL PRIMARY KEY,                          -- Eindeutige ID des Items
+    id VARCHAR(50) PRIMARY KEY,                          -- Eindeutige ID des Items
     type TEXT NOT NULL CHECK (type = 'Feature'),     -- Der GeoJSON-Typ des Items, sollte immer 'Feature' sein
     stac_version TEXT NOT NULL,                      -- Die STAC-Version, die von diesem Item implementiert wird
     stac_extensions TEXT[],                          -- Eine Liste von Erweiterungs-IDs, die von diesem Item implementiert werden
@@ -54,7 +54,7 @@ CREATE TABLE items (
     properties JSONB NOT NULL,                       -- Ein JSONB-Objekt, das zusätzliche Metadaten enthält
     links JSONB NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     assets JSONB NOT NULL,                          -- Eine Karte von Asset-Objekten (im JSON-Format) (required: href)
-    collection_ID INTEGER REFERENCES collections(id),                                -- Die ID der Collection, auf die dieses Item verweist
+    collection_ID VARCHAR(50) REFERENCES collections(id),                               -- Die ID der Collection, auf die dieses Item verweist
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Items
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update des Items
     -- CONSTRAINT assets_href_check CHECK (
@@ -78,7 +78,7 @@ CREATE TABLE items (
 
 -- Create the `items` table
 CREATE TABLE properties (
-    id SERIAL PRIMARY KEY,                             -- Unique identifier for the record
+    id VARCHAR(50) PRIMARY KEY,                             -- Unique identifier for the record
     name VARCHAR(255) NOT NULL,                       -- REQUIRED: Name for the model
     architecture VARCHAR(255) NOT NULL,               -- REQUIRED: Generic architecture name of the model
     tasks TEXT[] NOT NULL,                            -- REQUIRED: List of machine learning tasks (array of enums)
@@ -96,7 +96,7 @@ CREATE TABLE properties (
     input JSONB NOT NULL,                              -- REQUIRED: JSON object describing model input
     output JSONB NOT NULL,                             -- REQUIRED: JSON object describing model output
     hyperparameters JSONB,                             -- Additional hyperparameters relevant for the model
-    item_id INTEGER REFERENCES items(id),  -- Reference to the item that this record is associated with
+    item_id VARCHAR(50) REFERENCES items(id),  -- Reference to the item that this record is associated with
     created_at TIMESTAMP DEFAULT NOW(),                -- Timestamp for when the record was created
     updated_at TIMESTAMP DEFAULT NOW()                 -- Timestamp for when the record was last updated
 );
@@ -106,34 +106,34 @@ CREATE TABLE properties (
 -- Beispiel-Daten
 -----------------------------------------------------------------------------------------------------------------------
 -- Insert into `catalogs` table
-INSERT INTO catalogs (type, stac_version, stac_extensions, title, description, links, created_at, updated_at)
+INSERT INTO catalogs (id, type, stac_version, stac_extensions, title, description, links, created_at, updated_at)
 VALUES 
-('Catalog', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Catalog', 'Dies ist ein Beispielkatalog für STAC-Daten.', 
+('Catalog for MLM', 'Catalog', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Catalog', 'Dies ist ein Beispielkatalog für STAC-Daten.', 
  '{"links": [{"href": "https://example.com/catalog", "rel": "self"}, {"href": "https://example.com/other", "rel": "next"}]}', 
  NOW(), NOW());
 
 -- Insert into `collections` table
-INSERT INTO collections (type, stac_version, stac_extensions, title, description, license, extent, links, catalog_ID, created_at, updated_at)
+INSERT INTO collections (id, type, stac_version, stac_extensions, title, description, license, extent, links, catalog_ID, created_at, updated_at)
 VALUES 
-('Collection', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Collection', 
+('Collection for MLM', 'Collection', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Collection', 
  'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
  '{"spatial": {"bbox": [-180, -90, 180, 90]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
  '{"links": [{"href": "https://example.com/collection", "rel": "self"}, {"href": "https://example.com/next", "rel": "next"}]}', 
  (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW());
 
 -- Insert into `items` table
-INSERT INTO items (type, stac_version, stac_extensions, geometry, bbox, properties, links, assets, collection_ID, created_at, updated_at)
+INSERT INTO items (id, type, stac_version, stac_extensions, geometry, bbox, properties, links, assets, collection_ID, created_at, updated_at)
 VALUES 
-('Feature', '1.0.0', ARRAY['stac-core'], 'SRID=4326;POINT(10 10)', ARRAY[-10, -10, 10, 10], 
- '{"title": "Example Item", "description": "Dies ist ein Beispiel-Item innerhalb der Example Collection."}', 
+('example_model', 'Feature', '1.0.0', ARRAY['stac-core'], 'SRID=4326;POINT(10 10)', ARRAY[-10, -10, 10, 10], 
+ '{"title": "Example Item", "description": "Dies ist ein Beispiel-Item innerhalb der Example Collection.", "datetime": "2024-12-04T16:20:00"}', 
  '{"links": [{"href": "https://example.com/item", "rel": "self"}]}', 
  '{"thumbnail": {"href": "https://example.com/thumbnail.png"}, "data": {"href": "https://example.com/data"}}', 
  (SELECT id FROM collections WHERE title = 'Example Collection'), NOW(), NOW());
 
 -- Insert into `properties` table
-INSERT INTO properties (name, architecture, tasks, framework, framework_version, memory_size, total_parameters, pretrained, pretrained_source, batch_size_suggestion, accelerator, accelerator_constrained, accelerator_summary, accelerator_count, input, output, hyperparameters, item_id, created_at, updated_at)
+INSERT INTO properties (id, name, architecture, tasks, framework, framework_version, memory_size, total_parameters, pretrained, pretrained_source, batch_size_suggestion, accelerator, accelerator_constrained, accelerator_summary, accelerator_count, input, output, hyperparameters, item_id, created_at, updated_at)
 VALUES 
-('Example Model', 'ResNet50', ARRAY['classification', 'image'], 'TensorFlow', '2.7', 1200000000, 25000000, TRUE, 'ImageNet', 32, 'GPU', FALSE, 'NVIDIA Tesla V100', 2, 
+('example', 'Example Model', 'ResNet50', ARRAY['classification', 'image'], 'TensorFlow', '2.7', 1200000000, 25000000, TRUE, 'ImageNet', 32, 'GPU', FALSE, 'NVIDIA Tesla V100', 2, 
  '{"type": "image", "shape": [224, 224, 3]}', 
  '{"type": "class", "num_classes": 1000}', 
  '{"learning_rate": 0.001, "dropout": 0.5}', 
