@@ -2,8 +2,10 @@ from fastapi import FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from models import Item, Catalog, Collection, Properties
+from models import Item, Catalog, Collection
 import os
+
+from fastapi.responses import JSONResponse
 # from crud import get_items, get_catalogs, get_collections, get_properties
 # from schemas import ItemCreate, ItemResponse
 
@@ -18,9 +20,6 @@ Base = declarative_base()
 # Create FastAPI instance
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the FastAPI Server for the STAC Catalog!"}
 
 # Example database operation
 @app.get("/items")
@@ -61,6 +60,48 @@ def get_catalogs(catalog_id: int):
         return {"error": "Catalog not found"}
     return catalog
 
+############################################################################################################
+##### Core API endpoints
+############################################################################################################
+
+@app.get("/")
+def get_catalog():
+    db = SessionLocal()
+    try:
+        catalog = db.query(Catalog).first()
+        if catalog is None:
+            return {"error": "Catalog not found"}
+        return catalog
+    finally:
+        db.close()
+
+@app.get("/conformance")
+def get_conformance():
+    return JSONResponse(
+        content={
+            "conformsTo": [
+                "http://api.stacspec.org/v1.0.0/core",
+                "https://stac-extensions.github.io/mlm/v1.3.0/schema.json"
+            ]
+        }
+    )
+
+
+@app.get("/collections/{collection_id}/items/{item_id}")
+def get_collection_item(collection_id: int, item_id: int):
+    db = SessionLocal()
+    try:
+        item = db.query(Item).filter(Item.id == item_id, Item.collection_id == collection_id).first()
+        if item is None:
+            return {"error": "Item not found"}
+        return item
+    finally:
+        db.close()
+
+@app.get("/search")
+def search():
+    return {"message": "Search for items here"}
+
 @app.get("/collections")
 def get_all_collections():
     db = SessionLocal()
@@ -80,12 +121,63 @@ def get_collections(collection_id: int):
         return {"error": "Collection not found"}
     return collection
 
+@app.get("/collections/{collection_id}/items")
+def get_collection_items(collection_id: int):
+    db = SessionLocal()
+    try:
+        items = db.query(Item).filter(Item.collection_id == collection_id).all()
+        return items
+    finally:
+        db.close()
+
+@app.get("/queryables")
+def get_queryables():
+    return {
+        "title": "Queryables for the STAC API",
+        "type": "object",
+        "properties": {
+            "id": {
+                "title": "ID",
+                "type": "string",
+                "description": "The unique identifier of an Item."
+            },
+            "bbox": {
+                "title": "Bounding Box",
+                "type": "array",
+                "items": {"type": "number"},
+                "minItems": 4,
+                "maxItems": 6,
+                "description": "A spatial bounding box for the search."
+            },
+            "datetime": {
+                "title": "Datetime",
+                "type": "string",
+                "format": "date-time",
+                "description": "The temporal range for the search."
+            },
+            "collections": {
+                "title": "Collections",
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "A list of collection IDs to filter by."
+            },
+            "mlm:framework": {
+                "title": "Machine Learning Framework",
+                "type": "string",
+                "description": "The machine learning framework used by the model (e.g., TensorFlow, PyTorch)."
+            },
+            "mlm:total_parameters": {
+                "title": "Total Parameters",
+                "type": "integer",
+                "description": "The total number of parameters in the machine learning model."
+            },
+            "mlm:pretrained": {
+                "title": "Pretrained",
+                "type": "boolean",
+                "description": "Indicates whether the model is pretrained."
+            }
+        }
+    }
 
 
 
-
-
-# @app.post("/items/", response_model = ItemResponse)
-# def add_new_item(item: ItemCreate):
-#     db = SessionLocal()
-#     new_item = add_item(db, item.dict())

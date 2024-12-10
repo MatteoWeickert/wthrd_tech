@@ -5,7 +5,7 @@ CREATE TABLE catalogs (
     stac_extensions TEXT[],                          -- Eine Liste von Erweiterungs-IDs, die der Katalog implementiert
     title TEXT,                                     -- Ein kurzer beschreibender Titel des Katalogs
     description TEXT NOT NULL,                      -- Eine detaillierte Beschreibung des Katalogs
-    links JSONB,                                    -- Eine Liste von Links (Referenzen zu anderen Dokumenten)
+    links jsonb,                                    -- Eine Liste von Links (Referenzen zu anderen Dokumenten)
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Katalogs
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update des Katalogs
     -- CONSTRAINT links_href_rel_check CHECK (
@@ -108,9 +108,11 @@ CREATE TABLE properties (
 -- Insert into `catalogs` table
 INSERT INTO catalogs (id, type, stac_version, stac_extensions, title, description, links, created_at, updated_at)
 VALUES 
-('Catalog for MLM', 'Catalog', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Catalog', 'Dies ist ein Beispielkatalog für STAC-Daten.', 
- '{"links": [{"href": "https://example.com/catalog", "rel": "self"}, {"href": "https://example.com/other", "rel": "next"}]}', 
+('Catalog for MLM', 'Catalog', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Catalog', 
+ 'Dies ist ein Beispielkatalog für STAC-Daten.',
+ '[{"href": "https://example.com/catalog", "rel": "self"}, {"href": "https://example.com/other", "rel": "next"}]'::jsonb, 
  NOW(), NOW());
+
 
 -- Insert into `collections` table
 INSERT INTO collections (id, type, stac_version, stac_extensions, title, description, license, extent, links, catalog_ID, created_at, updated_at)
@@ -121,20 +123,64 @@ VALUES
  '{"links": [{"href": "https://example.com/collection", "rel": "self"}, {"href": "https://example.com/next", "rel": "next"}]}', 
  (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW());
 
--- Insert into `items` table
+-- Insert into `items` table with prefixed JSON keys
 INSERT INTO items (id, type, stac_version, stac_extensions, geometry, bbox, properties, links, assets, collection_ID, created_at, updated_at)
 VALUES 
-('example_model', 'Feature', '1.0.0', ARRAY['stac-core'], 'SRID=4326;POINT(10 10)', ARRAY[-10, -10, 10, 10], 
- '{"title": "Example Item", "description": "Dies ist ein Beispiel-Item innerhalb der Example Collection.", "datetime": "2024-12-04T16:20:00"}', 
- '{"links": [{"href": "https://example.com/item", "rel": "self"}]}', 
- '{"thumbnail": {"href": "https://example.com/thumbnail.png"}, "data": {"href": "https://example.com/data"}}', 
- (SELECT id FROM collections WHERE title = 'Example Collection'), NOW(), NOW());
-
--- Insert into `properties` table
-INSERT INTO properties (id, name, architecture, tasks, framework, framework_version, memory_size, total_parameters, pretrained, pretrained_source, batch_size_suggestion, accelerator, accelerator_constrained, accelerator_summary, accelerator_count, input, output, hyperparameters, item_id, created_at, updated_at)
-VALUES 
-('example', 'Example Model', 'ResNet50', ARRAY['classification', 'image'], 'TensorFlow', '2.7', 1200000000, 25000000, TRUE, 'ImageNet', 32, 'GPU', FALSE, 'NVIDIA Tesla V100', 2, 
- '{"type": "image", "shape": [224, 224, 3]}', 
- '{"type": "class", "num_classes": 1000}', 
- '{"learning_rate": 0.001, "dropout": 0.5}', 
- (SELECT id FROM items WHERE properties->>'title' = 'Example Item'), NOW(), NOW());
+(
+    'example_model', 
+    'Feature', 
+    '1.0.0', 
+    ARRAY['stac-core'], 
+    'SRID=4326;POINT(10 10)', 
+    ARRAY[-10, -10, 10, 10], 
+    '{
+        "title": "Example Item",
+        "description": "Dies ist ein Beispiel-Item innerhalb der Example Collection.",
+        "datetime": "2024-12-04T16:20:00",
+        "mlm:name": "Example Model",
+        "mlm:architecture": "ResNet50",
+        "mlm:tasks": ["classification", "image"],
+        "mlm:framework": "TensorFlow",
+        "mlm:framework_version": "2.7",
+        "mlm:memory_size": 1200000000,
+        "mlm:total_parameters": 25000000,
+        "mlm:pretrained": true,
+        "mlm:pretrained_source": "ImageNet",
+        "mlm:batch_size_suggestion": 32,
+        "mlm:accelerator": "GPU",
+        "mlm:accelerator_constrained": false,
+        "mlm:accelerator_summary": "NVIDIA Tesla V100",
+        "mlm:accelerator_count": 2,
+        "mlm:input": {
+            "type": "image",
+            "shape": [224, 224, 3]
+        },
+        "mlm:output": {
+            "type": "class",
+            "num_classes": 1000
+        },
+        "mlm:hyperparameters": {
+            "learning_rate": 0.001,
+            "dropout": 0.5
+        }
+    }', 
+    '{
+        "links": [
+            {
+                "href": "https://example.com/item",
+                "rel": "self"
+            }
+        ]
+    }', 
+    '{
+        "thumbnail": {
+            "href": "https://example.com/thumbnail.png"
+        },
+        "data": {
+            "href": "https://example.com/data"
+        }
+    }', 
+    (SELECT id FROM collections WHERE title = 'Example Collection'), 
+    NOW(), 
+    NOW()
+);
