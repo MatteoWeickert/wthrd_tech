@@ -27,19 +27,22 @@
   }
 
   #sidebar-topbaroption{
+    width: 10vb;
+    text-align: center;
     border-color: none;
     background-color:none;
-    color: #414243;
+    color: #1C3D86;
     font-size: small;
     margin: 10px;
     margin-bottom: -25px;
   }
 
   #sidebar-topbaroption:hover, #sidebar-topbaroption:active {
-    border-color: #cfd1d4;
-    background-color: #cfd1d4;
+    border-color: #c6dbf7;
+    background-color: #c6dbf7;
+    border-radius: 3px;
     padding: 10px;
-    color: #a1a2a3;
+    color: #1C3D86;
     font-size: small;
     margin-bottom: -25px;
   }
