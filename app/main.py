@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 # from schemas import ItemCreate, ItemResponse
 
 # Get database connection info from environment variables
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@db/metadata_database")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@postgres/metadata_database")
 
 # Initialize SQLAlchemy components
 engine = create_engine(DATABASE_URL)
@@ -23,7 +23,7 @@ Base = declarative_base()
 app = FastAPI()
 
 origins = ["*"]
-app.add.middleware(
+app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
@@ -71,7 +71,7 @@ def get_catalogs(catalog_id: int):
     return catalog
 
 ############################################################################################################
-##### Core API endpoints
+##### Core STAC API endpoints
 ############################################################################################################
 
 @app.get("/")
@@ -81,7 +81,20 @@ def get_catalog():
         catalog = db.query(Catalog).first()
         if catalog is None:
             return {"error": "Catalog not found"}
-        return catalog
+        # Fügt conformsTo dynamisch als Attribut hinzu
+        conforms_to = [
+            "http://api.stacspec.org/v1.0.0/core",
+            "https://stac-extensions.github.io/mlm/v1.3.0/schema.json"
+        ]
+        
+        # Wandelt das Catalog-Objekt in ein Dictionary (z. B. mit einer Methode oder mit vars())
+        catalog_dict = catalog.__dict__.copy()
+        
+        # Füge das neue Attribut hinzu
+        catalog_dict["conformsTo"] = conforms_to
+
+        # Rückgabe als JSON-kompatible Daten
+        return catalog_dict
     finally:
         db.close()
 

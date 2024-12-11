@@ -76,42 +76,22 @@ CREATE TABLE items (
     -- )
 );
 
--- Create the `items` table
-CREATE TABLE properties (
-    id VARCHAR(50) PRIMARY KEY,                             -- Unique identifier for the record
-    name VARCHAR(255) NOT NULL,                       -- REQUIRED: Name for the model
-    architecture VARCHAR(255) NOT NULL,               -- REQUIRED: Generic architecture name of the model
-    tasks TEXT[] NOT NULL,                            -- REQUIRED: List of machine learning tasks (array of enums)
-    framework VARCHAR(100) NOT NULL,                  -- Framework used to train the model
-    framework_version VARCHAR(50),                    -- Framework library version
-    memory_size BIGINT,                                -- In-memory size of the model during inference (bytes)
-    total_parameters BIGINT,                           -- Total number of model parameters
-    pretrained BOOLEAN NOT NULL DEFAULT FALSE,        -- Indicates if the model was pretrained
-    pretrained_source TEXT,                            -- Source of the pretraining, or NULL if not pretrained
-    batch_size_suggestion INT,                         -- Suggested batch size for hardware
-    accelerator VARCHAR(100),                          -- Intended computational hardware for inference
-    accelerator_constrained BOOLEAN DEFAULT FALSE,     -- Whether only the intended accelerator can run inference
-    accelerator_summary TEXT,                          -- High-level description of the accelerator
-    accelerator_count INT,                             -- Minimum number of accelerator instances required
-    input JSONB NOT NULL,                              -- REQUIRED: JSON object describing model input
-    output JSONB NOT NULL,                             -- REQUIRED: JSON object describing model output
-    hyperparameters JSONB,                             -- Additional hyperparameters relevant for the model
-    item_id VARCHAR(50) REFERENCES items(id),  -- Reference to the item that this record is associated with
-    created_at TIMESTAMP DEFAULT NOW(),                -- Timestamp for when the record was created
-    updated_at TIMESTAMP DEFAULT NOW()                 -- Timestamp for when the record was last updated
-);
-
-
 -----------------------------------------------------------------------------------------------------------------------
 -- Beispiel-Daten
 -----------------------------------------------------------------------------------------------------------------------
 -- Insert into `catalogs` table
 INSERT INTO catalogs (id, type, stac_version, stac_extensions, title, description, links, created_at, updated_at)
-VALUES 
-('Catalog for MLM', 'Catalog', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Catalog', 
- 'Dies ist ein Beispielkatalog für STAC-Daten.',
- '[{"href": "https://example.com/catalog", "rel": "self"}, {"href": "https://example.com/other", "rel": "next"}]'::jsonb, 
- NOW(), NOW());
+VALUES (
+    'Catalog for MLM', 
+    'Catalog', 
+    '1.0.0', 
+    ARRAY['stac-core', 'extended'], 
+    'Example Catalog', 
+    'Dies ist ein Beispielkatalog für STAC-Daten.',
+    '[{"href": "http://localhost:8000/", "type": "application/json", "rel": "self"}, {"href": "http://localhost:8000/", "type":"application/json", "rel": "root"}, {"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"}, {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}]'::jsonb, 
+    NOW(), 
+    NOW()
+);
 
 
 -- Insert into `collections` table
