@@ -5,6 +5,8 @@ from sqlalchemy.orm import sessionmaker
 from models import Item, Catalog, Collection
 import os
 
+from fastapi.middleware.cors import CORSMiddleware
+
 from fastapi.responses import JSONResponse
 # from crud import get_items, get_catalogs, get_collections, get_properties
 # from schemas import ItemCreate, ItemResponse
@@ -20,6 +22,14 @@ Base = declarative_base()
 # Create FastAPI instance
 app = FastAPI()
 
+origins = ["*"]
+app.add.middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 # Example database operation
 @app.get("/items")
