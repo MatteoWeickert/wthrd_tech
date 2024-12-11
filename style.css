@@ -141,14 +141,14 @@
 
   /*MAIN*/
 
-  #modell{
+  .modell-container{
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     justify-content: center;
   }
 
-  #modell-item{
+  .modell-item{
     color:#414243;
     border: 2px solid;
     border-color: #414243;
@@ -157,7 +157,7 @@
     min-width: 300px; 
   }
 
-  #modell-item:hover{
+  .modell-item:hover{
     color: #a1a2a3;
     border: solid 2px;
     border-color: #414243;
@@ -165,10 +165,26 @@
     padding: 10px;
   }
 
-  #modell-itemparameter{
+  .modell-itemparameter{
     font-size: 10px;
+    position: relative;
   }
 
+  #btn-expand{
+    border: none;
+    background-color: transparent;
+    position: absolute;
+    top: -28px;
+    right: -5px;
+  }
+
+  #btn-expand:hover{
+    border: none;
+    background-color: transparent;
+    position: absolute;
+    top: -28px;
+    right: -5px;
+  }
 
   /*FOOTER*/
 .footer-content {
