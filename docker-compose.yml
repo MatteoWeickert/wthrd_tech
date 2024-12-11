@@ -21,7 +21,7 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Initialize DB with the init.sql script
     ports:
-      - "5432:5432"  # Expose PostgreSQL on port 5432
+      - "5999:5999"  # Expose PostgreSQL on port 5432
   adminer:
     image: adminer
     ports:

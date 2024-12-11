@@ -97,7 +97,7 @@ VALUES (
 -- Insert into `collections` table
 INSERT INTO collections (id, type, stac_version, stac_extensions, title, description, license, extent, links, catalog_ID, created_at, updated_at)
 VALUES 
-('Collection for MLM', 'Collection', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Collection', 
+('MLM_Collection', 'Collection', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Collection', 
  'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
  '{"spatial": {"bbox": [-180, -90, 180, 90]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
  '{"links": [{"href": "https://example.com/collection", "rel": "self"}, {"href": "https://example.com/next", "rel": "next"}]}', 
@@ -107,7 +107,7 @@ VALUES
 INSERT INTO items (id, type, stac_version, stac_extensions, geometry, bbox, properties, links, assets, collection_ID, created_at, updated_at)
 VALUES 
 (
-    'example_model', 
+    'Du nutten', 
     'Feature', 
     '1.0.0', 
     ARRAY['stac-core'], 

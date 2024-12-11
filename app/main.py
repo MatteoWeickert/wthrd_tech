@@ -111,7 +111,8 @@ def get_conformance():
 
 
 @app.get("/collections/{collection_id}/items/{item_id}")
-def get_collection_item(collection_id: int, item_id: int):
+def get_collection_item(collection_id: str, item_id: str):
+
     db = SessionLocal()
     try:
         item = db.query(Item).filter(Item.id == item_id, Item.collection_id == collection_id).first()
@@ -137,7 +138,7 @@ def get_all_collections():
         db.close()
 
 @app.get("/collections/{collection_id}")
-def get_collections(collection_id: int):
+def get_collections(collection_id: str):
     db = SessionLocal()
     collection = db.query(Collection).filter(Collection.id == collection_id).first()
     if collection is None:
@@ -145,7 +146,7 @@ def get_collections(collection_id: int):
     return collection
 
 @app.get("/collections/{collection_id}/items")
-def get_collection_items(collection_id: int):
+def get_collection_items(collection_id: str):
     db = SessionLocal()
     try:
         items = db.query(Item).filter(Item.collection_id == collection_id).all()
