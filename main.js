@@ -37,10 +37,10 @@ function displayItems(items) {
 
         const parameters = document.createElement('div');
         parameters.classList.add('modell-itemparameter');
-        parameters.id = `modell-itemparameter-${item.properties['id']}`;
+        parameters.id = `modell-itemparameter-${item.id}`;
         parameters.innerHTML = `
             ${decideOnParameters(item)}
-            <button id="btn-expand" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${item.properties['id']}" aria-expanded="false" aria-controls="collapse-${item.properties['id']}">
+            <button id="btn-expand" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${item.id}" aria-expanded="false" aria-controls="collapse-${item.id}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrows-angle-expand" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707m4.344-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707"/>
                 </svg>
@@ -50,7 +50,7 @@ function displayItems(items) {
         const information = document.createElement('div');
         information.id = 'modell-itemcollapse'
         information.innerHTML = `
-            <div class="collapse" id="collapse-${item.properties['id']}">
+            <div class="collapse" id="collapse-${item.id}">
                 <div class="card card-body">
                     <span style="font-size:20px;">${item.properties.title}</span>
                     <span style="font-size:10px;">${item.properties['mlm:name']}</span>
