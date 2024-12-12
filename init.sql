@@ -183,4 +183,116 @@ VALUES
     (SELECT id FROM collections WHERE title = 'Example Collection'), 
     NOW(), 
     NOW()
+),
+(
+    'advanced_model', 
+    'Feature', 
+    '1.0.0', 
+    ARRAY['stac-core'], 
+    'SRID=4326;POINT(20 20)', 
+    ARRAY[15, 15, 25, 25], 
+    '{
+        "title": "Advanced Item",
+        "description": "Ein fortgeschrittenes Beispiel-Item innerhalb der Example Collection.",
+        "datetime": "2024-12-05T12:00:00",
+        "mlm:name": "Advanced Model",
+        "mlm:architecture": "Transformer",
+        "mlm:tasks": ["natural language processing"],
+        "mlm:framework": "PyTorch",
+        "mlm:framework_version": "1.11",
+        "mlm:memory_size": 8000000000,
+        "mlm:total_parameters": 500000000,
+        "mlm:pretrained": true,
+        "mlm:pretrained_source": "HuggingFace",
+        "mlm:batch_size_suggestion": 16,
+        "mlm:accelerator": "TPU",
+        "mlm:accelerator_constrained": true,
+        "mlm:accelerator_summary": "Google TPU v3",
+        "mlm:accelerator_count": 4,
+        "mlm:input": {
+            "type": "text",
+            "max_length": 512
+        },
+        "mlm:output": {
+            "type": "text",
+            "num_tokens": 128
+        },
+        "mlm:hyperparameters": {
+            "learning_rate": 0.0001,
+            "dropout": 0.1
+        }
+    }', 
+    '{
+        "links": [
+            {
+                "href": "https://example.com/advanced_item",
+                "rel": "self"
+            }
+        ]
+    }', 
+    '{
+        "thumbnail": {
+            "href": "https://example.com/advanced_thumbnail.png"
+        },
+        "data": {
+            "href": "https://example.com/advanced_data"
+        }
+    }', 
+    (SELECT id FROM collections WHERE title = 'Example Collection'), 
+    NOW(), 
+    NOW()
+),
+(
+    'basic_model', 
+    'Feature', 
+    '1.0.0', 
+    ARRAY['stac-core'], 
+    'SRID=4326;POINT(5 5)', 
+    ARRAY[0, 0, 10, 10], 
+    '{
+        "title": "Basic Item",
+        "description": "Ein einfaches Beispiel-Item innerhalb der Example Collection.",
+        "datetime": "2024-12-06T08:30:00",
+        "mlm:name": "Basic Model",
+        "mlm:architecture": "Linear Model",
+        "mlm:tasks": ["regression"],
+        "mlm:framework": "Scikit-Learn",
+        "mlm:framework_version": "1.0",
+        "mlm:memory_size": 20000000,
+        "mlm:total_parameters": 1000,
+        "mlm:pretrained": false,
+        "mlm:batch_size_suggestion": 64,
+        "mlm:accelerator": "CPU",
+        "mlm:accelerator_constrained": false,
+        "mlm:input": {
+            "type": "numerical",
+            "shape": [10]
+        },
+        "mlm:output": {
+            "type": "numerical",
+            "shape": [1]
+        },
+        "mlm:hyperparameters": {
+            "learning_rate": 0.01
+        }
+    }', 
+    '{
+        "links": [
+            {
+                "href": "https://example.com/basic_item",
+                "rel": "self"
+            }
+        ]
+    }', 
+    '{
+        "thumbnail": {
+            "href": "https://example.com/basic_thumbnail.png"
+        },
+        "data": {
+            "href": "https://example.com/basic_data"
+        }
+    }', 
+    (SELECT id FROM collections WHERE title = 'Example Collection'), 
+    NOW(), 
+    NOW()
 );
