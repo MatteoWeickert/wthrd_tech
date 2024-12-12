@@ -15,7 +15,7 @@ async function fetchItems() {
 
         if (Array.isArray(data) && data.length > 0) {
             displayItems(data);
-        } else {
+        } else {q
             showAlert(4, "Fehler beim Abrufen der Items.", "Überprüfe die Netzwerkverbindung.")
         }
     } catch (error) {
@@ -30,15 +30,13 @@ function displayItems(items) {
 
     items.forEach(item => {
         const itemDiv = document.createElement('div');
-        itemDiv.classList.add('p-3', 'modell-item');  // Add padding and class
+        itemDiv.classList.add('p-3', 'modell-item');
 
-        // Title section
         const title = document.createElement('span');
         title.innerHTML = `${item.properties.title || 'Unbekannter Titel'}`;
 
-        // Parameters and button
         const parameters = document.createElement('div');
-        parameters.classList.add('modell-itemparameter');  // Styling class
+        parameters.classList.add('modell-itemparameter');
         parameters.id = `modell-itemparameter-${item.properties['id']}`;
         parameters.innerHTML = `
             ${decideOnParameters(item)}
@@ -49,21 +47,29 @@ function displayItems(items) {
             </button>
         `;
 
-        // Collapsible content
         const information = document.createElement('div');
+        information.id = 'modell-itemcollapse'
         information.innerHTML = `
             <div class="collapse" id="collapse-${item.properties['id']}">
                 <div class="card card-body">
-                <span>
-                ${item.properties['mlm:tasks'] || ''} - 
-                ${item.properties['mlm:framework'] || ''} - 
-                ${item.assets.data['href'] || 'Kein Link'}
-            </span>
+                    <span style="font-size:20px;">${item.properties.title}</span>
+                    <span style="font-size:10px;">${item.properties['mlm:name']}</span>
+                    <hr>
+                    <span style="font-size:15px;">Beschreibung:</span>
+                    <span style="font-size:10px;">${item.properties.description}</span>
+                    <hr>
+                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span>
+                    <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} </span>
+                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span>
+                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span>
+                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span>
+                    <span>Link: ${item.assets.data['href'] || 'Unbekannt'} </span>
+                    <hr>
+                    <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
                 </div>
             </div>
         `;
 
-        // Append all parts
         itemDiv.appendChild(title);
         itemDiv.appendChild(parameters);
         itemDiv.appendChild(information);
