@@ -11,15 +11,16 @@ class Catalog(Base):
     """
     __tablename__ = "catalogs"
 
-    id = Column(String, primary_key=True, index=True)
-    type = Column(String, nullable=False, default="Catalog")
-    stac_version = Column(String, nullable=False)
-    stac_extensions = Column(ARRAY(String))  # List of extension identifiers
-    title = Column(String)
+    id = Column(String(50), primary_key=True, index=True)
+    type = Column(Text, nullable=False, default="Catalog")
+    stac_version = Column(Text, nullable=False)
+    stac_extensions = Column(ARRAY(Text))  # List of extension identifiers
+    title = Column(Text)
     description = Column(Text, nullable=False)
     links = Column(JSON)
-    created_at = Column(TIMESTAMP, server_default=func.now())
-    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
+    # conformsTo = Column(JSON)
 
     collections = relationship("Collection", back_populates="catalog")
 
@@ -29,7 +30,7 @@ class Collection(Base):
     """
     __tablename__ = "collections"
 
-    id = Column(String, primary_key=True, index=True)
+    id = Column(String(50), primary_key=True, index=True)
     type = Column(String, nullable=False, default="Collection")
     stac_version = Column(String, nullable=False)
     stac_extensions = Column(ARRAY(String))  # List of extension identifiers
@@ -51,7 +52,7 @@ class Item(Base):
     """
     __tablename__ = "items"
 
-    id = Column(String, primary_key=True, index=True)
+    id = Column(String(50), primary_key=True, index=True)
     type = Column(String, nullable=False, default="Feature")
     stac_version = Column(String, nullable=False)
     stac_extensions = Column(ARRAY(String))  # List of extension identifiers

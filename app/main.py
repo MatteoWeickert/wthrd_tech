@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 # from schemas import ItemCreate, ItemResponse
 
 # Get database connection info from environment variables
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@db/metadata_database")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@postgres/metadata_database")
 
 # Initialize SQLAlchemy components
 engine = create_engine(DATABASE_URL)
@@ -71,7 +71,7 @@ def get_catalogs(catalog_id: int):
     return catalog
 
 ############################################################################################################
-##### Core API endpoints
+##### Core STAC API endpoints
 ############################################################################################################
 
 @app.get("/")
@@ -81,7 +81,20 @@ def get_catalog():
         catalog = db.query(Catalog).first()
         if catalog is None:
             return {"error": "Catalog not found"}
-        return catalog
+        # Fügt conformsTo dynamisch als Attribut hinzu
+        conforms_to = [
+            "http://api.stacspec.org/v1.0.0/core",
+            "https://stac-extensions.github.io/mlm/v1.3.0/schema.json"
+        ]
+        
+        # Wandelt das Catalog-Objekt in ein Dictionary (z. B. mit einer Methode oder mit vars())
+        catalog_dict = catalog.__dict__.copy()
+        
+        # Füge das neue Attribut hinzu
+        catalog_dict["conformsTo"] = conforms_to
+
+        # Rückgabe als JSON-kompatible Daten
+        return catalog_dict
     finally:
         db.close()
 
@@ -98,7 +111,8 @@ def get_conformance():
 
 
 @app.get("/collections/{collection_id}/items/{item_id}")
-def get_collection_item(collection_id: int, item_id: int):
+def get_collection_item(collection_id: str, item_id: str):
+
     db = SessionLocal()
     try:
         item = db.query(Item).filter(Item.id == item_id, Item.collection_id == collection_id).first()
@@ -124,7 +138,7 @@ def get_all_collections():
         db.close()
 
 @app.get("/collections/{collection_id}")
-def get_collections(collection_id: int):
+def get_collections(collection_id: str):
     db = SessionLocal()
     collection = db.query(Collection).filter(Collection.id == collection_id).first()
     if collection is None:
@@ -132,7 +146,7 @@ def get_collections(collection_id: int):
     return collection
 
 @app.get("/collections/{collection_id}/items")
-def get_collection_items(collection_id: int):
+def get_collection_items(collection_id: str):
     db = SessionLocal()
     try:
         items = db.query(Item).filter(Item.collection_id == collection_id).all()
