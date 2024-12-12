@@ -4,47 +4,49 @@
     position: fixed;
     z-index: 1000;
     height: 100vh;
+    font-size: 13px;
   }
 
-  #sidebar-option{
-    color:  #414243 
+  #sidebar-groupheader{
+    color:  #1C3D86;
+    font-size: 13px;
+    font-weight: bold;
+    text-transform:uppercase;
   }
 
-  #sidebar-option:hover{
-    color: #a1a2a3; 
+  .form-check-input {
+    display: none;
+  }
+
+  .form-check-label {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 8px;
+    background-color: #dce2eb88;
+    color: #1C3D86;
+    font-size: 13px;
+    user-select: none;
+    transition: background-color 0.01s, color 0.1s;
+  }
+
+  .form-check-label:hover {
+    border: solid 1px;
+    border-color: rgba(0, 0, 0, 0.489); 
+  }
+
+  .form-check-input:checked + .form-check-label {
+    background-color:  #ebeced88;
+    color:  rgba(0, 0, 0, 0.489);
+    border: solid 1px;
+    border-color: rgba(0, 0, 0, 0.489); 
   }
 
   #sidebar-footerlink{
-    color:  #414243 
+    color: #9ec4f2;
   }
 
   #sidebar-footerlink:hover{
     color: #a1a2a3; 
-  }
-
-  #sidebar-topbar{
-    margin-top: -10px;
-  }
-
-  #sidebar-topbaroption{
-    width: 10vb;
-    text-align: center;
-    border-color: none;
-    background-color:none;
-    color: #1C3D86;
-    font-size: small;
-    margin: 10px;
-    margin-bottom: -25px;
-  }
-
-  #sidebar-topbaroption:hover, #sidebar-topbaroption:active {
-    border-color: #c6dbf7;
-    background-color: #c6dbf7;
-    border-radius: 3px;
-    padding: 10px;
-    color: #1C3D86;
-    font-size: small;
-    margin-bottom: -25px;
   }
 
   #sidebar-footerlink{

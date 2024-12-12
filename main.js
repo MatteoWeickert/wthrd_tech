@@ -15,12 +15,88 @@ async function fetchItems() {
 
         if (Array.isArray(data) && data.length > 0) {
             displayItems(data);
-        } else {q
+            console.log(printAllFilters(data));
+        } else {
             showAlert(4, "Fehler beim Abrufen der Items.", "Überprüfe die Netzwerkverbindung.")
         }
     } catch (error) {
         showAlert(4, "Fehler beim Abrufen der Items oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.")
     }
+}
+
+// Funktion zum anzeigen aller verfügbaren unique Filtervalues in der Sidebar
+function printAllFilters(items) {
+    const filters = extractUniqueFilterValues(items);
+    let filterContent = '';
+    const sidebar = document.getElementById("sidebar");
+
+    sidebar.innerHTML = ''; 
+
+    const toggleButton = `
+        <button class="d-md-none position-absolute top-0 end-0 m-2 btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle Sidebar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-x-lg" viewBox="0 0 16 16">
+                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+            </svg>
+        </button>
+    `;
+
+    let selectedFilters = {}; 
+
+    Object.keys(filters).forEach(group => {
+        let options = '';
+        filters[group].forEach(option => {
+            const optionId = `filter-${group}-${option.replace(/[^a-zA-Z0-9-_]/g, '')}`;
+            options += `
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" class="form-check-input" id="${optionId}" value="${option}">
+                    <label class="form-check-label" for="${optionId}">${option}</label>
+                </div>
+            `;
+        });
+
+        filterContent += `
+            <span id="sidebar-groupheader" class="sidebar-heading d-flex mt-3 align-items-center">
+                <span>${group}</span>
+            </span>
+            <div class="d-flex flex-wrap">
+                ${options}
+            </div>
+        `;
+    });
+
+    const footer = `
+        <div id="sidebar-footer" class="mt-auto">
+            <hr>
+            <a id="sidebar-footerlink" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
+            <a id="sidebar-footerlink" href="#" class="nav-link">Settings</a>
+        </div>
+    `;
+
+    sidebar.innerHTML = toggleButton + filterContent + footer;
+
+    const checkboxes = sidebar.querySelectorAll('.form-check-input');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            const group = checkbox.closest('.form-check').previousElementSibling.textContent.trim();
+            const value = checkbox.value;
+
+            if (checkbox.checked) {
+                if (!selectedFilters[group]) {
+                    selectedFilters[group] = [];
+                }
+                selectedFilters[group].push(value);
+            } else {
+                if (selectedFilters[group]) {
+                    selectedFilters[group] = selectedFilters[group].filter(item => item !== value);
+                    if (selectedFilters[group].length === 0) {
+                        delete selectedFilters[group];
+                    }
+                }
+            }
+
+            console.log(selectedFilters);
+        });
+    });
 }
 
 // Funktion zum Anzeigen aller Modelle
@@ -101,7 +177,7 @@ function displayItems(items) {
 function copyToClipboard(url_text, model_name) {
     console.log("reached");
     navigator.clipboard.writeText(url_text).then(() => {
-        showAlert(2, `Link des Modells ${model_name} erfolgreich in die Zwischenablage kopiert.`, "");
+        showAlert(2, `Link des Modells <i>${model_name}</i> erfolgreich in die Zwischenablage kopiert.`, "");
     }).catch(err => {
         showAlert(1, `Link des Modells ${model_name} konnte nicht kopiert werden.`, "");
     });
@@ -146,4 +222,58 @@ function showAlert(type, text, optional){
                             </div>`
         break;
     }
+}
+
+// Funktion um einzigartige Werte aus Items zu extrahieren
+function extractUniqueFilterValues(items) {
+    const filters = {
+        tasks: new Set(),
+        frameworks: new Set(),
+        inputTypes: new Set(),
+        accelerators: new Set(),
+        pretrainedSources: new Set(),
+        acceleratorSummaries: new Set(),
+        bboxes: new Set()
+    };
+
+    items.forEach(item => {
+        const properties = item.properties;
+
+        if (properties['mlm:tasks']) {
+            properties['mlm:tasks'].forEach(task => filters.tasks.add(task));
+        }
+
+        if (properties['mlm:framework']) {
+            filters.frameworks.add(properties['mlm:framework']);
+        }
+
+        if (properties['mlm:input']?.type) {
+            filters.inputTypes.add(properties['mlm:input'].type);
+        }
+
+        if (properties['mlm:accelerator']) {
+            filters.accelerators.add(properties['mlm:accelerator']);
+        }
+
+        if (properties['mlm:pretrained_source']) {
+            filters.pretrainedSources.add(properties['mlm:pretrained_source']);
+        }
+
+        if (properties['mlm:accelerator_summary']) {
+            filters.acceleratorSummaries.add(properties['mlm:accelerator_summary']);
+        }
+
+        if (item.bbox) {
+            filters.bboxes.add(JSON.stringify(item.bbox));
+        }
+    });
+
+    return {
+        tasks: Array.from(filters.tasks),
+        frameworks: Array.from(filters.frameworks),
+        inputTypes: Array.from(filters.inputTypes),
+        accelerators: Array.from(filters.accelerators),
+        pretrainedSources: Array.from(filters.pretrainedSources),
+        acceleratorSummaries: Array.from(filters.acceleratorSummaries),
+    };
 }
