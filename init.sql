@@ -107,7 +107,7 @@ VALUES
 INSERT INTO items (id, type, stac_version, stac_extensions, geometry, bbox, properties, links, assets, collection_ID, created_at, updated_at)
 VALUES 
 (
-    'Du nutten', 
+    'example_model', 
     'Feature', 
     '1.0.0', 
     ARRAY['stac-core'], 
