@@ -64,6 +64,20 @@
     color: #1C3D86;
   }
 
+  #topbar-searchicon{
+    display: flex;
+    margin: 5px;
+    align-items: center;
+  }
+
+  #topbar-search input {
+    border: none;
+    outline:  #9ec4f28e;
+    padding: 5px;
+    width: 100%;
+    border-radius: 10px;
+  }
+  
   #topbar-option:hover, #topbar-option:active {
     color: #1C3D86;
     background-color:  #9ec4f2;
@@ -150,8 +164,8 @@
 
   .modell-item{
     color:#414243;
-    border: 2px solid;
-    border-color: #414243;
+    background-color: #dce2eb88;
+    margin: 2px;
     border-radius: 10px;
     flex: 0 2 49%;
     min-width: 300px; 
@@ -160,8 +174,7 @@
   .modell-item:hover{
     color: #a1a2a3;
     border: solid 2px;
-    border-color: #414243;
-    background-color: #c6dbf7;
+    border-color: #c6dbf7;
     padding: 10px;
   }
 
@@ -170,7 +183,12 @@
     position: relative;
   }
 
-  #btn-expand{
+  #modell-itemcollapse{
+    color: #a1a2a3;
+    margin-top: 7px;
+  }
+
+  .btn-expand{
     border: none;
     background-color: transparent;
     position: absolute;
@@ -178,12 +196,24 @@
     right: -5px;
   }
 
-  #btn-expand:hover{
+  .btn-expand:hover{
     border: none;
     background-color: transparent;
     position: absolute;
     top: -28px;
     right: -5px;
+  }
+
+  .card-body-download{
+    position:relative;
+  }
+
+  .btn-clipboard {
+    border: none;
+    background-color: transparent;
+    position: absolute;
+    bottom: 0;
+    right: 0;
   }
 
   /*FOOTER*/

@@ -40,10 +40,15 @@ function displayItems(items) {
         parameters.id = `modell-itemparameter-${item.id}`;
         parameters.innerHTML = `
             ${decideOnParameters(item)}
-            <button id="btn-expand" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${item.id}" aria-expanded="false" aria-controls="collapse-${item.id}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrows-angle-expand" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707m4.344-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707"/>
-                </svg>
+            <button type="button" 
+                    class="btn-expand" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#collapse-${item.id}" 
+                    aria-expanded="false" 
+                    aria-controls="collapse-${item.id}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
+                        <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
+                    </svg>
             </button>
         `;
 
@@ -52,19 +57,34 @@ function displayItems(items) {
         information.innerHTML = `
             <div class="collapse" id="collapse-${item.id}">
                 <div class="card card-body">
-                    <span style="font-size:20px;">${item.properties.title}</span>
-                    <span style="font-size:10px;">${item.properties['mlm:name']}</span>
+                    <div class="card-body-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
+                            <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
+                        </svg>
+                        <span style="font-size: 10px;">${item.properties['mlm:name']} /   </span><span style="font-size:20px;">${item.properties.title}</span>
+                        <img src="${item.assets.data['thumbnail']}" width="10px" height="10px" alt="" />
+                    </div>
                     <hr>
                     <span style="font-size:15px;">Beschreibung:</span>
-                    <span style="font-size:10px;">${item.properties.description}</span>
+                    <span style="font-size:12px;">${item.properties.description}</span>
                     <hr>
-                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span>
-                    <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} </span>
-                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span>
-                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span>
-                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span>
-                    <span>Link: ${item.assets.data['href'] || 'Unbekannt'} </span>
+                    <div class="card-body-download">
+                        <span style="font-size:15px;">Einbinden:</span><br> <span style="font-size:12px;">${item.assets.data['href']}</span>
+                            <button type="button" class="btn-clipboard" onclick="copyToClipboard('${item.assets.data['href']}', '${item.properties['mlm:name']}')" id="clipboard-${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+                                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
+                                </svg>
+                            </button>
+                    </div>
                     <hr>
+                    <div style="font-size:12px;"class="card-body-parameters">
+                        <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
+                        <span>Modell: ${item.properties['mlm:name']}</span><br>
+                        <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} </span><br>
+                        <span>Link: ${item.assets.data['href'] || 'Unbekannt'} </span>
+                        <hr>
+                    </div>
                     <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
                 </div>
             </div>
@@ -77,6 +97,15 @@ function displayItems(items) {
     });
 }
 
+// Funktion zum kopieren von Informationen in die Zwischenablage
+function copyToClipboard(url_text, model_name) {
+    console.log("reached");
+    navigator.clipboard.writeText(url_text).then(() => {
+        showAlert(2, `Link des Modells ${model_name} erfolgreich in die Zwischenablage kopiert.`, "");
+    }).catch(err => {
+        showAlert(1, `Link des Modells ${model_name} konnte nicht kopiert werden.`, "");
+    });
+}
 
 // Funktion um anzuzeigende Informationen zu den Modellen zu generieren
 function decideOnParameters(item){
