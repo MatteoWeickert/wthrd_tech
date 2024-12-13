@@ -104,7 +104,7 @@ function displayItems(items) {
     const container = document.getElementById('modell-container');
     container.innerHTML = '';
 
-    items.forEach(item => {
+    items.forEach(item => { 
         const itemDiv = document.createElement('div');
         itemDiv.classList.add('p-3', 'modell-item');
 
