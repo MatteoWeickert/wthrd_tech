@@ -20,6 +20,8 @@
 
   .form-check-label {
     cursor: pointer;
+    box-shadow: 1px 1px grey;
+    margin: 2px;
     padding: 2px 4px;
     border-radius: 8px;
     background-color: #dce2eb88;
@@ -35,7 +37,7 @@
   }
 
   .form-check-input:checked + .form-check-label {
-    background-color:  #ebeced88;
+    background-color:  #ffffff;
     color:  rgba(0, 0, 0, 0.489);
     border: solid 1px;
     border-color: rgba(0, 0, 0, 0.489); 
@@ -156,6 +158,9 @@
 
 
   /*MAIN*/
+  #main-alert{
+    position: static;
+  }
 
   .modell-container{
     display: flex;
