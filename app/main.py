@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException
+from typing import Optional, List
+from pydantic import BaseModel
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -156,9 +158,40 @@ def get_collection_item(collection_id: str, item_id: str):
     finally:
         db.close()
 
-@app.get("/search")
-def search():
-    return {"message": "Search for items here"}
+# Eingabeschema für die Suche
+class SearchRequest(BaseModel):
+    collections: Optional[List[str]] = None  # Eine Liste
+
+@app.post("/search")
+def search(criteria: SearchRequest):
+    db = SessionLocal()
+    query = db.query(Item)
+    if(criteria.collections): 
+        query = query.filter(Item.collection_id.in_(criteria.collections))
+
+    # erhalte ergebnisse
+    items = query.all()
+
+    # JSON-kompatible Ausgabe erstellen
+    results = [
+        {
+            "id": item.id,
+            "type": item.type,
+            "stac_version": item.stac_version,
+            "stac_extensions": item.stac_extensions,
+            "geometry": item.geometry,
+            "bbox": item.bbox,
+            "properties": item.properties,
+            "links": item.links,
+            "assets": item.assets,
+            "collection_id": item.collection_id,
+            "created_at": item.created_at,
+            "updated_at": item.updated_at
+        }
+        for item in items
+    ]
+
+    return {"type": "FeatureCollection", "features": results}
 
 @app.get("/collections")
 def get_all_collections():

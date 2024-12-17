@@ -10,7 +10,7 @@ try:
 except Exception as e:
     print(f"Fehler beim Verbinden mit der STAC-API: {e}")
 
-# search = api.search(collections=["Collection for MLM"])
+search = api.search(collections=['MLM_Collection'])
 
 
 
