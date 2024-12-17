@@ -1,9 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from models import Item, Catalog, Collection
 import os
+from schemas import ItemCreate
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -44,7 +45,7 @@ def get_all_items():
         db.close()
 
 @app.get("/items/{item_id}")
-def get_item(item_id: int):
+def get_item(item_id: str):
     db = SessionLocal()
     item = db.query(Item).filter(Item.id == item_id).first()
     if item is None:
@@ -69,6 +70,39 @@ def get_catalogs(catalog_id: int):
     if catalog is None:
         return {"error": "Catalog not found"}
     return catalog
+
+@app.post("/addItem/")
+def add_item(item: ItemCreate):
+    db = SessionLocal()
+    new_item = Item(
+        id = item.id,
+        type = item.type,
+        stac_version = item.stac_version,
+        stac_extensions = item.stac_extensions,
+        geometry = item.geometry,
+        bbox = item.bbox,
+        properties = item.properties,
+        links = item.links,
+        assets = item.assets,
+        collection_id = item.collection_id,
+        created_at = item.created_at,
+        updated_at = item.updated_at
+    )
+    try:
+        db.add(new_item)
+        db.commit()
+        db.refresh(new_item)
+        return {"message": "Item added successfully", "item_id": new_item.id}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error adding item: {str(e)}")
+
+
+
+
+
+
+
 
 ############################################################################################################
 ##### Core STAC API endpoints
