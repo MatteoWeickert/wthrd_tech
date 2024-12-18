@@ -25,77 +25,78 @@ async function fetchItems() {
     }
 }
 
+// addItems
 async function addItems(){
     try {
-        const response = await fetch('http://localhost:8000/addItem', {
+        const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(getInputForm())
+            body: JSON.stringify(geInputForm())
          });
          const data = await response.json();
          console.log("to add:" + data);
        } catch(error) {
-          console.log("Error hier" +  error)
+          showAlert(4, "Item konnte nicht hinzugefügt werden.", "")
          } 
     }
 
-
+// Testfunktion um Items hinzuzufügen
 function getInputForm(){
-    const item = {
-        "id": "item-12345",
-  "type": "Feature",
-  "stac_version": "1.0.0",
-  "stac_extensions": ["https://stac-extensions.github.io/some-extension/v1.0.0/schema.json"],
-  "geometry": {
-    "type": "Polygon",
-    "coordinates": [
-      [
-        [102.0, 0.0],
-        [103.0, 0.0],
-        [103.0, 1.0],
-        [102.0, 1.0],
-        [102.0, 0.0]
-      ]
-    ]
-  },
-  "bbox": [102.0, 0.0, 103.0, 1.0],
-  "properties": {
-    "datetime": "2024-12-18T12:34:56Z",
-    "title": "Sample Item",
-    "description": "A sample STAC item for demonstration purposes"
-  },
-  "links": {
-    "self": {
-      "href": "https://example.com/items/item-12345",
-      "rel": "self",
-      "type": "application/json"
+        const item = {
+            "id": "item-12345",
+    "type": "Feature",
+    "stac_version": "1.0.0",
+    "stac_extensions": ["https://stac-extensions.github.io/some-extension/v1.0.0/schema.json"],
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+        [
+            [102.0, 0.0],
+            [103.0, 0.0],
+            [103.0, 1.0],
+            [102.0, 1.0],
+            [102.0, 0.0]
+        ]
+        ]
     },
-    "collection": {
-      "href": "https://example.com/collections/collection-123",
-      "rel": "collection",
-      "type": "application/json"
-    }
-  },
-  "assets": {
-    "thumbnail": {
-      "href": "https://example.com/thumbnails/item-12345.png",
-      "type": "image/png",
-      "title": "Thumbnail Image"
+    "bbox": [102.0, 0.0, 103.0, 1.0],
+    "properties": {
+        "datetime": "2024-12-18T12:34:56Z",
+        "title": "Sample Item",
+        "description": "A sample STAC item for demonstration purposes"
     },
-    "data": {
-      "href": "https://example.com/data/item-12345.tif",
-      "type": "image/tiff",
-      "title": "Data Asset"
+    "links": {
+        "self": {
+        "href": "https://example.com/items/item-12345",
+        "rel": "self",
+        "type": "application/json"
+        },
+        "collection": {
+        "href": "https://example.com/collections/collection-123",
+        "rel": "collection",
+        "type": "application/json"
+        }
+    },
+    "assets": {
+        "thumbnail": {
+        "href": "https://example.com/thumbnails/item-12345.png",
+        "type": "image/png",
+        "title": "Thumbnail Image"
+        },
+        "data": {
+        "href": "https://example.com/data/item-12345.tif",
+        "type": "image/tiff",
+        "title": "Data Asset"
+        }
+    },
+    "collection_id": "MLM_Collection",
+    "created_at": "2024-12-18T12:34:56Z",
+    "updated_at": "2024-12-18T12:34:56Z"
     }
-  },
-  "collection_id": "MLM_Collectin",
-  "created_at": "2024-12-18T12:34:56Z",
-  "updated_at": "2024-12-18T12:34:56Z"
+    return item
 }
-return item
-    }
 
 // Funktion zum anzeigen aller verfügbaren unique Filtervalues in der Sidebar
 function printAllFilters(items) {
