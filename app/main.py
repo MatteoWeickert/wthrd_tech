@@ -8,6 +8,9 @@ from models import Item, Catalog, Collection
 import os, datetime
 from schemas import ItemCreate
 
+from sqlalchemy.sql.expression import cast
+from sqlalchemy.types import String
+
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -162,14 +165,12 @@ def get_collection_item(collection_id: str, item_id: str):
 #     limit: Optional[int]
 
 # get "search"-Route is required
-@app.get("/search") 
+@app.get("/search")
 def search(
-    collections: Optional[List[str]] = Query(None),  # Der Wert in Klammern (hier: None) steht für die Default-Werte die eingesetzt werden, falls der Suchparameter nicht angegeben wird
-    bbox: Optional[List[float]] = Query(None),  # [west, south, east, north]
-    datetime_range: Optional[str] = Query(None),  # ISO8601 Zeitraum, z. B. "2023-01-01T00:00:00Z/2023-01-31T23:59:59Z"
-    # intersects: Optional[dict] = Query(None),
+    collections: Optional[List[str]] = Query(None),
+    bbox: Optional[List[float]] = Query(None),
+    datetime_range: Optional[str] = Query(None),
     limit: Optional[int] = Query(10),
-    # filter: theoretisch noch required
 ):
     db = SessionLocal()
     try:
@@ -178,7 +179,7 @@ def search(
         # Filter nach Collections
         if collections:
             query = query.filter(Item.collection_id.in_(collections))
-            
+        
         # Filter nach Bounding Box
         if bbox:
             if len(bbox) != 4:
@@ -188,39 +189,46 @@ def search(
             west, south, east, north = bbox
             query = query.filter(
                 and_(
-                    Item.bbox[0] <= east,  # west <= east
-                    Item.bbox[2] >= west,  # east >= west
-                    Item.bbox[1] <= north, # south <= north
-                    Item.bbox[3] >= south # north >= south
+                    Item.bbox[0] <= east,
+                    Item.bbox[2] >= west,
+                    Item.bbox[1] <= north,
+                    Item.bbox[3] >= south
                 )
             )
 
-        # Filter nach Zeit
+        # Filter nach Zeitspanne
         if datetime_range:
             try:
-                if "/" in datetime_range:
+                if "/" in datetime_range:  # Geschlossene Zeitspanne
                     start_time, end_time = datetime_range.split("/")
-                    start_time = datetime.datetime.fromisoformat(start_time.replace("Z", ""))
-                    end_time = datetime.datetime.fromisoformat(end_time.replace("Z", ""))
-                else:
-                    start_time = datetime.datetime.fromisoformat(datetime_range.replace("Z", ""))
+                    start_time = datetime.datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+                    end_time = datetime.datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S")
+                else:  # Einzelzeitpunkt
+                    start_time = datetime.datetime.strptime(datetime_range, "%Y-%m-%dT%H:%M:%S")
                     end_time = start_time
+                
+                # Debugging-Hilfen
+                print(f"Startzeit: {start_time}, Endzeit: {end_time}")
+                
+                # Filter hinzufügen
                 query = query.filter(
                     and_(
-                        Item.properties["datetime"].astext.cast(datetime.datetime) >= start_time,
-                        Item.properties["datetime"].astext.cast(datetime.datetime) <= end_time
+                        cast(Item.properties["datetime"], String) >= start_time.isoformat(),
+                        cast(Item.properties["datetime"], String) <= end_time.isoformat()
                     )
                 )
-            except ValueError:
+            except ValueError as e:
                 raise HTTPException(
-                    status_code=400, detail="Invalid datetime format. Use ISO8601 format."
+                    status_code=400, detail=f"Invalid datetime format. Use 'YYYY-MM-DDTHH:MM:SS' format. Error: {e}"
                 )
-            
+
         # Begrenze die Anzahl der Ergebnisse
         query = query.limit(limit)
 
         # Ergebnisse abrufen
         items = query.all()
+        if not items:
+            return {"type": "FeatureCollection", "features": [], "links": []}
 
         # Ergebnisse in GeoJSON-FeatureCollection umwandeln
         features = [
@@ -236,21 +244,27 @@ def search(
                 "links": item.links,
                 "assets": item.assets,
                 "created_at": item.created_at,
-                "updated_at": item.updated_at
+                "updated_at": item.updated_at,
             }
             for item in items
         ]
 
-        return {"type": "FeatureCollection", 
-                "features": features, 
-                "links": 
-                [
-                    {
-                        "rel": "self",
-                        "href": "http://localhost:8000/search"
-                    }
-                ]}
-    
+        return {
+            "type": "FeatureCollection",
+            "features": features,
+            "links": [
+                {
+                    "rel": "self",
+                    "href": "http://localhost:8000/search"
+                }
+            ]
+        }
+
+    except Exception as e:
+        print(f"Server-Fehler: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Internal Server Error: {e}"
+        )
     finally:
         db.close()
 
