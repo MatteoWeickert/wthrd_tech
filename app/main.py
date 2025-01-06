@@ -1,12 +1,13 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from typing import Optional, List
 from pydantic import BaseModel
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, and_, or_ 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from models import Item, Catalog, Collection
-import os
+import os, datetime
 from schemas import ItemCreate
+
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -100,12 +101,6 @@ def add_item(item: ItemCreate):
         raise HTTPException(status_code=500, detail=f"Error adding item: {str(e)}")
 
 
-
-
-
-
-
-
 ############################################################################################################
 ##### Core STAC API endpoints
 ############################################################################################################
@@ -158,40 +153,142 @@ def get_collection_item(collection_id: str, item_id: str):
     finally:
         db.close()
 
-# Eingabeschema für die Suche
-class SearchRequest(BaseModel):
-    collections: Optional[List[str]] = None  # Eine Liste
+# # Eingabeschema für die Suche
+# class SearchRequest(BaseModel):
+#     collections: Optional[List[str]] = None  # Eine Liste
+#     bbox: Optional[List[float]] = None  # [west, south, east, north]
+#     datetime: Optional[str] = None  # ISO8601 Zeitraum, z. B. "2023-01-01T00:00:00Z/2023-01-31T23:59:59Z"
+#     intersects: Optional[dict] = None
+#     limit: Optional[int]
+
+# get "search"-Route is required
+@app.get("/search") 
+def search(
+    collections: Optional[List[str]] = Query(None),  # Der Wert in Klammern (hier: None) steht für die Default-Werte die eingesetzt werden, falls der Suchparameter nicht angegeben wird
+    bbox: Optional[List[float]] = Query(None),  # [west, south, east, north]
+    datetime_range: Optional[str] = Query(None),  # ISO8601 Zeitraum, z. B. "2023-01-01T00:00:00Z/2023-01-31T23:59:59Z"
+    # intersects: Optional[dict] = Query(None),
+    limit: Optional[int] = Query(10),
+    # filter: theoretisch noch required
+):
+    db = SessionLocal()
+    try:
+        query = db.query(Item)
+
+        # Filter nach Collections
+        if collections:
+            query = query.filter(Item.collection_id.in_(collections))
+            
+        # Filter nach Bounding Box
+        if bbox:
+            if len(bbox) != 4:
+                raise HTTPException(
+                    status_code=400, detail="Bounding box must have exactly 4 values: [west, south, east, north]"
+                )
+            west, south, east, north = bbox
+            query = query.filter(
+                and_(
+                    Item.bbox[0] <= east,  # west <= east
+                    Item.bbox[2] >= west,  # east >= west
+                    Item.bbox[1] <= north, # south <= north
+                    Item.bbox[3] >= south # north >= south
+                )
+            )
+
+        # Filter nach Zeit
+        if datetime_range:
+            try:
+                if "/" in datetime_range:
+                    start_time, end_time = datetime_range.split("/")
+                    start_time = datetime.datetime.fromisoformat(start_time.replace("Z", ""))
+                    end_time = datetime.datetime.fromisoformat(end_time.replace("Z", ""))
+                else:
+                    start_time = datetime.datetime.fromisoformat(datetime_range.replace("Z", ""))
+                    end_time = start_time
+                query = query.filter(
+                    and_(
+                        Item.properties["datetime"].astext.cast(datetime.datetime) >= start_time,
+                        Item.properties["datetime"].astext.cast(datetime.datetime) <= end_time
+                    )
+                )
+            except ValueError:
+                raise HTTPException(
+                    status_code=400, detail="Invalid datetime format. Use ISO8601 format."
+                )
+            
+        # Begrenze die Anzahl der Ergebnisse
+        query = query.limit(limit)
+
+        # Ergebnisse abrufen
+        items = query.all()
+
+        # Ergebnisse in GeoJSON-FeatureCollection umwandeln
+        features = [
+            {
+                "type": "Feature",
+                "id": item.id,
+                "stac_extensions": item.stac_extensions,
+                "stac_version": item.stac_version,
+                "geometry": item.geometry,
+                "properties": item.properties,
+                "bbox": item.bbox,
+                "collection_id": item.collection_id,
+                "links": item.links,
+                "assets": item.assets,
+                "created_at": item.created_at,
+                "updated_at": item.updated_at
+            }
+            for item in items
+        ]
+
+        return {"type": "FeatureCollection", 
+                "features": features, 
+                "links": 
+                [
+                    {
+                        "rel": "self",
+                        "href": "http://localhost:8000/search"
+                    }
+                ]}
+    
+    finally:
+        db.close()
+
 
 @app.post("/search")
-def search(criteria: SearchRequest):
-    db = SessionLocal()
-    query = db.query(Item)
-    if(criteria.collections): 
-        query = query.filter(Item.collection_id.in_(criteria.collections))
+def search_post(body: dict):
+    return search(**body)
 
-    # erhalte ergebnisse
-    items = query.all()
+# @app.post("/search")
+# def search(criteria: SearchRequest):
+#     db = SessionLocal()
+#     query = db.query(Item)
+#     if(criteria.collections): 
+#         query = query.filter(Item.collection_id.in_(criteria.collections))
 
-    # JSON-kompatible Ausgabe erstellen
-    results = [
-        {
-            "id": item.id,
-            "type": item.type,
-            "stac_version": item.stac_version,
-            "stac_extensions": item.stac_extensions,
-            "geometry": item.geometry,
-            "bbox": item.bbox,
-            "properties": item.properties,
-            "links": item.links,
-            "assets": item.assets,
-            "collection_id": item.collection_id,
-            "created_at": item.created_at,
-            "updated_at": item.updated_at
-        }
-        for item in items
-    ]
+#     # erhalte ergebnisse
+#     items = query.all()
 
-    return {"type": "FeatureCollection", "features": results}
+#     # JSON-kompatible Ausgabe erstellen
+#     results = [
+#         {
+#             "id": item.id,
+#             "type": item.type,
+#             "stac_version": item.stac_version,
+#             "stac_extensions": item.stac_extensions,
+#             "geometry": item.geometry,
+#             "bbox": item.bbox,
+#             "properties": item.properties,
+#             "links": item.links,
+#             "assets": item.assets,
+#             "collection_id": item.collection_id,
+#             "created_at": item.created_at,
+#             "updated_at": item.updated_at
+#         }
+#         for item in items
+#     ]
+
+#     return {"type": "FeatureCollection", "features": results}
 
 @app.get("/collections")
 def get_all_collections():
