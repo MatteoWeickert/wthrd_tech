@@ -185,6 +185,7 @@ function filterItems(items, filters){
     }
     else{
         items.forEach( item=> {
+            try{
                 //Framework filtern
                 if(filters.frameworks && Object.keys(filters.frameworks).length > 0){
                     //console.log("frameworks")
@@ -256,6 +257,11 @@ function filterItems(items, filters){
                 if(matchingValues){
                     selectedItems.push(item)
                 }
+            }
+            catch (error){
+                showAlert(1, "Nicht alle Modelle wurden betrachtet. Fehlerhaftes Modell: ", item.id)
+                return;
+            }
         });
         if(Object.keys(selectedItems).length == 0){
             showAlert(2, "Keine Modelle gefunden.", "Nutze andere Suchparameter oder füge ein weiteres Modell mit deinen Anforderungen hinzu.")
@@ -371,7 +377,7 @@ function showAlert(type, text, optional){
         break;
         case(1): // WARNING
             alertContainer.innerHTML = `                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                                <strong>Warnung:</strong> ${text} ${optional}
+                                <strong>Warnung:</strong> ${text} <i> ${optional} </i>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>`
         break;
