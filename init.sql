@@ -112,7 +112,7 @@ VALUES
     '1.0.0', 
     ARRAY['stac-core'], 
     'SRID=4326;POINT(10 10)', 
-    ARRAY[-10.0, -10.0, 10.0, 10.0], 
+    ARRAY[-10.0, -10.0, 10.0, 10.0],  -- Werte müssen in der Reihenfolge [west, south, east, north] sein
     '{
         "title": "Example Item",
         "description": "Dies ist ein Beispiel-Item innerhalb der Example Collection.",

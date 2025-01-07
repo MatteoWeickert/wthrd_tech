@@ -80,6 +80,7 @@ def get_catalogs(catalog_id: int):
 @app.post("/addItem/")
 def add_item(item: ItemCreate):
     db = SessionLocal()
+    
     new_item = Item(
         id = item.id,
         type = item.type,
