@@ -189,10 +189,10 @@ def search(
             west, south, east, north = bbox
             query = query.filter(
                 and_(
-                    Item.bbox[0] <= east,
-                    Item.bbox[2] >= west,
-                    Item.bbox[1] <= north,
-                    Item.bbox[3] >= south
+                    Item.bbox[1] >= west,
+                    Item.bbox[2] >= south,
+                    Item.bbox[3] <= east,
+                    Item.bbox[4] <= north
                 )
             )
 
