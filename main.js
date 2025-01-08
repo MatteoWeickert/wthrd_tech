@@ -33,14 +33,14 @@ async function addItems(){
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(geInputForm())
+            body: JSON.stringify(getInputForm())
          });
          const data = await response.json();
          console.log("to add:" + data);
        } catch(error) {
           showAlert(4, "Item konnte nicht hinzugefügt werden.", "")
          } 
-    }
+}
 
 // Testfunktion um Items hinzuzufügen
 function getInputForm(){
