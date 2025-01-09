@@ -64,5 +64,6 @@ class Item(Base):
     collection_id = Column(String, ForeignKey("collections.id"), nullable=False)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    color = Column(String, nullable=True)
 
     collection = relationship("Collection", back_populates="items")
