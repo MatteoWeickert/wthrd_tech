@@ -155,11 +155,52 @@
   }
 
 
-
-
   /*MAIN*/
+  #map{
+    min-width: 200px;
+    min-height: 300px;
+  }
   #main-alert{
     position: static;
+  }
+
+  #main-inputcontainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;  /* Sicherstellen, dass Container die gesamte Breite einnimmt */
+  }
+  
+  .main-inputwindow{
+    min-width: 50%;
+    margin-bottom: 10px;
+    text-align: center;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    border-bottom:0.5px solid black;
+  }
+  
+  #main-inputgroup {
+    align-items: center;
+    width: 100%;
+    margin-top: 30px;
+    align-items: stretch;
+  }
+
+  .main-inputexp {
+      font-size: 20px;
+      margin-right: 10px;
+      flex-shrink: 0;
+      font-weight: bold;
+      text-transform:uppercase;
+      color:#414243;
+  }
+
+  #main-inputelem {
+      display: flex;
+      justify-content: center;
+      flex-grow: 1;
   }
 
   .modell-container{

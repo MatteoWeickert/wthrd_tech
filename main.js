@@ -1,6 +1,8 @@
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 function startWebsite(){
     fetchItems();
+    addItems();
+    createInputForm(['Name', 'Beschreibung', 'Architektur', 'Aufgaben', 'Eingabe', 'Ausgabe', 'Links', 'Assets']);
 }
 startWebsite();
 
@@ -32,7 +34,7 @@ async function addItems(){
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(getInputForm())
+            body: JSON.stringify(gtInputForm())
          });
          const data = await response.json();
          console.log("to add:" + data);
@@ -41,60 +43,217 @@ async function addItems(){
          } 
 }
 
+const map = L.map('map').setView([0, 0], 2);
+
+L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+
+
+const drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+const drawControl = new L.Control.Draw({
+  draw: {
+    polyline: false,
+    polygon: false,
+    circle: false,
+    marker: false,
+    circlemarker: false,
+    rectangle: true
+  },
+  edit: {
+    featureGroup: drawnItems,
+    remove: true
+  }
+});
+map.addControl(drawControl);
+
+map.on(L.Draw.Event.CREATED, function (event) {
+    const layer = event.layer;
+    drawnItems.clearLayers();
+    drawnItems.addLayer(layer);
+    const bounds = layer.getBounds();
+    getBounds(bounds);
+});
+
+function getBounds(data){
+    console.log(data.toBBoxString());
+}
+
+// Funktion welche die Inputfenster automatisch entsprechend der Anforderungen erstellt
+function createInputForm(data) {
+    console.log("1");
+    const parameters = data;
+    const container = document.getElementById('main-inputcontainer');
+    createInputScrollBar(data);
+    container.innerHTML = '';
+
+    parameters.forEach(parameter => {
+        console.log("2", parameter);
+        container.innerHTML += `
+            <div id="main-inputgroup" class="d-flex align-items-center justify-content-between w-100">
+                <div id="inputexp-${parameter}" class="main-inputexp">
+                    ${parameter}
+                </div>
+                <div id="main-inputelem" class="flex-grow-1 d-flex justify-content-center">
+                    <input id="input-${parameter}" class="main-inputwindow" />
+                </div>
+                <div id="" class="main-inputalert"></div>
+            </div>
+        `;
+    });
+
+    // BoundingBox Option hinzufügen
+    container.innerHTML += `
+                                    <div id="main-inputgroup" class="d-flex align-items-center justify-content-between w-100">
+                                    <div id="inputexp-map" class="main-inputexp">
+                                        Bounding Box
+                                    </div>
+                                    <div id="main-inputelem" class="flex-grow-1 justify-content-center">
+                                        <div id="map" class="h-100 w-50"></div>
+                                    </div>
+                                    <div id="" class="main-inputalert"></div>
+                                </div>
+
+    `
+    // Colorcode Option hinzufügen
+    container.innerHTML += `
+                                    <div id="main-inputgroup" class="d-flex align-items-center justify-content-between w-100">
+                                    <div id="inputexp-color" class="main-inputexp">
+                                        Farbgebung
+                                    </div>
+                                    <div id="main-inputelem" class="flex-grow-1 justify-content-center">
+                                        <input id="main-inputelem-color" style="height: 30px;"class="w-50" type="color" />
+                                    </div>
+                                    <div id="" class="main-inputalert"></div>
+                                </div>
+
+    `
+}
+
+// Funktion um ausgewählte Farbe beim hinzufügen eines Modells zu sichern
+function getSelectedColor(){
+    const colorInput = document.getElementById('main-inputelem-color');
+    colorInput.addEventListener('input', function() {
+        const selectedColor = colorInput.value;
+        return selectedColor
+    });
+}
+
+// Funktion zum dynamischen Erstellen des Inhaltsverzeichnisses mit Scrollfunktion
+function createInputScrollBar(data) {
+    const parameters = data;
+    const sidebar = document.getElementById("sidebar");
+    const sidebarList = sidebar.querySelector(".nav.flex-column");
+    
+    // Titel hinzufügen
+    sidebarList.innerHTML = `                        
+        <h6 id="sidebar-groupheader" class="sidebar-heading d-flex align-items-center mt-4 mb-1 text-muted">
+            <span>Inhaltsverzeichnis</span>
+        </h6><hr>`;
+    
+    // Dynamisch alle Parameter hinzufügen
+    parameters.forEach(parameter => {
+        sidebarList.innerHTML += `
+            <li class="nav-item">
+                <a class="nav-link" href="#inputexp-${parameter}">${parameter}</a>
+            </li>
+        `;
+    });
+    
+    // Feststehende Elemente hinzufügen
+    sidebarList.innerHTML += `
+    <li class="nav-item">
+        <a class="nav-link" href="#inputexp-map">Bounding Box</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#inputexp-color">Farbgebung</a>
+    </li>
+    `;
+    
+    // Footer hinzufügen
+    sidebarList.innerHTML += ` 
+        <div id="sidebar-footer" class="mt-auto">
+            <hr>
+            <li class="nav-item">
+                <a id="sidebar-footerlink" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
+                    Login
+                </a>
+            </li>
+            <li class="nav-item">
+                <a id="sidebar-footerlink" class="nav-link" href="#">
+                    Settings
+                </a>
+            </li>
+        </div>`;
+}
+
+
+
 // Testfunktion um Items hinzuzufügen
 function getInputForm(){
         const item = {
-            "id": "item-12345",
+            "id": "item-67890",
             "type": "Feature",
             "stac_version": "1.0.0",
-            "stac_extensions": ["https://stac-extensions.github.io/some-extension/v1.0.0/schema.json"],
+            "stac_extensions": [
+                "https://stac-extensions.github.io/eo/v1.0.0/schema.json",
+                "https://stac-extensions.github.io/scientific/v1.0.0/schema.json"
+            ],
             "geometry": {
                 "type": "Polygon",
-                    "coordinates": [
-        [
-            [102.0, 0.0],
-            [103.0, 0.0],
-            [103.0, 1.0],
-            [102.0, 1.0],
-            [102.0, 0.0]
-        ]
-        ]
-    },
-    "bbox": [102.0, 0.0, 103.0, 1.0],
-    "properties": {
-        "datetime": "2024-12-18T12:34:56Z",
-        "title": "Sample Item",
-        "description": "A sample STAC item for demonstration purposes"
-    },
-    "links": {
-        "self": {
-        "href": "https://example.com/items/item-12345",
-        "rel": "self",
-        "type": "application/json"
-        },
-        "collection": {
-        "href": "https://example.com/collections/collection-123",
-        "rel": "collection",
-        "type": "application/json"
+                "coordinates": [
+                    [
+                        [12.4924, 41.8902],
+                        [12.4934, 41.8902],
+                        [12.4934, 41.8912],
+                        [12.4924, 41.8912],
+                        [12.4924, 41.8902]
+                    ]
+                ]
+            },
+            "bbox": [12.4924, 41.8902, 12.4934, 41.8912],
+            "properties": {
+                "datetime": "2025-01-01T12:00:00Z",
+                "mlm:name": "Sample Model",
+                "mlm:architecture": "EfficientNet-B0",
+                "mlm:tasks": "Image Segmentation",
+                "mlm:input": "Satellite Imagery",
+                "mlm:output": "Land Use Classes",
+                "mlm:color": "#FF5733",
+                "title": "Example STAC Item",
+                "description": "This item represents a demonstration of STAC metadata."
+            },
+            "links": {
+                "self": {
+                    "href": "https://example.com/items/item-67890",
+                    "rel": "self",
+                    "type": "application/json"
+                },
+                "collection": {
+                    "href": "https://example.com/collections/collection-456",
+                    "rel": "collection",
+                    "type": "application/json"
+                }
+            },
+            "assets": {
+                "thumbnail": {
+                    "href": "https://example.com/thumbnails/item-67890.png",
+                    "type": "image/png",
+                    "title": "Thumbnail Image"
+                },
+                "data": {
+                    "href": "https://example.com/data/item-67890.tif",
+                    "type": "image/tiff",
+                    "title": "Data Asset"
+                }
+            },
+            "collection_id": "Example_Collection",
+            "created_at": "2025-01-01T12:00:00Z",
+            "updated_at": "2025-01-01T12:00:00Z"
         }
-    },
-    "assets": {
-        "thumbnail": {
-        "href": "https://example.com/thumbnails/item-12345.png",
-        "type": "image/png",
-        "title": "Thumbnail Image"
-        },
-        "data": {
-        "href": "https://example.com/data/item-12345.tif",
-        "type": "image/tiff",
-        "title": "Data Asset"
-        }
-    },
-    "collection_id": "MLM_Collection",
-    "created_at": "2024-12-18T12:34:56Z",
-    "updated_at": "2024-12-18T12:34:56Z"
-    }
-    return item
+ return item;       
 }
 
 // Funktion zum anzeigen aller verfügbaren unique Filtervalues in der Sidebar
