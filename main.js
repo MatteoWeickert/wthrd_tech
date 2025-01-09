@@ -1,7 +1,6 @@
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 function startWebsite(){
     fetchItems();
-    addItems();
 }
 startWebsite();
 
@@ -46,12 +45,12 @@ async function addItems(){
 function getInputForm(){
         const item = {
             "id": "item-12345",
-    "type": "Feature",
-    "stac_version": "1.0.0",
-    "stac_extensions": ["https://stac-extensions.github.io/some-extension/v1.0.0/schema.json"],
-    "geometry": {
-        "type": "Polygon",
-        "coordinates": [
+            "type": "Feature",
+            "stac_version": "1.0.0",
+            "stac_extensions": ["https://stac-extensions.github.io/some-extension/v1.0.0/schema.json"],
+            "geometry": {
+                "type": "Polygon",
+                    "coordinates": [
         [
             [102.0, 0.0],
             [103.0, 0.0],
@@ -368,7 +367,7 @@ function fillInParameters(item, filters){
 
 }
 
-// Funktion zum erstellen von dynmaischen Alerts 1 Warnung 2 Info 3 Erfolg 4 Error
+// Funktion zum erstellen von dynmaischen Clean 0 Alerts 1 Warnung 2 Info 3 Erfolg 4 Error
 function showAlert(type, text, optional){
     alertContainer = document.getElementById('main-alert')
     switch(type){
