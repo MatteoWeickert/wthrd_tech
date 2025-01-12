@@ -54,7 +54,7 @@ VALUES (
     'Dies ist ein Beispielkatalog für STAC-Daten.',
     '[
         {"href": "http://localhost:8000/", "type": "application/json", "rel": "self"},
-        {"href": "http://localhost:8000/", "type":"application/json", "rel": "root"},
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
         {"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"},
         {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}]'::jsonb, 
     NOW(), 
@@ -68,9 +68,11 @@ VALUES
  'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
  '{"spatial": {"bbox": [-180, -90, 180, 90]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
  '[
-    {"href": "https://example.com/collection", "rel": "self"},
-    {"href": "http://localhost:8000/", "rel": "root"},
-    {"href": "http://localhost:8000/collections", "rel": "parent"}
+    {"href": "https://example.com/collection", "type": "application/json", "rel": "self"},
+    {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
+    {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
+    {"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"},
+    {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "child"}
  ]'::jsonb, 
  (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW());
 
@@ -116,9 +118,10 @@ VALUES
         }
     }', 
     '[
-        {"href": "https://example.com/item", "rel": "self"},
-        {"href": "http://localhost:8000/collections", "rel": "parent"},
-        {"href": "http://localhost:8000/", "rel": "root"}
+        {"href": "https://example.com/item", "type": "application/json", "rel": "self"},
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
+        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}
     ]'::jsonb, 
     '{
         "thumbnail": {
@@ -171,9 +174,10 @@ VALUES
         }
     }', 
     '[
-        {"href": "https://example.com/advanced_item", "rel": "self"},
-        {"href": "http://localhost:8000/collections", "rel": "parent"},
-        {"href": "http://localhost:8000/", "rel": "root"}
+        {"href": "https://example.com/advanced_item", "type": "application/json", "rel": "self"},
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
+        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}
     ]'::jsonb, 
     '{
         "thumbnail": {
@@ -222,9 +226,10 @@ VALUES
         }
     }', 
     '[
-        {"href": "https://example.com/basic_item", "rel": "self"},
-        {"href": "http://localhost:8000/collections", "rel": "parent"},
-        {"href": "http://localhost:8000/", "rel": "root"}
+        {"href": "https://example.com/basic_item", "type": "application/json", "rel": "self"},
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
+        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}
     ]'::jsonb, 
     '{
         "thumbnail": {
