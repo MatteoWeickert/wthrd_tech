@@ -2,7 +2,7 @@
 # SQLAlchmey macht Vorgaben für die Datenbank (Eigenschaften etc.), Pydantic prüft die Eingaben des Nutzers an FastAPI und die Rückgabe an den Nutzer
 
 from pydantic import BaseModel, Field, validator
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 class ItemCreate(BaseModel):
