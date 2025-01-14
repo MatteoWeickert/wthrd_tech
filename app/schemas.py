@@ -18,7 +18,7 @@ class ItemCreate(BaseModel):
     collection_id: str
     created_at: datetime
     updated_at: datetime
-    color: Optional[str] = Field(None, description="The given HEX color code is invalid.")
+    color: Dict[str, Any] = Field(None, description="The given HEX color code is invalid.")
 
     @validator("geometry")
     def validate_geometry(cls, value):
