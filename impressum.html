@@ -4,12 +4,12 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!-- ICON -->
-        <title>Modellkatalog</title>
+        <title>Impressum</title>
         <link rel="icon" type="image/x-icon" href="wthrdicon.svg">
 
         <!--Imports:-->
-        <!--JS main script-->
-        <script defer src="main.js"></script>
+        <!--JS main script--
+        <script defer src="main.js"></script>-->
         <!--stylesheet-->
         <link rel="stylesheet" href="style.css">
         <!--bootstrap-->
@@ -64,10 +64,10 @@
                                 <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
                                     <form id="registerForm">
                                         <div class="mb-3">
-                                            <input type="text" class="form-control overlay-input" id="register-name" placeholder="Vorname">
+                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Vorname">
                                         </div>
                                         <div class="mb-3">
-                                            <input type="text" class="form-control overlay-input" id="register-lastname" placeholder="Nachname">
+                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nachname">
                                         </div>
                                         <div class="mb-3">
                                             <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nutzername">
@@ -91,21 +91,37 @@
             </div>
             <div class="container-fluid">
                 <div class="row">
+
                 <!-- Sidebar-->
                 <nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
-                        <div class="position-sticky">
-                            <ul class="nav flex-column">
+                    <div class="position-sticky">
+                        <ul class="nav flex-column">
 
-                                <!-- Sidebar: Topbar für Filterungsoptionen -->
-                                <div id="sidebar-topbar" class="col-md-9 col-lg-9 d-flex px-0 py-3"></div>
+                            <!-- Sidebar: Footer -->
+                            <div id="sidebar-footer" class="mt-auto">
                                 <hr>
-                                <!-- Sidebar: Footer -->
-                                <div id="sidebar-footer" class="mt-auto"></div>
-                            </ul>
-                        </div>  
-            
+                                <li class="nav-item">
+                                    <a id="sidebar-footerlink" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
+                                        Login
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a id="sidebar-footerlink" class="nav-link" href="#">
+                                        Settings
+                                    </a>
+                                </li>
+                            </div>
+                        </ul>
+                    </div>  
 
-                </nav>
+                    <!-- Sidebar: Button zum schließen des Dropdownfenster bei sd/md -->
+                    <button class="d-md-none position-absolute top-0 end-0 m-2 btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle Sidebar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-x-lg" viewBox="0 0 16 16">
+                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                        </svg>
+                    </button>
+
+            </nav>
 
                 <!-- Topbar für Mainsite -->
                 <div id="topbar" class="col-md-9 col-lg-9 ms-sm-auto d-flex align-items-center flex-shrink">
@@ -133,7 +149,7 @@
                     <a id="topbar-option" href="#" class="text-decoration-none fw-bold px-3 py-2">
                         How-To
                     </a>
-                    <div id="topbar-logo" class="d-lg-block d-md-none d-none">
+                    <div id="topbar-logo" class="d-lg-block d-none">
                         <img id="topbar-logo"  href="#" src="wthrdicon.svg" style="right:52%;"height="40px" width="40px">
                     </div>
                     <div id="topbar-menuoptions" class="ms-auto d-flex justify-content-end px-3 py-2">
@@ -143,7 +159,7 @@
                                 <svg style="margin-right: 10px;"xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-search" viewBox="0 0 16 16">
                                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                                 </svg>
-                                <input type="text" placeholder="..."></input>
+                                <input type="text" placeholder="Suchbegriff.."></input>
                             </div>
                         </a>
                         <!-- Topbar: Loginelement -->
@@ -176,16 +192,18 @@
                     <!-- Overlay für Ladeanzeige, Popups etc. -->
                     <div id="main-loadoverlay">
 
-                        <!-- Alert Container -->
-                        <div id="main-alert" class="container mt-5">
-                        </div>
-
                         <!-- Main Container -->
                         <div id="main-content" class="container mt-5">
+                            
+                            <h1>Impressum</h1>
+                            <p><strong>Angaben gemäß § 5 TMG:</strong></p>
+                            <p>wthrd technologies<br>Heisenbergstraße 2<br>48149 Münster</p>
+                            <p><strong>Vertreten durch:</strong></p>
+                            <p>Projektleiter Johann Matteo Weickert</p>
+                            <p><strong>Kontakt:</strong></p>
+                            <p>Tel: +49 251 33919<br>E-Mail: fsgelok@uni-muenster.de</p>
 
-                            <!-- Modell Container -->
-                            <div id="main-modell" class="container">
-                                <div id="modell-container"></div>
+                            
                         </div>
                         
                         <!-- FOOTER -->
