@@ -13,15 +13,14 @@ function startWebsite(){
             addItems();
             break;
         default: window.location.href = '/unknown.html';
-            break;
-            
+        break;         
     }
 }
 startWebsite();
 
 // Funktion zum Verwalten der gewollten Userinputs
 function getExpectedInputs(){
-    return ['Name', 'Beschreibung','Architektur', 'Aufgaben', 'Eingabe', 'Ausgabe', 'Links', 'Assets']
+    return ['id', 'stacversion', 'stacextension', 'geometry', 'title', 'description', 'name', 'architecture', 'framework', 'frameworkversion', 'pretrainedsource','batchsizesuggestion','hyperparameter', 'collectionid', 'collectiontitle']
 }
 
 // Fetchen aller Modelle
@@ -46,19 +45,73 @@ async function fetchItems() {
 
 // addItems
 async function addItems(){
+    const input = getUserInputs();
+    console.log("1" + JSON.stringify(input))
+    //console.log("addItems Test:" + input.id)
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(gtInputForm())
+            //spez inputs: datetime tasks(array) pretrained inputupload outputupload assetupload getColor()
+
+            body:`(
+                '${input.id}', 
+                'Feature', 
+                '${input.stacversion}',
+                ARRAY['${input.stacextension}'], 
+                '${getGeometry()}', 
+                ARRAY[${getBounds()}],
+                '{
+                    "title": "${input.title}",
+                    "description": "${input.description}",
+                    "datetime": "2024-12-04T16:20:00",
+                    "mlm:name": "${input.name}",
+                    "mlm:architecture": "${input.architecture}",
+                    "mlm:tasks": ["classification", "image"],
+                    "mlm:framework": "${input.framework}",
+                    "mlm:framework_version": "${input.frameworkversion}",
+                    "mlm:pretrained": true,
+                    "mlm:pretrained_source": "${input.pretrainedsource}",
+                    "mlm:batch_size_suggestion": ${input.batchsizesuggestion},
+                    "mlm:input": [{
+                        "name": "testname",
+                        "bands": ["basnd","basnd"],
+                        "input": ""
+                    }],
+                    "mlm:output": {
+                        "type": "class",
+                        "num_classes": 1000
+                    },
+                    "mlm:hyperparameters": '${getHyperparameters()}'
+                }', 
+                ARRAY[
+                    '{"href": "https://example.com/item", "type": "application/json", "rel": "self"}'::jsonb,
+                    '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
+                    '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
+                    '{"href": "http://localhost:8000/collections/${input.collectionid}", "type": "application/json", "rel": "collection"}'::jsonb
+                ],
+            '{
+                    "thumbnail": {
+                        "href": "https://example.com/thumbnail.png"
+                    },
+                    "data": {
+                        "href": "https://example.com/data"
+                    }
+                }', 
+                (SELECT id FROM collections WHERE title = '${input.collectiontitle}'), 
+                NOW(), 
+                NOW(),
+                '${getSelectedColor()}'
+            ),`
          });
          const data = await response.json();
          console.log("to add:" + data);
        } catch(error) {
+            console.log("Error aus addItems" + error)
           showAlert(4, "Item konnte nicht hinzugefügt werden.", "")
-         } 
+        } 
 }
 
 const map = L.map('map').setView([0, 0], 2);
@@ -95,12 +148,35 @@ map.on(L.Draw.Event.CREATED, function (event) {
     getBounds(bounds);
 });
 
-function getBounds(data){
-    if (data && data.toBBoxString) {
-        return data.toBBoxString();
-    } else {
-        return null;
+// Event-Listener, wenn ein Rechteck gezeichnet wurde
+map.on('draw:created', function (event) {
+    const layer = event.layer;
+    drawnItems.addLayer(layer);
+    const bounds = layer.getBounds();
+    console.log("Bounding Box: " + bounds.toBBoxString());
+    return bounds.toBBoxString();
+});
+
+function getGeometry(){
+    const input = getUserInputs()
+    const geometry = (input.geometry).replace(/[^\w\s]/gi, '');
+    return geometry
+}
+
+function getHyperparameters(){
+    const input = getUserInputs()
+    const hyppara = ((input.hyperparameter).replace(/[^\w\s]/gi, ''));
+    console.log(hyppara)
+}
+
+// Funktion um immer die aktuelle Bounding Box von der Karte zu extrahieren
+function getBounds() {
+    const lastRectangle = drawnItems.getLayers().pop();
+    if (lastRectangle) {
+        const bounds = lastRectangle.getBounds();
+        return bounds.toBBoxString();
     }
+    return null;
 }
 
 // Erstellt dynmaisch die gefragten Inputs für ein vollständiges Modell
@@ -135,6 +211,7 @@ function createInputForm(data) {
     });
     count += 1;
 
+    // Bounding Box-Option
     tableBody.innerHTML += `
         <tr id="main-inputgroup">
             <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box</td>
@@ -157,6 +234,7 @@ function createInputForm(data) {
         </tr>
     `;
 
+    // Buttons zum absenden un analysieren
     container.innerHTML += `
         <div id="main-buttonarea">
             <button class="button-input" onclick="analyzeInput()"id="main-button-analyse">Analysieren</button>
@@ -178,7 +256,8 @@ function getUserInputs() {
 //Funktion um den Inhalt des Input forms vor dem Abschicken zu analysieren
 function analyzeInput(){
     const parameters = getExpectedInputs();
-    const data = getUserInputs();  
+    const data = getUserInputs(); 
+    console.log(JSON.stringify(data)) 
     const missing = [];
     parameters.forEach(parameter =>{
         if (data[parameter] === undefined || data[parameter] === null || data[parameter] === "") {
@@ -190,6 +269,7 @@ function analyzeInput(){
     const bounding = getBounds();
     const hex = document.getElementById("main-inputelem-color").value;
     if (bounding === undefined || bounding === null || bounding === "") {
+        console.log(bounding)
         missing.push('Bounding')
     }
     console.log("hex" + hex)
@@ -197,11 +277,20 @@ function analyzeInput(){
         missing.push('Color')
     }
     changeInputTOC(parameters, missing, 2);
+    return missing;
 }
 
 // Funktion um den Inputform abzusenden, falls korrekt gefüllt
-function sendInput(){
+function sendInput() {
+    const missing = analyzeInput();
 
+    if (missing.length > 0) {
+        showAlert(4, "Bitte füllen Sie alle Eingabefelder korrekt aus.", "");
+    } else {
+        const userInputs = getUserInputs();
+        console.log("SendInputs => addItems")
+        addItems(); 
+    }
 }
 
 // Funktion um ausgewählte Farbe beim hinzufügen eines Modells zu sichern
@@ -229,7 +318,7 @@ function createInputTOC(data) {
     parameters.forEach(parameter => {
         sidebarList.innerHTML += `
             <li class="nav-item">
-                <a class="nav-link" style="color:green;" href="#inputexp-${parameter}">${parameter}</a>
+                <a class="nav-link" style="color:green; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
             </li>
         `;
     });
@@ -237,10 +326,10 @@ function createInputTOC(data) {
     // Feststehende Elemente hinzufügen
     sidebarList.innerHTML += `
     <li class="nav-item">
-        <a class="nav-link" style="color:green;" href="#inputexp-map">Bounding Box</a>
+        <a class="nav-link" style="color:green; margin-top: -10px; " href="#inputexp-map">Bounding Box</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" style="color:green;" href="#inputexp-color">Farbgebung</a>
+        <a class="nav-link" style="color:green; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
     </li>
     `;
     
