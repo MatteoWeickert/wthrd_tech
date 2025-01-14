@@ -65,8 +65,6 @@ class ItemCreate(BaseModel):
 
         return value
     
-<<<<<<< HEAD
-=======
     @validator("color")
     def validate_color(cls, value):
         if value is not None:
@@ -77,7 +75,6 @@ class ItemCreate(BaseModel):
     
     # "links"-validation: falsch, weil links kein dict sein dürfen, sondern ein array sein müssen. !!!ÄNDERN!!!
 
->>>>>>> 91b86ab4444011937944b295dd8f2f333435d904
     # @validator("links")
     # def validate_links(cls, value):
     #     if "href" not in value or "rel" not in value:

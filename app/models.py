@@ -17,7 +17,7 @@ class Catalog(Base):
     stac_extensions = Column(ARRAY(Text))  # List of extension identifiers
     title = Column(Text)
     description = Column(Text, nullable=False)
-    links = Column(JSON)
+    links = Column(ARRAY(JSON))
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
     # conformsTo = Column(JSON)
@@ -38,7 +38,7 @@ class Collection(Base):
     description = Column(Text, nullable=False)
     license = Column(String, nullable=False)
     extent = Column(JSON, nullable=False)
-    links = Column(JSON)
+    links = Column(ARRAY(JSON))
     catalog_id = Column(String, ForeignKey("catalogs.id"), nullable=False)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
