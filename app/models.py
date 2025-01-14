@@ -59,7 +59,7 @@ class Item(Base):
     geometry = Column(JSON)  # GeoJSON geometry object
     bbox = Column(ARRAY(BigInteger))  # Bounding Box (Array of coordinates)
     properties = Column(JSON, nullable=False)
-    links = Column(JSON, nullable=False)
+    links = Column(ARRAY(JSON), nullable=False)
     assets = Column(JSON, nullable=False)
     collection_id = Column(String, ForeignKey("collections.id"), nullable=False)
     created_at = Column(TIMESTAMP, server_default=func.now())

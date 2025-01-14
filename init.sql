@@ -52,7 +52,7 @@ CREATE TABLE items (
     geometry GEOMETRY,                              -- Geometrie des Items, als GeoJSON Geometry Objekt gespeichert
     bbox NUMERIC[],                                  -- Bounding Box des Items, wenn Geometrie nicht null ist
     properties JSONB NOT NULL,                       -- Ein JSONB-Objekt, das zusätzliche Metadaten enthält
-    links JSONB NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
+    links JSONB[] NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     assets JSONB NOT NULL,                          -- Eine Karte von Asset-Objekten (im JSON-Format) (required: href)
     collection_ID VARCHAR(50) REFERENCES collections(id),                               -- Die ID der Collection, auf die dieses Item verweist
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Items
@@ -143,15 +143,17 @@ VALUES
             "learning_rate": 0.001,
             "dropout": 0.5
         }
-    }', 
-    '{
-        "links": [
-            {
-                "href": "https://example.com/item",
-                "rel": "self"
-            }
-        ]
-    }', 
+    }',
+    ARRAY[    
+        '{
+            "links": [
+                {
+                    "href": "https://example.com/item",
+                    "rel": "self"
+                }
+            ]
+        }'
+    ], 
     '{
         "thumbnail": {
             "href": "https://example.com/thumbnail.png"
@@ -202,14 +204,15 @@ VALUES
             "dropout": 0.1
         }
     }', 
-    '{
+    ARRAY['{
         "links": [
             {
                 "href": "https://example.com/advanced_item",
                 "rel": "self"
             }
         ]
-    }', 
+    }']
+    , 
     '{
         "thumbnail": {
             "href": "https://example.com/advanced_thumbnail.png"
@@ -255,15 +258,16 @@ VALUES
         "mlm:hyperparameters": {
             "learning_rate": 0.01
         }
-    }', 
-    '{
+    }',
+    ARRAY['{
         "links": [
             {
                 "href": "https://example.com/basic_item",
                 "rel": "self"
             }
         ]
-    }', 
+    }'] 
+    , 
     '{
         "thumbnail": {
             "href": "https://example.com/basic_thumbnail.png"
