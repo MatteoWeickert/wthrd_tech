@@ -62,7 +62,7 @@ async function addItems(){
                 '${input.stacversion}',
                 ARRAY['${input.stacextension}'], 
                 '${getGeometry()}', 
-                ARRAY[${getBounds()}],
+                ${getBounds()},
                 '{
                     "title": "${input.title}",
                     "description": "${input.description}",
