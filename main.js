@@ -1,10 +1,28 @@
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 function startWebsite(){
-    fetchItems();
-    addItems();
-    createInputForm(['Name', 'Beschreibung', 'Architektur', 'Aufgaben', 'Eingabe', 'Ausgabe', 'Links', 'Assets']);
+    const data = window.location.pathname.trim().toLowerCase();
+    //console.log(window.location.pathname)
+    switch(data){
+        case('/addmodel.html'):
+            //console.log("accessed")
+            createInputForm(getExpectedInputs());
+            break;
+        case('/catalog.html'):
+            //console.log("accessed 2")
+            fetchItems();
+            addItems();
+            break;
+        default: window.location.href = '/unknown.html';
+            break;
+            
+    }
 }
 startWebsite();
+
+// Funktion zum Verwalten der gewollten Userinputs
+function getExpectedInputs(){
+    return ['Name', 'Beschreibung','Architektur', 'Aufgaben', 'Eingabe', 'Ausgabe', 'Links', 'Assets']
+}
 
 // Fetchen aller Modelle
 async function fetchItems() {
@@ -78,58 +96,112 @@ map.on(L.Draw.Event.CREATED, function (event) {
 });
 
 function getBounds(data){
-    console.log(data.toBBoxString());
+    if (data && data.toBBoxString) {
+        return data.toBBoxString();
+    } else {
+        return null;
+    }
 }
 
-// Funktion welche die Inputfenster automatisch entsprechend der Anforderungen erstellt
+// Erstellt dynmaisch die gefragten Inputs für ein vollständiges Modell
 function createInputForm(data) {
-    console.log("1");
+    //console.log("1");
     const parameters = data;
     const container = document.getElementById('main-inputcontainer');
-    createInputScrollBar(data);
+    createInputTOC(data);
     container.innerHTML = '';
+    var count = 0
+
+    container.innerHTML = `
+        <table class="w-100">
+            <tbody id="input-table-body"></tbody>
+        </table>
+    `;
+
+    const tableBody = document.getElementById('input-table-body');
 
     parameters.forEach(parameter => {
-        console.log("2", parameter);
-        container.innerHTML += `
-            <div id="main-inputgroup" class="d-flex align-items-center justify-content-between w-100">
-                <div id="inputexp-${parameter}" class="main-inputexp">
-                    ${parameter}
-                </div>
-                <div id="main-inputelem" class="flex-grow-1 d-flex justify-content-center">
+        //console.log("2", parameter);
+        count += 1
+        tableBody.innerHTML += `
+            <tr id="main-inputgroup">
+                <td id="inputexp-${parameter}" class="main-inputexp">${count}) ${parameter}</td>
+                <td id="main-inputelem" class="main-inputelem flex-grow-1 d-flex justify-content-center">
                     <input id="input-${parameter}" class="main-inputwindow" />
-                </div>
-                <div id="" class="main-inputalert"></div>
-            </div>
+                </td>
+                <td id="" class="main-inputalert"></td>
+            </tr>
         `;
     });
+    count += 1;
 
-    // BoundingBox Option hinzufügen
+    tableBody.innerHTML += `
+        <tr id="main-inputgroup">
+            <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box</td>
+            <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
+                <div id="map" class="h-100 w-50"></div>
+            </td>
+            <td id="" class="main-inputalert"></td>
+        </tr>
+    `;
+    count += 1;
+
+    // Farbcode-Option hinzufügen
+    tableBody.innerHTML += `
+        <tr id="main-inputgroup">
+            <td id="inputexp-color" class="main-inputexp">${count}) Farbgebung</td>
+            <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
+                <input id="main-inputelem-color" style="height: 30px;" class="w-50" type="color" />
+            </td>
+            <td id="" class="main-inputalert"></td>
+        </tr>
+    `;
+
     container.innerHTML += `
-                                    <div id="main-inputgroup" class="d-flex align-items-center justify-content-between w-100">
-                                    <div id="inputexp-map" class="main-inputexp">
-                                        Bounding Box
-                                    </div>
-                                    <div id="main-inputelem" class="flex-grow-1 justify-content-center">
-                                        <div id="map" class="h-100 w-50"></div>
-                                    </div>
-                                    <div id="" class="main-inputalert"></div>
-                                </div>
-
+        <div id="main-buttonarea">
+            <button class="button-input" onclick="analyzeInput()"id="main-button-analyse">Analysieren</button>
+            <button class="button-input" onclick="sendInput()"id="main-button-send">Abschicken</button>
+        </div>
     `
-    // Colorcode Option hinzufügen
-    container.innerHTML += `
-                                    <div id="main-inputgroup" class="d-flex align-items-center justify-content-between w-100">
-                                    <div id="inputexp-color" class="main-inputexp">
-                                        Farbgebung
-                                    </div>
-                                    <div id="main-inputelem" class="flex-grow-1 justify-content-center">
-                                        <input id="main-inputelem-color" style="height: 30px;"class="w-50" type="color" />
-                                    </div>
-                                    <div id="" class="main-inputalert"></div>
-                                </div>
+}
 
-    `
+// Funktion um alle User Eingaben abzugreifen und in ein Array zu bündeln
+function getUserInputs() {
+    const expected = getExpectedInputs();
+    const input = {};
+    for (const p of expected) { 
+        input[p] = document.getElementById('input-' + p).value; 
+    }
+    return input
+}
+
+//Funktion um den Inhalt des Input forms vor dem Abschicken zu analysieren
+function analyzeInput(){
+    const parameters = getExpectedInputs();
+    const data = getUserInputs();  
+    const missing = [];
+    parameters.forEach(parameter =>{
+        if (data[parameter] === undefined || data[parameter] === null || data[parameter] === "") {
+            missing.push(parameter)
+        } else {
+            return;
+        }
+    });
+    const bounding = getBounds();
+    const hex = document.getElementById("main-inputelem-color").value;
+    if (bounding === undefined || bounding === null || bounding === "") {
+        missing.push('Bounding')
+    }
+    console.log("hex" + hex)
+    if (hex === undefined || hex === null || hex === "" || hex === '#000000') {
+        missing.push('Color')
+    }
+    changeInputTOC(parameters, missing, 2);
+}
+
+// Funktion um den Inputform abzusenden, falls korrekt gefüllt
+function sendInput(){
+
 }
 
 // Funktion um ausgewählte Farbe beim hinzufügen eines Modells zu sichern
@@ -142,7 +214,7 @@ function getSelectedColor(){
 }
 
 // Funktion zum dynamischen Erstellen des Inhaltsverzeichnisses mit Scrollfunktion
-function createInputScrollBar(data) {
+function createInputTOC(data) {
     const parameters = data;
     const sidebar = document.getElementById("sidebar");
     const sidebarList = sidebar.querySelector(".nav.flex-column");
@@ -157,7 +229,7 @@ function createInputScrollBar(data) {
     parameters.forEach(parameter => {
         sidebarList.innerHTML += `
             <li class="nav-item">
-                <a class="nav-link" href="#inputexp-${parameter}">${parameter}</a>
+                <a class="nav-link" style="color:green;" href="#inputexp-${parameter}">${parameter}</a>
             </li>
         `;
     });
@@ -165,10 +237,10 @@ function createInputScrollBar(data) {
     // Feststehende Elemente hinzufügen
     sidebarList.innerHTML += `
     <li class="nav-item">
-        <a class="nav-link" href="#inputexp-map">Bounding Box</a>
+        <a class="nav-link" style="color:green;" href="#inputexp-map">Bounding Box</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" href="#inputexp-color">Farbgebung</a>
+        <a class="nav-link" style="color:green;" href="#inputexp-color">Farbgebung</a>
     </li>
     `;
     
@@ -189,6 +261,134 @@ function createInputScrollBar(data) {
         </div>`;
 }
 
+// Funktion zum anpassen vom Inhaltsverzeichnis des Inputsforms je nach Eingabe 
+function changeInputTOC(data, pois, value){
+    const parameters = data;
+    const changeList = pois;
+    const changetype = value;
+
+    const sidebar = document.getElementById("sidebar");
+    const sidebarList = sidebar.querySelector(".nav.flex-column");
+        
+    // Titel hinzufügen
+    sidebarList.innerHTML = `                        
+        <h6 id="sidebar-groupheader" class="sidebar-heading d-flex align-items-center mt-4 mb-1 text-muted">
+            <span>Inhaltsverzeichnis</span>
+        </h6><hr>`;
+    
+    // Dynamisch alle Parameter hinzufügen
+    parameters.forEach(parameter => {
+        if (changeList.includes(parameter)) {
+            switch(changetype){
+                // 1 Success 2 Error
+                case(1):
+                    sidebarList.innerHTML += `
+                        <li class="nav-item d-flex align-items-center">
+                            <a class="nav-link me-2" style="color:green;" href="#inputexp-${parameter}">${parameter}</a>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                            </svg>
+                        </li>
+                    `;
+                    break;
+                case(2):
+                    sidebarList.innerHTML += `
+                        <li class="nav-item d-flex align-items-center">
+                            <a class="nav-link me-2" style="color:red;" href="#inputexp-${parameter}">${parameter}</a>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                            </svg>
+                        </li>
+                    `;
+                    break;
+            } 
+        } else {
+            sidebarList.innerHTML += `
+                <li class="nav-item">
+                    <a class="nav-link" style="color:grey;" href="#inputexp-${parameter}">${parameter}</a>
+                </li>
+            `;
+        }
+    });
+
+    if (changeList.includes('Bounding')){
+        switch(changetype){
+            case(1):
+            sidebarList.innerHTML += `
+                        <li class="nav-item d-flex align-items-center">
+                            <a class="nav-link me-2" style="color:green;" href="#inputexp-map">Bounding Box</a>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                            </svg>
+                        </li>
+            `;
+            break;
+            case(2):
+            sidebarList.innerHTML += `
+                        <li class="nav-item d-flex align-items-center">
+                            <a class="nav-link me-2" style="color:red;" href="#inputexp-map">Bounding Box</a>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                            </svg>
+                        </li>
+            `;
+            break;
+        }
+    }else{
+        sidebarList.innerHTML += `
+        <li class="nav-item">
+            <a class="nav-link" style="color:grey;" href="#inputexp-map">Bounding Box</a>
+        </li>
+        `;
+    }
+
+    if (changeList.includes('Color')){
+        switch(changetype){
+            case(1):
+            sidebarList.innerHTML += `
+                        <li class="nav-item d-flex align-items-center">
+                            <a class="nav-link me-2" style="color:green;" href="#inputexp-color">Farbgebung</a>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                            </svg>
+                        </li>
+            `;
+            break;
+            case(2):
+            sidebarList.innerHTML += `
+                        <li class="nav-item d-flex align-items-center">
+                            <a class="nav-link me-2" style="color:red;" href="#inputexp-color">Farbgebung</a>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                            </svg>
+                        </li>
+            `;
+            break;
+        }
+    }else{
+        sidebarList.innerHTML += `        
+        <li class="nav-item">
+            <a class="nav-link" style="color:grey;" href="#inputexp-color">Farbgebung</a>
+        </li>
+        `;
+    }
+
+    // Footer hinzufügen
+    sidebarList.innerHTML += ` 
+        <div id="sidebar-footer" class="mt-auto">
+            <hr>
+            <li class="nav-item">
+                <a id="sidebar-footerlink" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
+                    Login
+                </a>
+            </li>
+            <li class="nav-item">
+                <a id="sidebar-footerlink" class="nav-link" href="#">
+                    Settings
+                </a>
+            </li>
+        </div>`;
+}
 
 
 // Testfunktion um Items hinzuzufügen

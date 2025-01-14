@@ -163,17 +163,9 @@
   #main-alert{
     position: static;
   }
-
-  #main-inputcontainer {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    align-items: stretch;  /* Sicherstellen, dass Container die gesamte Breite einnimmt */
-  }
   
   .main-inputwindow{
-    min-width: 50%;
-    margin-bottom: 10px;
+    min-width: 75%;
     text-align: center;
     border-left: none;
     border-right: none;
@@ -181,13 +173,6 @@
     border-bottom:0.5px solid black;
   }
   
-  #main-inputgroup {
-    align-items: center;
-    width: 100%;
-    margin-top: 30px;
-    align-items: stretch;
-  }
-
   .main-inputexp {
       font-size: 20px;
       margin-right: 10px;
@@ -198,9 +183,34 @@
   }
 
   #main-inputelem {
+      margin-top: 20px;
       display: flex;
       justify-content: center;
       flex-grow: 1;
+  }
+
+  #main-buttonarea{
+    display: flex;
+    gap: 40px;
+    margin-top: 80px;
+    justify-content: center;
+  }
+
+  .button-input{
+    font-size: 11px;
+    font-weight: bold;
+    text-transform:uppercase;
+    text-decoration-color: #414243;
+    background-color: transparent;
+    width: 200px;
+    min-width: 100px;
+    padding: 10px;
+    border-radius: 5px;
+  }
+
+  .button-input:hover{
+    text-decoration-color: #414243;
+    border-color: #c6dbf7;
   }
 
   .modell-container{
