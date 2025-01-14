@@ -8,15 +8,6 @@ CREATE TABLE catalogs (
     links jsonb,                                    -- Eine Liste von Links (Referenzen zu anderen Dokumenten)
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Katalogs
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update des Katalogs
-    -- CONSTRAINT links_href_rel_check CHECK (
-    --     NOT EXISTS (
-    --         SELECT 1
-    --         FROM jsonb_array_elements(links) AS link  -- Zerlegt das JSON-Array in einzelne Link-Objekte
-    --         WHERE 
-    --             link->>'href' IS NULL OR            -- Überprüft, ob 'href' null ist
-    --             link->>'rel' IS NULL                -- Überprüft, ob 'rel' null ist
-    --     )
-    -- )
 );
 
 CREATE TABLE collections (
@@ -28,20 +19,10 @@ CREATE TABLE collections (
     description TEXT NOT NULL,                      -- Eine detaillierte Beschreibung der Collection
     license TEXT NOT NULL,                          -- Lizenz der Daten-Collection als SPDX Lizenzbezeichner oder Ausdruck
     extent JSONB NOT NULL,                          -- Spatial und Temporal Extent (als JSON-Objekt)
-    -- summaries JSONB,                                -- Eine Karte von Zusammenfassungen als JSON-Objekt
     links JSONB,                                    -- Eine Liste von Links im JSON-Format (required: href und rel)
     catalog_ID VARCHAR(50) REFERENCES catalogs(id),                                -- Die ID des Katalogs, zu dem diese Collection gehört
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum der Collection
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update der Collection
-    -- CONSTRAINT links_href_rel_check CHECK (
-    --     NOT EXISTS (
-    --         SELECT 1
-    --         FROM jsonb_array_elements(links) AS link  -- Zerlegt das JSON-Array in einzelne Link-Objekte
-    --         WHERE 
-    --             link->>'href' IS NULL OR            -- Überprüft, ob 'href' null ist
-    --             link->>'rel' IS NULL                -- Überprüft, ob 'rel' null ist
-    --     )
-    -- )
 );
 
 CREATE TABLE items (
@@ -57,23 +38,6 @@ CREATE TABLE items (
     collection_ID VARCHAR(50) REFERENCES collections(id),                               -- Die ID der Collection, auf die dieses Item verweist
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Items
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update des Items
-    -- CONSTRAINT assets_href_check CHECK (
-    --     -- Überprüfen, ob jedes Asset im 'assets'-JSON ein 'href'-Feld enthält
-    --     NOT EXISTS (
-    --         SELECT 1 
-    --         FROM jsonb_each(assets) AS asset(key, value) 
-    --         WHERE value->>'href' IS NULL
-    --     )
-    -- ),
-    -- CONSTRAINT links_href_rel_check CHECK (
-    --     NOT EXISTS (
-    --         SELECT 1
-    --         FROM jsonb_array_elements(links) AS link  -- Zerlegt das JSON-Array in einzelne Link-Objekte
-    --         WHERE 
-    --             link->>'href' IS NULL OR            -- Überprüft, ob 'href' null ist
-    --             link->>'rel' IS NULL                -- Überprüft, ob 'rel' null ist
-    --     )
-    -- )
 );
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -88,11 +52,14 @@ VALUES (
     ARRAY['stac-core', 'extended'], 
     'Example Catalog', 
     'Dies ist ein Beispielkatalog für STAC-Daten.',
-    '[{"href": "http://localhost:8000/", "type": "application/json", "rel": "self"}, {"href": "http://localhost:8000/", "type":"application/json", "rel": "root"}, {"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"}, {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}]'::jsonb, 
+    '[
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "self"},
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
+        {"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"},
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}]'::jsonb, 
     NOW(), 
     NOW()
 );
-
 
 -- Insert into `collections` table
 INSERT INTO collections (id, type, stac_version, stac_extensions, title, description, license, extent, links, catalog_ID, created_at, updated_at)
@@ -100,7 +67,13 @@ VALUES
 ('MLM_Collection', 'Collection', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Collection', 
  'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
  '{"spatial": {"bbox": [-180, -90, 180, 90]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
- '{"links": [{"href": "https://example.com/collection", "rel": "self"}, {"href": "https://example.com/next", "rel": "next"}]}', 
+ '[
+    {"href": "https://example.com/collection", "type": "application/json", "rel": "self"},
+    {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
+    {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
+    {"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"},
+    {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "child"}
+ ]'::jsonb, 
  (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW());
 
 -- Insert into `items` table with prefixed JSON keys
@@ -143,17 +116,13 @@ VALUES
             "learning_rate": 0.001,
             "dropout": 0.5
         }
-    }',
-    ARRAY[    
-        '{
-            "links": [
-                {
-                    "href": "https://example.com/item",
-                    "rel": "self"
-                }
-            ]
-        }'
-    ], 
+    }', 
+    '[
+        {"href": "https://example.com/item", "type": "application/json", "rel": "self"},
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
+        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}
+    ]'::jsonb, 
     '{
         "thumbnail": {
             "href": "https://example.com/thumbnail.png"
@@ -204,15 +173,12 @@ VALUES
             "dropout": 0.1
         }
     }', 
-    ARRAY['{
-        "links": [
-            {
-                "href": "https://example.com/advanced_item",
-                "rel": "self"
-            }
-        ]
-    }']
-    , 
+    '[
+        {"href": "https://example.com/advanced_item", "type": "application/json", "rel": "self"},
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
+        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}
+    ]'::jsonb, 
     '{
         "thumbnail": {
             "href": "https://example.com/advanced_thumbnail.png"
@@ -258,16 +224,13 @@ VALUES
         "mlm:hyperparameters": {
             "learning_rate": 0.01
         }
-    }',
-    ARRAY['{
-        "links": [
-            {
-                "href": "https://example.com/basic_item",
-                "rel": "self"
-            }
-        ]
-    }'] 
-    , 
+    }', 
+    '[
+        {"href": "https://example.com/basic_item", "type": "application/json", "rel": "self"},
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
+        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}
+    ]'::jsonb, 
     '{
         "thumbnail": {
             "href": "https://example.com/basic_thumbnail.png"

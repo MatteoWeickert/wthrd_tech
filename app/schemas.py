@@ -34,6 +34,7 @@ class ItemCreate(BaseModel):
     collection_id: str
     created_at: datetime
     updated_at: datetime
+    color: Dict[str, Any] = Field(None, description="The given HEX color code is invalid.")
 
     @validator("geometry")
     def validate_geometry(cls, value):
@@ -64,6 +65,19 @@ class ItemCreate(BaseModel):
 
         return value
     
+<<<<<<< HEAD
+=======
+    @validator("color")
+    def validate_color(cls, value):
+        if value is not None:
+            hex_pattern = r"^#(?:[0-9a-fA-F]{3}){1,2}$"
+            if not re.match(hex_pattern, value):
+                raise ValueError("Invalid color format. Must be a HEX color code like #RRGGBB.")
+        return value
+    
+    # "links"-validation: falsch, weil links kein dict sein dürfen, sondern ein array sein müssen. !!!ÄNDERN!!!
+
+>>>>>>> 91b86ab4444011937944b295dd8f2f333435d904
     # @validator("links")
     # def validate_links(cls, value):
     #     if "href" not in value or "rel" not in value:

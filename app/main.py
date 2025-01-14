@@ -310,7 +310,7 @@ def get_all_collections():
     db = SessionLocal()
     try:
         collections = db.query(Collection).all()
-        return collections
+        return {"collections": collections}
     except Exception as e:
         return {"error: " + str(e)}
     finally:
