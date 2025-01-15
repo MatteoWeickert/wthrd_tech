@@ -1,3 +1,5 @@
+const drawnItems = new L.FeatureGroup();
+
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
@@ -13,8 +15,6 @@ function startWebsite(){
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-
-            const drawnItems = new L.FeatureGroup();
             map.addLayer(drawnItems);
 
             const drawControl = new L.Control.Draw({
