@@ -37,7 +37,8 @@ CREATE TABLE items (
     assets JSONB NOT NULL,                          -- Eine Karte von Asset-Objekten (im JSON-Format) (required: href)
     collection_ID VARCHAR(50) REFERENCES collections(id),                               -- Die ID der Collection, auf die dieses Item verweist
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Items
-    updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update des Items
+    updated_at TIMESTAMPTZ DEFAULT NOW(),             -- Letztes Update des Items
+    color VARCHAR(50) 
 );
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -53,10 +54,11 @@ VALUES (
     'Example Catalog', 
     'Dies ist ein Beispielkatalog für STAC-Daten.',
     ARRAY[
-        {"href": "http://localhost:8000/", "type": "application/json", "rel": "self"}::jsonb,
-        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}::jsonb,
-        {"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"}::jsonb,
-        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}::jsonb], 
+        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "self"}'::jsonb,
+        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
+        '{"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"}'::jsonb,
+        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}'::jsonb
+        ], 
     NOW(), 
     NOW()
 );
@@ -64,20 +66,42 @@ VALUES (
 -- Insert into `collections` table
 INSERT INTO collections (id, type, stac_version, stac_extensions, title, description, license, extent, links, catalog_ID, created_at, updated_at)
 VALUES 
-('MLM_Collection', 'Collection', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Collection', 
- 'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
- '{"spatial": {"bbox": [-180, -90, 180, 90]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
- ARRAY[
-    {"href": "https://example.com/collection", "type": "application/json", "rel": "self"}::jsonb,
-    {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}::jsonb,
-    {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}::jsonb,
-    {"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"}::jsonb,
-    {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "child"}::jsonb
- ], 
- (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW());
+(
+    'MLM_Collection', 'Collection', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Collection', 
+    'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
+    '{"spatial": {"bbox": [-180, -90, 180, 90]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
+    ARRAY[
+        '{"href": "https://example.com/collection", "type": "application/json", "rel": "self"}'::jsonb,
+        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
+        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "child"}'::jsonb
+    ], 
+    (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW()
+),
+(
+    'MLM_Collection_2', -- Neue eindeutige ID
+    'Collection', 
+    '1.0.0', 
+    ARRAY['stac-core', 'extended'], 
+    'Example Collection 2', -- Neuer Titel
+    'Eine zweite Beispiel-Collection, die innerhalb desselben Beispielkatalogs enthalten ist.', -- Neue Beschreibung
+    'CC BY 4.0', 
+    '{"spatial": {"bbox": [-180, -90, 180, 90]}, "temporal": {"interval": [["2023-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]]}}', 
+    ARRAY[
+        '{"href": "https://example.com/collection2", "type": "application/json", "rel": "self"}'::jsonb,
+        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
+        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection_2/items", "type": "application/json", "rel": "items"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection_2", "type": "application/json", "rel": "child"}'::jsonb
+    ], 
+    (SELECT id FROM catalogs WHERE title = 'Example Catalog'), 
+    NOW(), 
+    NOW()
+ );
 
 -- Insert into `items` table with prefixed JSON keys
-INSERT INTO items (id, type, stac_version, stac_extensions, geometry, bbox, properties, links, assets, collection_ID, created_at, updated_at)
+INSERT INTO items (id, type, stac_version, stac_extensions, geometry, bbox, properties, links, assets, collection_ID, created_at, updated_at, color)
 VALUES 
 (
     'example_model', 
@@ -118,10 +142,10 @@ VALUES
         }
     }', 
     ARRAY[
-        {"href": "https://example.com/item", "type": "application/json", "rel": "self"}::jsonb,
-        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}::jsonb,
-        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}::jsonb,
-        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}::jsonb
+        '{"href": "https://example.com/item", "type": "application/json", "rel": "self"}'::jsonb,
+        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
+        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}'::jsonb
     ], 
     '{
         "thumbnail": {
@@ -133,7 +157,8 @@ VALUES
     }', 
     (SELECT id FROM collections WHERE title = 'Example Collection'), 
     NOW(), 
-    NOW()
+    NOW(),
+    '#8f4130'
 ),
 (
     'advanced_model', 
@@ -174,10 +199,10 @@ VALUES
         }
     }', 
     ARRAY[
-        {"href": "https://example.com/advanced_item", "type": "application/json", "rel": "self"}::jsonb,
-        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}::jsonb,
-        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}::jsonb,
-        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}::jsonb
+        '{"href": "https://example.com/advanced_item", "type": "application/json", "rel": "self"}'::jsonb,
+        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
+        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}'::jsonb
     ], 
     '{
         "thumbnail": {
@@ -189,7 +214,8 @@ VALUES
     }', 
     (SELECT id FROM collections WHERE title = 'Example Collection'), 
     NOW(), 
-    NOW()
+    NOW(),
+    '#8f4135'
 ),
 (
     'basic_model', 
@@ -226,10 +252,10 @@ VALUES
         }
     }', 
     ARRAY[
-        {"href": "https://example.com/basic_item", "type": "application/json", "rel": "self"}::jsonb,
-        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}::jsonb,
-        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}::jsonb,
-        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}::jsonb
+        '{"href": "https://example.com/advanced_item", "type": "application/json", "rel": "self"}'::jsonb,
+        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
+        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}'::jsonb
     ], 
     '{
         "thumbnail": {
@@ -241,5 +267,6 @@ VALUES
     }', 
     (SELECT id FROM collections WHERE title = 'Example Collection'), 
     NOW(), 
-    NOW()
+    NOW(),
+    '#8f4139'
 );
