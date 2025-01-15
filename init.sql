@@ -5,7 +5,7 @@ CREATE TABLE catalogs (
     stac_extensions TEXT[],                          -- Eine Liste von Erweiterungs-IDs, die der Katalog implementiert
     title TEXT,                                     -- Ein kurzer beschreibender Titel des Katalogs
     description TEXT NOT NULL,                      -- Eine detaillierte Beschreibung des Katalogs
-    links jsonb,                                    -- Eine Liste von Links (Referenzen zu anderen Dokumenten)
+    links JSONB[] NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Katalogs
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update des Katalogs
 );
@@ -19,7 +19,7 @@ CREATE TABLE collections (
     description TEXT NOT NULL,                      -- Eine detaillierte Beschreibung der Collection
     license TEXT NOT NULL,                          -- Lizenz der Daten-Collection als SPDX Lizenzbezeichner oder Ausdruck
     extent JSONB NOT NULL,                          -- Spatial und Temporal Extent (als JSON-Objekt)
-    links JSONB,                                    -- Eine Liste von Links im JSON-Format (required: href und rel)
+    links JSONB[] NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     catalog_ID VARCHAR(50) REFERENCES catalogs(id),                                -- Die ID des Katalogs, zu dem diese Collection gehört
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum der Collection
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update der Collection
@@ -33,7 +33,7 @@ CREATE TABLE items (
     geometry GEOMETRY,                              -- Geometrie des Items, als GeoJSON Geometry Objekt gespeichert
     bbox NUMERIC[],                                  -- Bounding Box des Items, wenn Geometrie nicht null ist
     properties JSONB NOT NULL,                       -- Ein JSONB-Objekt, das zusätzliche Metadaten enthält
-    links JSONB NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
+    links JSONB[] NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     assets JSONB NOT NULL,                          -- Eine Karte von Asset-Objekten (im JSON-Format) (required: href)
     collection_ID VARCHAR(50) REFERENCES collections(id),                               -- Die ID der Collection, auf die dieses Item verweist
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Items
@@ -52,11 +52,11 @@ VALUES (
     ARRAY['stac-core', 'extended'], 
     'Example Catalog', 
     'Dies ist ein Beispielkatalog für STAC-Daten.',
-    '[
-        {"href": "http://localhost:8000/", "type": "application/json", "rel": "self"},
-        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
-        {"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"},
-        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}]'::jsonb, 
+    ARRAY[
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "self"}::jsonb,
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}::jsonb,
+        {"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"}::jsonb,
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}::jsonb], 
     NOW(), 
     NOW()
 );
@@ -67,13 +67,13 @@ VALUES
 ('MLM_Collection', 'Collection', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Collection', 
  'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
  '{"spatial": {"bbox": [-180, -90, 180, 90]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
- '[
-    {"href": "https://example.com/collection", "type": "application/json", "rel": "self"},
-    {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
-    {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
-    {"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"},
-    {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "child"}
- ]'::jsonb, 
+ ARRAY[
+    {"href": "https://example.com/collection", "type": "application/json", "rel": "self"}::jsonb,
+    {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}::jsonb,
+    {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}::jsonb,
+    {"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"}::jsonb,
+    {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "child"}::jsonb
+ ], 
  (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW());
 
 -- Insert into `items` table with prefixed JSON keys
@@ -117,12 +117,12 @@ VALUES
             "dropout": 0.5
         }
     }', 
-    '[
-        {"href": "https://example.com/item", "type": "application/json", "rel": "self"},
-        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
-        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
-        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}
-    ]'::jsonb, 
+    ARRAY[
+        {"href": "https://example.com/item", "type": "application/json", "rel": "self"}::jsonb,
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}::jsonb,
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}::jsonb,
+        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}::jsonb
+    ], 
     '{
         "thumbnail": {
             "href": "https://example.com/thumbnail.png"
@@ -173,12 +173,12 @@ VALUES
             "dropout": 0.1
         }
     }', 
-    '[
-        {"href": "https://example.com/advanced_item", "type": "application/json", "rel": "self"},
-        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
-        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
-        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}
-    ]'::jsonb, 
+    ARRAY[
+        {"href": "https://example.com/advanced_item", "type": "application/json", "rel": "self"}::jsonb,
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}::jsonb,
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}::jsonb,
+        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}::jsonb
+    ], 
     '{
         "thumbnail": {
             "href": "https://example.com/advanced_thumbnail.png"
@@ -225,12 +225,12 @@ VALUES
             "learning_rate": 0.01
         }
     }', 
-    '[
-        {"href": "https://example.com/basic_item", "type": "application/json", "rel": "self"},
-        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"},
-        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
-        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}
-    ]'::jsonb, 
+    ARRAY[
+        {"href": "https://example.com/basic_item", "type": "application/json", "rel": "self"}::jsonb,
+        {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}::jsonb,
+        {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}::jsonb,
+        {"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}::jsonb
+    ], 
     '{
         "thumbnail": {
             "href": "https://example.com/basic_thumbnail.png"
