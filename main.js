@@ -146,6 +146,7 @@ async function addItems() {
             headers: {
                 'Content-Type': 'application/json'
             },
+            
             body: JSON.stringify({
                 id: input.id,
                 type: 'Feature',
