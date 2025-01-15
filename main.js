@@ -44,74 +44,117 @@ async function fetchItems() {
 }
 
 // addItems
-async function addItems(){
+async function addItems() {
     const input = getUserInputs();
-    console.log("1" + JSON.stringify(input))
-    //console.log("addItems Test:" + input.id)
+    console.log("Testconsole: " + `(
+        '${input.id}', 
+        'Feature', 
+        '${input.stacversion}', 
+        ARRAY['${input.stacextension}'], 
+        ${JSON.stringify(getGeometry())},  // Korrektes GeoJSON
+        ${JSON.stringify(getBounds())},   // Korrektes Bounding Box Format
+        '{
+            "title": "${input.title}",
+            "description": "${input.description}",
+            "datetime": "2024-12-04T16:20:00",
+            "mlm:name": "${input.name}",
+            "mlm:architecture": "${input.architecture}",
+            "mlm:tasks": ["classification", "image"],
+            "mlm:framework": "${input.framework}",
+            "mlm:framework_version": "${input.frameworkversion}",
+            "mlm:pretrained": true,
+            "mlm:pretrained_source": "${input.pretrainedsource}",
+            "mlm:batch_size_suggestion": ${input.batchsizesuggestion},
+            "mlm:input": [{
+                "name": "testname",
+                "bands": ["basnd", "basnd"],
+                "input": ""
+            }],
+            "mlm:output": {
+                "type": "class",
+                "num_classes": 1000
+            },
+            "mlm:hyperparameters": "${getHyperparameters() || ''}"  // Verhindert undefined
+        }', 
+        ARRAY[
+            '{"href": "https://example.com/item", "type": "application/json", "rel": "self"}'::jsonb,
+            '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
+            '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
+            '{"href": "http://localhost:8000/collections/${input.collectionid}", "type": "application/json", "rel": "collection"}'::jsonb
+        ],
+        '{
+            "thumbnail": {
+                "href": "https://example.com/thumbnail.png"
+            },
+            "data": {
+                "href": "https://example.com/data"
+            }
+        }', 
+        (SELECT id FROM collections WHERE title = '${input.collectiontitle}'), 
+        NOW(), 
+        NOW(),
+        '${getSelectedColor() || ''}'  // Verhindert undefined
+    )`);
+
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            //spez inputs: datetime tasks(array) pretrained inputupload outputupload assetupload getColor()
-
-            body:`(
-                '${input.id}', 
-                'Feature', 
-                '${input.stacversion}',
-                ARRAY['${input.stacextension}'], 
-                '${getGeometry()}', 
-                ${getBounds()},
-                '{
-                    "title": "${input.title}",
-                    "description": "${input.description}",
-                    "datetime": "2024-12-04T16:20:00",
-                    "mlm:name": "${input.name}",
-                    "mlm:architecture": "${input.architecture}",
+            body: JSON.stringify({
+                id: input.id,
+                type: 'Feature',
+                stac_version: input.stacversion,
+                stac_extensions: [input.stacextension],
+                geometry: getGeometry(),
+                bbox: getBounds(),
+                properties: {
+                    title: input.title,
+                    description: input.description,
+                    datetime: "2024-12-04T16:20:00",
+                    "mlm:name": input.name,
+                    "mlm:architecture": input.architecture,
                     "mlm:tasks": ["classification", "image"],
-                    "mlm:framework": "${input.framework}",
-                    "mlm:framework_version": "${input.frameworkversion}",
+                    "mlm:framework": input.framework,
+                    "mlm:framework_version": input.frameworkversion,
                     "mlm:pretrained": true,
-                    "mlm:pretrained_source": "${input.pretrainedsource}",
-                    "mlm:batch_size_suggestion": ${input.batchsizesuggestion},
+                    "mlm:pretrained_source": input.pretrainedsource,
+                    "mlm:batch_size_suggestion": input.batchsizesuggestion,
                     "mlm:input": [{
                         "name": "testname",
-                        "bands": ["basnd","basnd"],
+                        "bands": ["basnd", "basnd"],
                         "input": ""
                     }],
                     "mlm:output": {
                         "type": "class",
                         "num_classes": 1000
                     },
-                    "mlm:hyperparameters": '${getHyperparameters()}'
-                }', 
-                ARRAY[
-                    '{"href": "https://example.com/item", "type": "application/json", "rel": "self"}'::jsonb,
-                    '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-                    '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
-                    '{"href": "http://localhost:8000/collections/${input.collectionid}", "type": "application/json", "rel": "collection"}'::jsonb
+                    "mlm:hyperparameters": getHyperparameters() || ''
+                },
+                links: [
+                    { "href": "https://example.com/item", "type": "application/json", "rel": "self" },
+                    { "href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent" },
+                    { "href": "http://localhost:8000/", "type": "application/json", "rel": "root" },
+                    { "href": `http://localhost:8000/collections/${input.collectionid}`, "type": "application/json", "rel": "collection" }
                 ],
-            '{
-                    "thumbnail": {
-                        "href": "https://example.com/thumbnail.png"
-                    },
-                    "data": {
-                        "href": "https://example.com/data"
-                    }
-                }', 
-                (SELECT id FROM collections WHERE title = '${input.collectiontitle}'), 
-                NOW(), 
-                NOW(),
-                '${getSelectedColor()}'
-            ),`
-         });
-         const data = await response.json();
-         console.log("to add:" + data);
-       } catch(error) {
-            console.log("Error aus addItems" + error)
-          showAlert(4, "Item konnte nicht hinzugefügt werden.", "")
-        } 
+                assets: {
+                    thumbnail: { "href": "https://example.com/thumbnail.png" },
+                    data: { "href": "https://example.com/data" }
+                },
+                collection_id: input.collectiontitle,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                color: getSelectedColor() || ''
+            })
+        });
+
+        const data = await response.json();
+        console.log("to add:", data);
+    } catch (error) {
+        console.log("Error aus addItems", error);
+        showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
+    }
 }
 
 const map = L.map('map').setView([0, 0], 2);
@@ -157,12 +200,27 @@ map.on('draw:created', function (event) {
     return bounds.toBBoxString();
 });
 
+// Funktion um die Geometry auszugeben
 function getGeometry(){
     const input = getUserInputs()
     const geometry = (input.geometry).replace(/[^\w\s]/gi, '');
-    return geometry
+    //return geometry;
+    return `{
+  "type": "Polygon",
+  "coordinates": [
+    [
+      [7882190080512502, 3713739173208318],
+      [7882190080512502, 5821798141355221],
+      [27911651652899923, 5821798141355221],
+      [27911651652899923, 3713739173208318],
+      [7882190080512502, 3713739173208318]
+    ]
+  ]
+}
+`
 }
 
+// Funktion um die Hyperparameters auszugeben
 function getHyperparameters(){
     const input = getUserInputs()
     const hyppara = ((input.hyperparameter).replace(/[^\w\s]/gi, ''));
@@ -174,7 +232,9 @@ function getBounds() {
     const lastRectangle = drawnItems.getLayers().pop();
     if (lastRectangle) {
         const bounds = lastRectangle.getBounds();
-        return bounds.toBBoxString();
+        //return bounds.toBBoxString();
+        return `[ -3.1604576110839844, 4.878750341423394, 17.35425710678101, 28.7440977569921 ]
+`;
     }
     return null;
 }
@@ -257,7 +317,6 @@ function getUserInputs() {
 function analyzeInput(){
     const parameters = getExpectedInputs();
     const data = getUserInputs(); 
-    console.log(JSON.stringify(data)) 
     const missing = [];
     parameters.forEach(parameter =>{
         if (data[parameter] === undefined || data[parameter] === null || data[parameter] === "") {
@@ -276,7 +335,7 @@ function analyzeInput(){
     if (hex === undefined || hex === null || hex === "" || hex === '#000000') {
         missing.push('Color')
     }
-    changeInputTOC(parameters, missing, 2);
+    changeInputTOC(parameters, missing);
     return missing;
 }
 
@@ -351,10 +410,9 @@ function createInputTOC(data) {
 }
 
 // Funktion zum anpassen vom Inhaltsverzeichnis des Inputsforms je nach Eingabe 
-function changeInputTOC(data, pois, value){
+function changeInputTOC(data, pois){
     const parameters = data;
     const changeList = pois;
-    const changetype = value;
 
     const sidebar = document.getElementById("sidebar");
     const sidebarList = sidebar.querySelector(".nav.flex-column");
@@ -368,98 +426,67 @@ function changeInputTOC(data, pois, value){
     // Dynamisch alle Parameter hinzufügen
     parameters.forEach(parameter => {
         if (changeList.includes(parameter)) {
-            switch(changetype){
-                // 1 Success 2 Error
-                case(1):
                     sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:green;" href="#inputexp-${parameter}">${parameter}</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                            </svg>
-                        </li>
-                    `;
-                    break;
-                case(2):
-                    sidebarList.innerHTML += `
-                        <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red;" href="#inputexp-${parameter}">${parameter}</a>
+                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
                     `;
-                    break;
             } 
-        } else {
+        else {
             sidebarList.innerHTML += `
-                <li class="nav-item">
-                    <a class="nav-link" style="color:grey;" href="#inputexp-${parameter}">${parameter}</a>
-                </li>
-            `;
+            <li class="nav-item d-flex align-items-center">
+                <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                </svg>
+            </li>
+        `;
         }
     });
 
     if (changeList.includes('Bounding')){
-        switch(changetype){
-            case(1):
             sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:green;" href="#inputexp-map">Bounding Box</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                            </svg>
-                        </li>
-            `;
-            break;
-            case(2):
-            sidebarList.innerHTML += `
-                        <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red;" href="#inputexp-map">Bounding Box</a>
+                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-map">Bounding Box</a>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
             `;
-            break;
         }
-    }else{
+    else{
         sidebarList.innerHTML += `
-        <li class="nav-item">
-            <a class="nav-link" style="color:grey;" href="#inputexp-map">Bounding Box</a>
+        <li class="nav-item d-flex align-items-center">
+            <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-map">Bounding Box</a>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
         </li>
-        `;
+`;
     }
 
     if (changeList.includes('Color')){
-        switch(changetype){
-            case(1):
             sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:green;" href="#inputexp-color">Farbgebung</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                            </svg>
-                        </li>
-            `;
-            break;
-            case(2):
-            sidebarList.innerHTML += `
-                        <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red;" href="#inputexp-color">Farbgebung</a>
+                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
             `;
-            break;
         }
-    }else{
-        sidebarList.innerHTML += `        
-        <li class="nav-item">
-            <a class="nav-link" style="color:grey;" href="#inputexp-color">Farbgebung</a>
+    else{
+        sidebarList.innerHTML += `
+        <li class="nav-item d-flex align-items-center">
+            <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
         </li>
-        `;
+`;
     }
 
     // Footer hinzufügen
