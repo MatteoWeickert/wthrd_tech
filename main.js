@@ -6,11 +6,54 @@ function startWebsite(){
         case('/addmodel.html'):
             //console.log("accessed")
             createInputForm(getExpectedInputs());
+
+            const map = L.map('map').setView([0, 0], 2);
+
+            L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+
+            const drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            const drawControl = new L.Control.Draw({
+            draw: {
+                polyline: false,
+                polygon: false,
+                circle: false,
+                marker: false,
+                circlemarker: false,
+                rectangle: true
+            },
+            edit: {
+                featureGroup: drawnItems,
+                remove: true
+            }
+            });
+            map.addControl(drawControl);
+
+            map.on(L.Draw.Event.CREATED, function (event) {
+                const layer = event.layer;
+                drawnItems.clearLayers();
+                drawnItems.addLayer(layer);
+                const bounds = layer.getBounds();
+                getBounds(bounds);
+            });
+
+            // Event-Listener, wenn ein Rechteck gezeichnet wurde
+            map.on('draw:created', function (event) {
+                const layer = event.layer;
+                drawnItems.addLayer(layer);
+                const bounds = layer.getBounds();
+                console.log("Bounding Box: " + bounds.toBBoxString());
+                return bounds.toBBoxString();
+            });
+
             break;
         case('/catalog.html'):
             //console.log("accessed 2")
             fetchItems();
-            addItems();
             break;
         default: window.location.href = '/unknown.html';
         break;         
@@ -39,6 +82,7 @@ async function fetchItems() {
             showAlert(4, "Fehler beim Abrufen der Items.", "Überprüfe die Netzwerkverbindung.")
         }
     } catch (error) {
+        console.log(error)
         showAlert(4, "Fehler beim Abrufen der Items oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.")
     }
 }
@@ -156,49 +200,6 @@ async function addItems() {
         showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
     }
 }
-
-const map = L.map('map').setView([0, 0], 2);
-
-L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
-
-
-const drawnItems = new L.FeatureGroup();
-map.addLayer(drawnItems);
-
-const drawControl = new L.Control.Draw({
-  draw: {
-    polyline: false,
-    polygon: false,
-    circle: false,
-    marker: false,
-    circlemarker: false,
-    rectangle: true
-  },
-  edit: {
-    featureGroup: drawnItems,
-    remove: true
-  }
-});
-map.addControl(drawControl);
-
-map.on(L.Draw.Event.CREATED, function (event) {
-    const layer = event.layer;
-    drawnItems.clearLayers();
-    drawnItems.addLayer(layer);
-    const bounds = layer.getBounds();
-    getBounds(bounds);
-});
-
-// Event-Listener, wenn ein Rechteck gezeichnet wurde
-map.on('draw:created', function (event) {
-    const layer = event.layer;
-    drawnItems.addLayer(layer);
-    const bounds = layer.getBounds();
-    console.log("Bounding Box: " + bounds.toBBoxString());
-    return bounds.toBBoxString();
-});
 
 // Funktion um die Geometry auszugeben
 function getGeometry(){
@@ -751,6 +752,7 @@ function displayItems(items, filters) {
     container.innerHTML = '';
     const selectedFilters = filters;
     const filteredItems = filterItems(items, filters);
+    console.log("1" + items)
 
     filteredItems.forEach(item => { 
                 const itemDiv = document.createElement('div');
