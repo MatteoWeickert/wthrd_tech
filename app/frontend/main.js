@@ -1,4 +1,8 @@
-const drawnItems = new L.FeatureGroup();
+function getLforMap(){
+    const drawnItems = new L.FeatureGroup();
+    return drawnItems;
+}
+
 
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 function startWebsite(){
@@ -7,55 +11,54 @@ function startWebsite(){
     switch(data){
         case('/addmodel.html'):
             //console.log("accessed")
+            const drawnItems = getLforMap();
             createInputForm(getExpectedInputs());
-
             const map = L.map('map').setView([0, 0], 2);
 
             L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-
-            map.addLayer(drawnItems);
-
-            const drawControl = new L.Control.Draw({
-            draw: {
-                polyline: false,
-                polygon: false,
-                circle: false,
-                marker: false,
-                circlemarker: false,
-                rectangle: true
-            },
-            edit: {
-                featureGroup: drawnItems,
-                remove: true
-            }
-            });
-            map.addControl(drawControl);
-
-            map.on(L.Draw.Event.CREATED, function (event) {
-                const layer = event.layer;
-                drawnItems.clearLayers();
-                drawnItems.addLayer(layer);
-                const bounds = layer.getBounds();
-                getBounds(bounds);
-            });
-
-            // Event-Listener, wenn ein Rechteck gezeichnet wurde
-            map.on('draw:created', function (event) {
-                const layer = event.layer;
-                drawnItems.addLayer(layer);
-                const bounds = layer.getBounds();
-                console.log("Bounding Box: " + bounds.toBBoxString());
-                return bounds.toBBoxString();
-            });
-
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+        
+                map.addLayer(drawnItems);
+        
+                const drawControl = new L.Control.Draw({
+                draw: {
+                    polyline: false,
+                    polygon: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false,
+                    rectangle: true
+                },
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                }
+                });
+                map.addControl(drawControl);
+        
+                map.on(L.Draw.Event.CREATED, function (event) {
+                    const layer = event.layer;
+                    drawnItems.clearLayers();
+                    drawnItems.addLayer(layer);
+                    const bounds = layer.getBounds();
+                    getBounds(bounds);
+                });
+        
+                // Event-Listener, wenn ein Rechteck gezeichnet wurde
+                map.on('draw:created', function (event) {
+                    const layer = event.layer;
+                    drawnItems.addLayer(layer);
+                    const bounds = layer.getBounds();
+                    console.log("Bounding Box: " + bounds.toBBoxString());
+                    return bounds.toBBoxString();
+                });
             break;
         case('/catalog.html'):
             //console.log("accessed 2")
             fetchItems();
             break;
-        default: window.location.href = '/unknown.html';
+        default: window.location.href = '/start.html';
         break;         
     }
 }
@@ -77,9 +80,9 @@ async function fetchItems() {
 
         if (Array.isArray(data) && data.length > 0) {
             displayItems(data, undefined);
-            console.log(printAllFilters(data));
+            //console.log(JSON.stringify(printAllFilters(data)));
         } else {
-            showAlert(4, "Fehler beim Abrufen der Items.", "Überprüfe die Netzwerkverbindung.")
+            showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
         }
     } catch (error) {
         console.log(error)
@@ -231,6 +234,7 @@ function getHyperparameters(){
 
 // Funktion um immer die aktuelle Bounding Box von der Karte zu extrahieren
 function getBounds() {
+    const drawnItems = getLforMap();
     const lastRectangle = drawnItems.getLayers().pop();
     if (lastRectangle) {
         const bounds = lastRectangle.getBounds();
@@ -508,7 +512,6 @@ function changeInputTOC(data, pois){
         </div>`;
 }
 
-
 // Testfunktion um Items hinzuzufügen
 function getInputForm(){
         const item = {
@@ -747,21 +750,63 @@ function filterItems(items, filters){
     }
 }
 
+// Funktion zum Anzeigen der Pretrained Variale im Frontend Modellkatalog
+function isPretrained(bool,source){
+    const boolean = bool
+    const text = source
+    if(boolean){
+        return `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg> <span>   </span><span>${source}</span>
+        `
+    }
+    else{
+        return `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+            </svg>
+        `
+    }
+}
+
+function createMapOnModell(data){
+    const item = data;
+    const map = L.map(`map-${item.id}`).setView([0, 0], 2);
+
+        // Tile Layer hinzufügen (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        const bbox = item.properties.bbox || [];
+
+        if (bbox.length === 4) {
+            const bounds = [
+                [bbox[1], bbox[0]],
+                [bbox[3], bbox[2]]
+            ];
+            L.rectangle(bounds, { color: "#ff7800", weight: 1 }).addTo(map);
+            map.fitBounds(bounds);
+        }
+}
+
 // Funktion zum Anzeigen aller Modelle
 function displayItems(items, filters) {
     const container = document.getElementById('modell-container');
     container.innerHTML = '';
     const selectedFilters = filters;
     const filteredItems = filterItems(items, filters);
-    console.log("1" + items)
 
-    filteredItems.forEach(item => { 
+    filteredItems.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.classList.add('p-3', 'modell-item');
 
                 const title = document.createElement('span');
-                title.innerHTML = `${item.properties.title || 'Unbekannter Titel'}`;
+                title.innerHTML = `${item.properties['mlm:name']}`;
                 title.style.color = `${item.color|| ''}`;
+
+                //createMapOnModell(item);
 
                 const parameters = document.createElement('div');
                 parameters.classList.add('modell-itemparameter');
@@ -789,16 +834,15 @@ function displayItems(items, filters) {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
                                     <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
                                 </svg>
-                                <span style="font-size: 10px;">${item.properties['mlm:name']} /   </span><span style="font-size:20px; color:${item.color}">${item.properties.title}</span>
-                                <img src="${item.assets.data['thumbnail']}" width="10px" height="10px" alt="" />
+                                <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
                             </div>
                             <hr>
                             <span style="font-size:15px;">Beschreibung:</span>
                             <span style="font-size:12px;">${item.properties.description}</span>
                             <hr>
                             <div class="card-body-download">
-                                <span style="font-size:15px;">Einbinden:</span><br> <span style="font-size:12px;">${item.assets.data['href']}</span>
-                                    <button type="button" class="btn-clipboard" onclick="copyToClipboard('${item.assets.data['href']}', '${item.properties['mlm:name']}')" id="clipboard-${item.id}">
+                                <span style="font-size:15px;">Einbinden:</span><br> <span style="font-size:12px;">${item.assets.model['href']}</span>
+                                    <button type="button" class="btn-clipboard" onclick="copyToClipboard('${item.assets.model['href']}', '${item.properties['mlm:name']}')" id="clipboard-${item.id}">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-clipboard" viewBox="0 0 16 16">
                                             <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
                                             <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
@@ -806,15 +850,26 @@ function displayItems(items, filters) {
                                     </button>
                             </div>
                             <hr>
-                            <div style="font-size:12px;"class="card-body-parameters">
-                                <span>Tasks: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
-                                <span>Modell: ${item.properties['mlm:tasks']}</span><br>
-                                <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} </span><br>
-                                <span>Link: ${item.assets.data['href'] || 'Unbekannt'} </span>
-                                <hr>
+                            <div class="col-8">
+                                <div style="font-size:12px;"class="card-body-parameters">
+                                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
+                                    <span>Empfohlener Zeitraum: ${item.properties.start_datetime || 'Unbekannt'} bis ${item.properties.end_datetime || 'Unbekannt'} </span><br>
+                                    <span>Erwartete Eingabe: ${item.properties['mlm:input'][0].name || 'Unbekannt'} </span><br>
+                                    <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].bands || 'Unbekannt'}</span><br>
+                                    <span>Accelerator: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
+                                    <span>Architektur: ${item.properties['mlm:architecture'] || 'Unbekannt'}</span><br>
+                                    <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} in der Version: ${item.properties['mlm:framework_version'] || 'Unbekannt'} </span><br>
+                                    <span>Empfohlene Batchgröße: ${item.properties['mlm:batch_size_suggestion'] || 'Unbekannt'}
+                                    <hr>
+                                    <span>Weitere Information: ${item.properties['mlm:accelerator_summary'] || 'Keine weiteren Informationen hinterlegt.'} </span><br>
+                                    <hr>
+                                </div>
+                                <span style="font-size:10px;">Vortrainiert: ${isPretrained(item.properties['mlm:pretrained'] || undefined, item.properties['mlm:pretrained_source'] || undefined)} </span>
+                                <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
                             </div>
-                            <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
-                        </div>
+                            <div class="col-4">
+                                    <div id="map-${item.id}"></div>
+                            </div>
                     </div>
                 `;
 
