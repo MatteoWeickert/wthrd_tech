@@ -80,7 +80,7 @@ async function fetchItems() {
 
         if (Array.isArray(data) && data.length > 0) {
             displayItems(data, undefined);
-            //console.log(JSON.stringify(printAllFilters(data)));
+            printAllFilters(data);
         } else {
             showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
         }
@@ -598,7 +598,7 @@ function printAllFilters(items) {
     Object.keys(filters).forEach(group => {
         let options = '';
         filters[group].forEach(option => {
-            const optionId = `filter-${group}-${option.replace(/[^a-zA-Z0-9-_]/g, '')}`;
+            const optionId = `filter-${group}-${option}`;
             options += `
                 <div class="form-check form-check-inline">
                     <input type="checkbox" class="form-check-input" id="${optionId}" value="${option}" data-group="${group}">
@@ -770,25 +770,53 @@ function isPretrained(bool,source){
     }
 }
 
-function createMapOnModell(data){
+// Funktion zum erstellen der individuellen Kartenansicht für jedes Modell
+function createMapOnModell(data) {
     const item = data;
-    const map = L.map(`map-${item.id}`).setView([0, 0], 2);
+    //console.log("test " + item.id);
 
-        // Tile Layer hinzufügen (OpenStreetMap)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+    const mapContainer = document.getElementById(`map-${item.id}`);
 
-        const bbox = item.properties.bbox || [];
+    // Observer für langsames laden
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                //console.log("Lade Karte " + item.id);
+                const map = L.map(`map-${item.id}`, {
+                    center: [0, 0], 
+                    zoom: 3, 
+                    zoomControl: false,
+                    scrollWheelZoom: false
+                });
 
-        if (bbox.length === 4) {
-            const bounds = [
-                [bbox[1], bbox[0]],
-                [bbox[3], bbox[2]]
-            ];
-            L.rectangle(bounds, { color: "#ff7800", weight: 1 }).addTo(map);
-            map.fitBounds(bounds);
-        }
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                }).addTo(map);
+
+                const bbox = item.bbox || [];
+
+                if (bbox.length === 0) {
+                    document.getElementById(`map-${item.id}`).innerHTML = "Keine Kartenansicht verfügbar.";
+                }
+
+                if (bbox.length === 4) {
+                    const bounds = [
+                        [bbox[1], bbox[0]],
+                        [bbox[3], bbox[2]]
+                    ];
+                    L.rectangle(bounds, { color: "#ff7800", weight: 1 }).addTo(map);
+
+                    map.fitBounds(bounds, { padding: [40, 40] });
+                }
+
+                observer.unobserve(mapContainer);
+            }
+        });
+    }, {
+        rootMargin: '100px',
+        threshold: 0.01
+    });
+
+    observer.observe(mapContainer);
 }
 
 // Funktion zum Anzeigen aller Modelle
@@ -805,8 +833,6 @@ function displayItems(items, filters) {
                 const title = document.createElement('span');
                 title.innerHTML = `${item.properties['mlm:name']}`;
                 title.style.color = `${item.color|| ''}`;
-
-                //createMapOnModell(item);
 
                 const parameters = document.createElement('div');
                 parameters.classList.add('modell-itemparameter');
@@ -850,25 +876,28 @@ function displayItems(items, filters) {
                                     </button>
                             </div>
                             <hr>
-                            <div class="col-8">
-                                <div style="font-size:12px;"class="card-body-parameters">
-                                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
-                                    <span>Empfohlener Zeitraum: ${item.properties.start_datetime || 'Unbekannt'} bis ${item.properties.end_datetime || 'Unbekannt'} </span><br>
-                                    <span>Erwartete Eingabe: ${item.properties['mlm:input'][0].name || 'Unbekannt'} </span><br>
-                                    <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].bands || 'Unbekannt'}</span><br>
-                                    <span>Accelerator: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
-                                    <span>Architektur: ${item.properties['mlm:architecture'] || 'Unbekannt'}</span><br>
-                                    <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} in der Version: ${item.properties['mlm:framework_version'] || 'Unbekannt'} </span><br>
-                                    <span>Empfohlene Batchgröße: ${item.properties['mlm:batch_size_suggestion'] || 'Unbekannt'}
-                                    <hr>
-                                    <span>Weitere Information: ${item.properties['mlm:accelerator_summary'] || 'Keine weiteren Informationen hinterlegt.'} </span><br>
-                                    <hr>
+                            <div class="row">
+                                <div class="col-md-6 col-lg-8">
+                                        <div style="font-size:12px;"class="card-body-parameters">
+                                            <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
+                                            <span>Empfohlener Zeitraum: ${item.properties.start_datetime || 'Unbekannt'} bis ${item.properties.end_datetime || 'Unbekannt'} </span><br>
+                                            <span>Erwartete Eingabe: ${item.properties['mlm:input'][0].name || 'Unbekannt'} </span><br>
+                                            <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].bands || 'Unbekannt'}</span><br>
+                                            <span>Accelerator: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
+                                            <span>Architektur: ${item.properties['mlm:architecture'] || 'Unbekannt'}</span><br>
+                                            <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} in der Version: ${item.properties['mlm:framework_version'] || 'Unbekannt'} </span><br>
+                                            <span>Empfohlene Batchgröße: ${item.properties['mlm:batch_size_suggestion'] || 'Unbekannt'}
+                                            <hr>
+                                            <span>Weitere Information: ${item.properties['mlm:accelerator_summary'] || 'Keine weiteren Informationen hinterlegt.'} </span><br>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-lg-4">
+                                            <div style="width: 100%;height:100%;" id="map-${item.id}"></div>
+                                    </div>
                                 </div>
+                                <hr>
                                 <span style="font-size:10px;">Vortrainiert: ${isPretrained(item.properties['mlm:pretrained'] || undefined, item.properties['mlm:pretrained_source'] || undefined)} </span>
                                 <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
-                            </div>
-                            <div class="col-4">
-                                    <div id="map-${item.id}"></div>
                             </div>
                     </div>
                 `;
@@ -877,6 +906,8 @@ function displayItems(items, filters) {
                 itemDiv.appendChild(parameters);
                 itemDiv.appendChild(information);
                 container.appendChild(itemDiv);
+
+                createMapOnModell(item);
         });
 }
 
@@ -938,17 +969,22 @@ function showAlert(type, text, optional){
 // Funktion um einzigartige Werte aus Items zu extrahieren
 function extractUniqueFilterValues(items) {
     const filters = {
+        collection: new Set(),
         tasks: new Set(),
         frameworks: new Set(),
-        inputTypes: new Set(),
         accelerators: new Set(),
-        pretrainedSources: new Set(),
-        acceleratorSummaries: new Set(),
-        bboxes: new Set()
+        inputName: new Set(),
+        architecture: new Set(),
+        batchSize: new Set(),
+        pretrainedSource: new Set()
     };
 
     items.forEach(item => {
         const properties = item.properties;
+
+        if (item.collection_id) {
+            filters.collection.add(item.collection_id);
+        }
 
         if (properties['mlm:tasks']) {
             properties['mlm:tasks'].forEach(task => filters.tasks.add(task));
@@ -958,8 +994,8 @@ function extractUniqueFilterValues(items) {
             filters.frameworks.add(properties['mlm:framework']);
         }
 
-        if (properties['mlm:input']?.type) {
-            filters.inputTypes.add(properties['mlm:input'].type);
+        if (properties['mlm:input'][0].name) {
+            filters.inputName.add(properties['mlm:input'][0].name);
         }
 
         if (properties['mlm:accelerator']) {
@@ -967,24 +1003,27 @@ function extractUniqueFilterValues(items) {
         }
 
         if (properties['mlm:pretrained_source']) {
-            filters.pretrainedSources.add(properties['mlm:pretrained_source']);
+            filters.pretrainedSource.add(properties['mlm:pretrained_source']);
         }
 
-        if (properties['mlm:accelerator_summary']) {
-            filters.acceleratorSummaries.add(properties['mlm:accelerator_summary']);
+        if (properties['mlm:architecture']) {
+            filters.architecture.add(properties['mlm:architecture']);
         }
 
-        if (item.bbox) {
-            filters.bboxes.add(JSON.stringify(item.bbox));
+        if (properties['mlm:batch_size_suggestion']) {
+            filters.batchSize.add(properties['mlm:batch_size_suggestion']);
         }
     });
 
     return {
         tasks: Array.from(filters.tasks),
         frameworks: Array.from(filters.frameworks),
-        inputTypes: Array.from(filters.inputTypes),
         accelerators: Array.from(filters.accelerators),
-        pretrainedSources: Array.from(filters.pretrainedSources),
-        acceleratorSummaries: Array.from(filters.acceleratorSummaries),
+        pretrainedSource: Array.from(filters.pretrainedSource),
+        accelerators: Array.from(filters.accelerators),
+        collection: Array.from(filters.collection),
+        inputName: Array.from(filters.inputName),
+        architecture: Array.from(filters.architecture),
+        batchSize: Array.from(filters.batchSize)
     };
 }
