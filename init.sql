@@ -31,7 +31,7 @@ CREATE TABLE items (
     stac_version TEXT NOT NULL,                      -- Die STAC-Version, die von diesem Item implementiert wird
     stac_extensions TEXT[],                          -- Eine Liste von Erweiterungs-IDs, die von diesem Item implementiert werden
     geometry GEOMETRY,                              -- Geometrie des Items, als GeoJSON Geometry Objekt gespeichert
-    bbox NUMERIC[],                                  -- Bounding Box des Items, wenn Geometrie nicht null ist
+    bbox DOUBLE PRECISION[],                                  -- Bounding Box des Items, wenn Geometrie nicht null ist
     properties JSONB NOT NULL,                       -- Ein JSONB-Objekt, das zusätzliche Metadaten enthält
     links JSONB[] NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     assets JSONB NOT NULL,                          -- Eine Karte von Asset-Objekten (im JSON-Format) (required: href)
@@ -99,174 +99,560 @@ VALUES
     NOW(), 
     NOW()
  );
-
--- Insert into `items` table with prefixed JSON keys
-INSERT INTO items (id, type, stac_version, stac_extensions, geometry, bbox, properties, links, assets, collection_ID, created_at, updated_at, color)
-VALUES 
-(
-    'example_model', 
+-- Example data for items
+INSERT INTO items (
+    id, type, stac_version, stac_extensions, geometry, bbox, properties, 
+    links, assets, collection_ID, created_at, updated_at, color
+)
+VALUES (
+    'solar_satlas_sentinel2', 
     'Feature', 
     '1.0.0', 
-    ARRAY['stac-core'], 
-    'SRID=4326;POINT(10 10)', 
-    ARRAY[-10.0, -10.0, 10.0, 10.0],  -- Werte müssen in der Reihenfolge [west, south, east, north] sein
-    '{
-        "title": "Example Item",
-        "description": "Dies ist ein Beispiel-Item innerhalb der Example Collection.",
-        "datetime": "2024-12-04T16:20:00",
-        "mlm:name": "Example Model",
-        "mlm:architecture": "ResNet50",
-        "mlm:tasks": ["classification", "image"],
-        "mlm:framework": "TensorFlow",
-        "mlm:framework_version": "2.7",
-        "mlm:memory_size": 1200000000,
-        "mlm:total_parameters": 25000000,
-        "mlm:pretrained": true,
-        "mlm:pretrained_source": "ImageNet",
-        "mlm:batch_size_suggestion": 32,
-        "mlm:accelerator": "GPU",
-        "mlm:accelerator_constrained": false,
-        "mlm:accelerator_summary": "NVIDIA Tesla V100",
-        "mlm:accelerator_count": 2,
-        "mlm:input": {
-            "type": "image",
-            "shape": [224, 224, 3]
-        },
-        "mlm:output": {
-            "type": "class",
-            "num_classes": 1000
-        },
-        "mlm:hyperparameters": {
-            "learning_rate": 0.001,
-            "dropout": 0.5
-        }
-    }', 
     ARRAY[
-        '{"href": "https://example.com/item", "type": "application/json", "rel": "self"}'::jsonb,
-        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}'::jsonb
-    ], 
+        'https://stac-extensions.github.io/file/v2.1.0/schema.json',
+        'https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json'
+    ]::text[],  
+    '{"type": "Polygon", "coordinates": [[[-7.882190080512502, 37.13739173208318], [-7.882190080512502, 58.21798141355221], [27.911651652899923, 58.21798141355221], [27.911651652899923, 37.13739173208318], [-7.882190080512502, 37.13739173208318]]]}',
+    ARRAY[-7.882190080512502, 37.13739173208318, 27.911651652899923, 58.21798141355221]::double precision[],
     '{
-        "thumbnail": {
-            "href": "https://example.com/thumbnail.png"
+        "start_datetime": "1900-01-01T00:00:00Z", "end_datetime": "9999-01-01T00:00:00Z", 
+        "description": "Sourced from satlas source code released by Allen AI under Apache 2.0",
+        "mlm:framework": "pytorch", "mlm:framework_version": "2.3.0+cu121",
+        "file:size": 333000000, "mlm:memory_size": 1, "mlm:batch_size_suggestion": 10,
+        "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
+        "mlm:accelerator_summary": "It is necessary to use GPU since it was compiled for NVIDIA Ampere and newer architectures with AOTInductor and the computational demands of the model.",
+        "mlm:name": "Satlas Solar Farm Segmentation", 
+        "mlm:architecture": "Swin Transformer V2 with U-Net head", 
+        "mlm:tasks": ["semantic-segmentation", "segmentation"],
+        "mlm:input": [{
+            "name": "9 Band Sentinel-2 4 Time Step Series Batch",
+            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
+            "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
+            "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
+            "pre_processing_function": {
+                "format": "documentation-link", 
+                "expression": "https://github.com/allenai/satlas/blob/main/CustomInference.md#sentinel-2-inference-example"
+            }
+        }],
+        "mlm:output": [{
+            "name": "confidence array", "tasks": ["semantic-segmentation"],
+            "result": {"shape": [-1, 1, 1024, 1024], "dim_order": ["batch", "height", "width"], "data_type": "float32"},
+            "classification:classes": [{"value": 1, "name": "Solar Farm", "description": "Solar Farm"}]
+        }],
+        "mlm:total_parameters": 89748193, "mlm:pretrained": true,
+        "mlm:pretrained_source": "Sentinel-2 imagery and SATLAS labels",
+        "datetime": null
+    }',
+    ARRAY[
+        '{"rel": "derived_from", "href": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c", "type": "application/json"}',
+        '{"rel": "self", "href": "http://localhost:8000/collections/MLM_Collection/items/solar_satlas_sentinel2", "type": "application/json"}',
+        '{"rel": "parent", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}',
+        '{"rel": "root", "href": "http://localhost:8000/", "type": "application/json"}',
+        '{"rel": "collection", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}'
+    ]::jsonb[], 
+    '{
+        "model": {
+            "href": "s3://wherobots-modelhub-prod/professional/semantic-segmentation/solar-satlas-sentinel2/inductor/gpu/aot_inductor_gpu_tensor_cores.zip",
+            "type": "application/zip; application=pytorch",
+            "title": "AOTInductor model exported from private, edited, hard fork of Satlas github repo.",
+            "description": "A Swin Transformer backbone with a U-net head trained on the 9-band Sentinel-2 Top of Atmosphere product.",
+            "mlm_artifact_type": "torch.jit.script", "file:size": 333000000,
+            "roles": ["mlm:model", "data"]
         },
-        "data": {
-            "href": "https://example.com/data"
+        "source_code": {
+            "href": "https://github.com/wherobots/modelhub/blob/main/model-forge/satlas/solar/export.py",
+            "type": "text/x-python",
+            "title": "Model implementation.", 
+            "description": "Source code to export the model.",
+            "roles": ["mlm:model", "code"]
         }
-    }', 
+    }'::jsonb, 
     (SELECT id FROM collections WHERE title = 'Example Collection'), 
     NOW(), 
     NOW(),
-    '#8f4130'
+    '#8B572A'
 ),
 (
-    'advanced_model', 
+    'solar_satlas_sentinel2_2', 
     'Feature', 
     '1.0.0', 
-    ARRAY['stac-core'], 
-    'SRID=4326;POINT(20 20)', 
-    ARRAY[15, 15, 25, 25], 
-    '{
-        "title": "Advanced Item",
-        "description": "Ein fortgeschrittenes Beispiel-Item innerhalb der Example Collection.",
-        "datetime": "2024-12-05T12:00:00",
-        "mlm:name": "Advanced Model",
-        "mlm:architecture": "Transformer",
-        "mlm:tasks": ["natural language processing"],
-        "mlm:framework": "PyTorch",
-        "mlm:framework_version": "1.11",
-        "mlm:memory_size": 8000000000,
-        "mlm:total_parameters": 500000000,
-        "mlm:pretrained": true,
-        "mlm:pretrained_source": "HuggingFace",
-        "mlm:batch_size_suggestion": 16,
-        "mlm:accelerator": "TPU",
-        "mlm:accelerator_constrained": true,
-        "mlm:accelerator_summary": "Google TPU v3",
-        "mlm:accelerator_count": 4,
-        "mlm:input": {
-            "type": "text",
-            "max_length": 512
-        },
-        "mlm:output": {
-            "type": "text",
-            "num_tokens": 128
-        },
-        "mlm:hyperparameters": {
-            "learning_rate": 0.0001,
-            "dropout": 0.1
-        }
-    }', 
     ARRAY[
-        '{"href": "https://example.com/advanced_item", "type": "application/json", "rel": "self"}'::jsonb,
-        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}'::jsonb
-    ], 
+        'https://stac-extensions.github.io/file/v2.1.0/schema.json',
+        'https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json'
+    ]::text[],  
+    '{"type": "Polygon", "coordinates": [[[-7.882190080512502, 37.13739173208318], [-7.882190080512502, 58.21798141355221], [27.911651652899923, 58.21798141355221], [27.911651652899923, 37.13739173208318], [-7.882190080512502, 37.13739173208318]]]}',
+    ARRAY[-7.882190080512502, 37.13739173208318, 27.911651652899923, 58.21798141355221]::double precision[],
     '{
-        "thumbnail": {
-            "href": "https://example.com/advanced_thumbnail.png"
+        "start_datetime": "1900-01-01T00:00:00Z", "end_datetime": "9999-01-01T00:00:00Z", 
+        "description": "Sourced from satlas source code released by Allen AI under Apache 2.0",
+        "mlm:framework": "pytorch", "mlm:framework_version": "2.3.0+cu121",
+        "file:size": 333000000, "mlm:memory_size": 1, "mlm:batch_size_suggestion": 10,
+        "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
+        "mlm:accelerator_summary": "It is necessary to use GPU since it was compiled for NVIDIA Ampere and newer architectures with AOTInductor and the computational demands of the model.",
+        "mlm:name": "Satlas Solar Farm Segmentation", 
+        "mlm:architecture": "Swin Transformer V2 with U-Net head", 
+        "mlm:tasks": ["semantic-segmentation", "segmentation"],
+        "mlm:input": [{
+            "name": "9 Band Sentinel-2 4 Time Step Series Batch",
+            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
+            "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
+            "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
+            "pre_processing_function": {
+                "format": "documentation-link", 
+                "expression": "https://github.com/allenai/satlas/blob/main/CustomInference.md#sentinel-2-inference-example"
+            }
+        }],
+        "mlm:output": [{
+            "name": "confidence array", "tasks": ["semantic-segmentation"],
+            "result": {"shape": [-1, 1, 1024, 1024], "dim_order": ["batch", "height", "width"], "data_type": "float32"},
+            "classification:classes": [{"value": 1, "name": "Solar Farm", "description": "Solar Farm"}]
+        }],
+        "mlm:total_parameters": 89748193, "mlm:pretrained": true,
+        "mlm:pretrained_source": "Sentinel-2 imagery and SATLAS labels",
+        "datetime": null
+    }',
+    ARRAY[
+        '{"rel": "derived_from", "href": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c", "type": "application/json"}',
+        '{"rel": "self", "href": "http://localhost:8000/collections/MLM_Collection/items/solar_satlas_sentinel2_2", "type": "application/json"}',
+        '{"rel": "parent", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}',
+        '{"rel": "root", "href": "http://localhost:8000/", "type": "application/json"}',
+        '{"rel": "collection", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}'
+    ]::jsonb[], 
+    '{
+        "model": {
+            "href": "s3://wherobots-modelhub-prod/professional/semantic-segmentation/solar-satlas-sentinel2/inductor/gpu/aot_inductor_gpu_tensor_cores.zip",
+            "type": "application/zip; application=pytorch",
+            "title": "AOTInductor model exported from private, edited, hard fork of Satlas github repo.",
+            "description": "A Swin Transformer backbone with a U-net head trained on the 9-band Sentinel-2 Top of Atmosphere product.",
+            "mlm_artifact_type": "torch.jit.script", "file:size": 333000000,
+            "roles": ["mlm:model", "data"]
         },
-        "data": {
-            "href": "https://example.com/advanced_data"
+        "source_code": {
+            "href": "https://github.com/wherobots/modelhub/blob/main/model-forge/satlas/solar/export.py",
+            "type": "text/x-python",
+            "title": "Model implementation.", 
+            "description": "Source code to export the model.",
+            "roles": ["mlm:model", "code"]
         }
-    }', 
+    }'::jsonb, 
     (SELECT id FROM collections WHERE title = 'Example Collection'), 
     NOW(), 
     NOW(),
-    '#8f4135'
+    '#F8E71C'
 ),
 (
-    'basic_model', 
+    'solar_satlas_sentinel2_3', 
     'Feature', 
     '1.0.0', 
-    ARRAY['stac-core'], 
-    'SRID=4326;POINT(5 5)', 
-    ARRAY[0, 0, 10, 10], 
-    '{
-        "title": "Basic Item",
-        "description": "Ein einfaches Beispiel-Item innerhalb der Example Collection.",
-        "datetime": "2024-12-06T08:30:00",
-        "mlm:name": "Basic Model",
-        "mlm:architecture": "Linear Model",
-        "mlm:tasks": ["regression"],
-        "mlm:framework": "Scikit-Learn",
-        "mlm:framework_version": "1.0",
-        "mlm:memory_size": 20000000,
-        "mlm:total_parameters": 1000,
-        "mlm:pretrained": false,
-        "mlm:batch_size_suggestion": 64,
-        "mlm:accelerator": "CPU",
-        "mlm:accelerator_constrained": false,
-        "mlm:input": {
-            "type": "numerical",
-            "shape": [10]
-        },
-        "mlm:output": {
-            "type": "numerical",
-            "shape": [1]
-        },
-        "mlm:hyperparameters": {
-            "learning_rate": 0.01
-        }
-    }', 
     ARRAY[
-        '{"href": "https://example.com/advanced_item", "type": "application/json", "rel": "self"}'::jsonb,
-        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "collection"}'::jsonb
-    ], 
+        'https://stac-extensions.github.io/file/v2.1.0/schema.json',
+        'https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json'
+    ]::text[],  
+    '{"type": "Polygon", "coordinates": [[[-7.882190080512502, 37.13739173208318], [-7.882190080512502, 58.21798141355221], [27.911651652899923, 58.21798141355221], [27.911651652899923, 37.13739173208318], [-7.882190080512502, 37.13739173208318]]]}',
+    ARRAY[-7.882190080512502, 37.13739173208318, 27.911651652899923, 58.21798141355221]::double precision[],
     '{
-        "thumbnail": {
-            "href": "https://example.com/basic_thumbnail.png"
+        "start_datetime": "1900-01-01T00:00:00Z", "end_datetime": "9999-01-01T00:00:00Z", 
+        "description": "Sourced from satlas source code released by Allen AI under Apache 2.0",
+        "mlm:framework": "pytorch", "mlm:framework_version": "2.3.0+cu121",
+        "file:size": 333000000, "mlm:memory_size": 1, "mlm:batch_size_suggestion": 10,
+        "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
+        "mlm:accelerator_summary": "It is necessary to use GPU since it was compiled for NVIDIA Ampere and newer architectures with AOTInductor and the computational demands of the model.",
+        "mlm:name": "Satlas Solar Farm Segmentation", 
+        "mlm:architecture": "Swin Transformer V2 with U-Net head", 
+        "mlm:tasks": ["semantic-segmentation", "segmentation"],
+        "mlm:input": [{
+            "name": "9 Band Sentinel-2 4 Time Step Series Batch",
+            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
+            "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
+            "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
+            "pre_processing_function": {
+                "format": "documentation-link", 
+                "expression": "https://github.com/allenai/satlas/blob/main/CustomInference.md#sentinel-2-inference-example"
+            }
+        }],
+        "mlm:output": [{
+            "name": "confidence array", "tasks": ["semantic-segmentation"],
+            "result": {"shape": [-1, 1, 1024, 1024], "dim_order": ["batch", "height", "width"], "data_type": "float32"},
+            "classification:classes": [{"value": 1, "name": "Solar Farm", "description": "Solar Farm"}]
+        }],
+        "mlm:total_parameters": 89748193, "mlm:pretrained": true,
+        "mlm:pretrained_source": "Sentinel-2 imagery and SATLAS labels",
+        "datetime": null
+    }',
+    ARRAY[
+        '{"rel": "derived_from", "href": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c", "type": "application/json"}',
+        '{"rel": "self", "href": "http://localhost:8000/collections/MLM_Collection/items/solar_satlas_sentinel2_3", "type": "application/json"}',
+        '{"rel": "parent", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}',
+        '{"rel": "root", "href": "http://localhost:8000/", "type": "application/json"}',
+        '{"rel": "collection", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}'
+    ]::jsonb[], 
+    '{
+        "model": {
+            "href": "s3://wherobots-modelhub-prod/professional/semantic-segmentation/solar-satlas-sentinel2/inductor/gpu/aot_inductor_gpu_tensor_cores.zip",
+            "type": "application/zip; application=pytorch",
+            "title": "AOTInductor model exported from private, edited, hard fork of Satlas github repo.",
+            "description": "A Swin Transformer backbone with a U-net head trained on the 9-band Sentinel-2 Top of Atmosphere product.",
+            "mlm_artifact_type": "torch.jit.script", "file:size": 333000000,
+            "roles": ["mlm:model", "data"]
         },
-        "data": {
-            "href": "https://example.com/basic_data"
+        "source_code": {
+            "href": "https://github.com/wherobots/modelhub/blob/main/model-forge/satlas/solar/export.py",
+            "type": "text/x-python",
+            "title": "Model implementation.", 
+            "description": "Source code to export the model.",
+            "roles": ["mlm:model", "code"]
         }
-    }', 
+    }'::jsonb, 
     (SELECT id FROM collections WHERE title = 'Example Collection'), 
     NOW(), 
     NOW(),
-    '#8f4139'
-);
+    '#D0021B'
+),
+(
+    'solar_satlas_sentinel2_4', 
+    'Feature', 
+    '1.0.0', 
+    ARRAY[
+        'https://stac-extensions.github.io/file/v2.1.0/schema.json',
+        'https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json'
+    ]::text[],  
+    '{"type": "Polygon", "coordinates": [[[-7.882190080512502, 37.13739173208318], [-7.882190080512502, 58.21798141355221], [27.911651652899923, 58.21798141355221], [27.911651652899923, 37.13739173208318], [-7.882190080512502, 37.13739173208318]]]}',
+    ARRAY[-7.882190080512502, 37.13739173208318, 27.911651652899923, 58.21798141355221]::double precision[],
+    '{
+        "start_datetime": "1900-01-01T00:00:00Z", "end_datetime": "9999-01-01T00:00:00Z", 
+        "description": "Sourced from satlas source code released by Allen AI under Apache 2.0",
+        "mlm:framework": "pytorch", "mlm:framework_version": "2.3.0+cu121",
+        "file:size": 333000000, "mlm:memory_size": 1, "mlm:batch_size_suggestion": 10,
+        "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
+        "mlm:accelerator_summary": "It is necessary to use GPU since it was compiled for NVIDIA Ampere and newer architectures with AOTInductor and the computational demands of the model.",
+        "mlm:name": "Satlas Solar Farm Segmentation", 
+        "mlm:architecture": "Swin Transformer V2 with U-Net head", 
+        "mlm:tasks": ["semantic-segmentation", "segmentation"],
+        "mlm:input": [{
+            "name": "9 Band Sentinel-2 4 Time Step Series Batch",
+            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
+            "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
+            "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
+            "pre_processing_function": {
+                "format": "documentation-link", 
+                "expression": "https://github.com/allenai/satlas/blob/main/CustomInference.md#sentinel-2-inference-example"
+            }
+        }],
+        "mlm:output": [{
+            "name": "confidence array", "tasks": ["semantic-segmentation"],
+            "result": {"shape": [-1, 1, 1024, 1024], "dim_order": ["batch", "height", "width"], "data_type": "float32"},
+            "classification:classes": [{"value": 1, "name": "Solar Farm", "description": "Solar Farm"}]
+        }],
+        "mlm:total_parameters": 89748193, "mlm:pretrained": true,
+        "mlm:pretrained_source": "Sentinel-2 imagery and SATLAS labels",
+        "datetime": null
+    }',
+    ARRAY[
+        '{"rel": "derived_from", "href": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c", "type": "application/json"}',
+        '{"rel": "self", "href": "http://localhost:8000/collections/MLM_Collection/items/solar_satlas_sentinel2_4", "type": "application/json"}',
+        '{"rel": "parent", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}',
+        '{"rel": "root", "href": "http://localhost:8000/", "type": "application/json"}',
+        '{"rel": "collection", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}'
+    ]::jsonb[], 
+    '{
+        "model": {
+            "href": "s3://wherobots-modelhub-prod/professional/semantic-segmentation/solar-satlas-sentinel2/inductor/gpu/aot_inductor_gpu_tensor_cores.zip",
+            "type": "application/zip; application=pytorch",
+            "title": "AOTInductor model exported from private, edited, hard fork of Satlas github repo.",
+            "description": "A Swin Transformer backbone with a U-net head trained on the 9-band Sentinel-2 Top of Atmosphere product.",
+            "mlm_artifact_type": "torch.jit.script", "file:size": 333000000,
+            "roles": ["mlm:model", "data"]
+        },
+        "source_code": {
+            "href": "https://github.com/wherobots/modelhub/blob/main/model-forge/satlas/solar/export.py",
+            "type": "text/x-python",
+            "title": "Model implementation.", 
+            "description": "Source code to export the model.",
+            "roles": ["mlm:model", "code"]
+        }
+    }'::jsonb, 
+    (SELECT id FROM collections WHERE title = 'Example Collection'), 
+    NOW(), 
+    NOW(),
+    '#9013FE'
+),
+(
+    'solar_satlas_sentinel2_5', 
+    'Feature', 
+    '1.0.0', 
+    ARRAY[
+        'https://stac-extensions.github.io/file/v2.1.0/schema.json',
+        'https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json'
+    ]::text[],  
+    '{"type": "Polygon", "coordinates": [[[-7.882190080512502, 37.13739173208318], [-7.882190080512502, 58.21798141355221], [27.911651652899923, 58.21798141355221], [27.911651652899923, 37.13739173208318], [-7.882190080512502, 37.13739173208318]]]}',
+    ARRAY[-7.882190080512502, 37.13739173208318, 27.911651652899923, 58.21798141355221]::double precision[],
+    '{
+        "start_datetime": "1900-01-01T00:00:00Z", "end_datetime": "9999-01-01T00:00:00Z", 
+        "description": "Sourced from satlas source code released by Allen AI under Apache 2.0",
+        "mlm:framework": "pytorch", "mlm:framework_version": "2.3.0+cu121",
+        "file:size": 333000000, "mlm:memory_size": 1, "mlm:batch_size_suggestion": 10,
+        "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
+        "mlm:accelerator_summary": "It is necessary to use GPU since it was compiled for NVIDIA Ampere and newer architectures with AOTInductor and the computational demands of the model.",
+        "mlm:name": "Satlas Solar Farm Segmentation", 
+        "mlm:architecture": "Swin Transformer V2 with U-Net head", 
+        "mlm:tasks": ["semantic-segmentation", "segmentation"],
+        "mlm:input": [{
+            "name": "9 Band Sentinel-2 4 Time Step Series Batch",
+            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
+            "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
+            "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
+            "pre_processing_function": {
+                "format": "documentation-link", 
+                "expression": "https://github.com/allenai/satlas/blob/main/CustomInference.md#sentinel-2-inference-example"
+            }
+        }],
+        "mlm:output": [{
+            "name": "confidence array", "tasks": ["semantic-segmentation"],
+            "result": {"shape": [-1, 1, 1024, 1024], "dim_order": ["batch", "height", "width"], "data_type": "float32"},
+            "classification:classes": [{"value": 1, "name": "Solar Farm", "description": "Solar Farm"}]
+        }],
+        "mlm:total_parameters": 89748193, "mlm:pretrained": true,
+        "mlm:pretrained_source": "Sentinel-2 imagery and SATLAS labels",
+        "datetime": null
+    }',
+    ARRAY[
+        '{"rel": "derived_from", "href": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c", "type": "application/json"}',
+        '{"rel": "self", "href": "http://localhost:8000/collections/MLM_Collection/items/solar_satlas_sentinel2_5", "type": "application/json"}',
+        '{"rel": "parent", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}',
+        '{"rel": "root", "href": "http://localhost:8000/", "type": "application/json"}',
+        '{"rel": "collection", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}'
+    ]::jsonb[], 
+    '{
+        "model": {
+            "href": "s3://wherobots-modelhub-prod/professional/semantic-segmentation/solar-satlas-sentinel2/inductor/gpu/aot_inductor_gpu_tensor_cores.zip",
+            "type": "application/zip; application=pytorch",
+            "title": "AOTInductor model exported from private, edited, hard fork of Satlas github repo.",
+            "description": "A Swin Transformer backbone with a U-net head trained on the 9-band Sentinel-2 Top of Atmosphere product.",
+            "mlm_artifact_type": "torch.jit.script", "file:size": 333000000,
+            "roles": ["mlm:model", "data"]
+        },
+        "source_code": {
+            "href": "https://github.com/wherobots/modelhub/blob/main/model-forge/satlas/solar/export.py",
+            "type": "text/x-python",
+            "title": "Model implementation.", 
+            "description": "Source code to export the model.",
+            "roles": ["mlm:model", "code"]
+        }
+    }'::jsonb, 
+    (SELECT id FROM collections WHERE title = 'Example Collection 2'), 
+    NOW(), 
+    NOW(),
+    '#7ED321'
+),
+(
+    'solar_satlas_sentinel2_6', 
+    'Feature', 
+    '1.0.0', 
+    ARRAY[
+        'https://stac-extensions.github.io/file/v2.1.0/schema.json',
+        'https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json'
+    ]::text[],  
+    '{"type": "Polygon", "coordinates": [[[-7.882190080512502, 37.13739173208318], [-7.882190080512502, 58.21798141355221], [27.911651652899923, 58.21798141355221], [27.911651652899923, 37.13739173208318], [-7.882190080512502, 37.13739173208318]]]}',
+    ARRAY[-7.882190080512502, 37.13739173208318, 27.911651652899923, 58.21798141355221]::double precision[],
+    '{
+        "start_datetime": "1900-01-01T00:00:00Z", "end_datetime": "9999-01-01T00:00:00Z", 
+        "description": "Sourced from satlas source code released by Allen AI under Apache 2.0",
+        "mlm:framework": "pytorch", "mlm:framework_version": "2.3.0+cu121",
+        "file:size": 333000000, "mlm:memory_size": 1, "mlm:batch_size_suggestion": 10,
+        "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
+        "mlm:accelerator_summary": "It is necessary to use GPU since it was compiled for NVIDIA Ampere and newer architectures with AOTInductor and the computational demands of the model.",
+        "mlm:name": "Satlas Solar Farm Segmentation", 
+        "mlm:architecture": "Swin Transformer V2 with U-Net head", 
+        "mlm:tasks": ["semantic-segmentation", "segmentation"],
+        "mlm:input": [{
+            "name": "9 Band Sentinel-2 4 Time Step Series Batch",
+            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
+            "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
+            "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
+            "pre_processing_function": {
+                "format": "documentation-link", 
+                "expression": "https://github.com/allenai/satlas/blob/main/CustomInference.md#sentinel-2-inference-example"
+            }
+        }],
+        "mlm:output": [{
+            "name": "confidence array", "tasks": ["semantic-segmentation"],
+            "result": {"shape": [-1, 1, 1024, 1024], "dim_order": ["batch", "height", "width"], "data_type": "float32"},
+            "classification:classes": [{"value": 1, "name": "Solar Farm", "description": "Solar Farm"}]
+        }],
+        "mlm:total_parameters": 89748193, "mlm:pretrained": true,
+        "mlm:pretrained_source": "Sentinel-2 imagery and SATLAS labels",
+        "datetime": null
+    }',
+    ARRAY[
+        '{"rel": "derived_from", "href": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c", "type": "application/json"}',
+        '{"rel": "self", "href": "http://localhost:8000/collections/MLM_Collection/items/solar_satlas_sentinel2_6", "type": "application/json"}',
+        '{"rel": "parent", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}',
+        '{"rel": "root", "href": "http://localhost:8000/", "type": "application/json"}',
+        '{"rel": "collection", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}'
+    ]::jsonb[], 
+    '{
+        "model": {
+            "href": "s3://wherobots-modelhub-prod/professional/semantic-segmentation/solar-satlas-sentinel2/inductor/gpu/aot_inductor_gpu_tensor_cores.zip",
+            "type": "application/zip; application=pytorch",
+            "title": "AOTInductor model exported from private, edited, hard fork of Satlas github repo.",
+            "description": "A Swin Transformer backbone with a U-net head trained on the 9-band Sentinel-2 Top of Atmosphere product.",
+            "mlm_artifact_type": "torch.jit.script", "file:size": 333000000,
+            "roles": ["mlm:model", "data"]
+        },
+        "source_code": {
+            "href": "https://github.com/wherobots/modelhub/blob/main/model-forge/satlas/solar/export.py",
+            "type": "text/x-python",
+            "title": "Model implementation.", 
+            "description": "Source code to export the model.",
+            "roles": ["mlm:model", "code"]
+        }
+    }'::jsonb, 
+    (SELECT id FROM collections WHERE title = 'Example Collection 2'), 
+    NOW(), 
+    NOW(),
+    '#50E3C2'
+),
+(
+    'solar_satlas_sentinel2_7', 
+    'Feature', 
+    '1.0.0', 
+    ARRAY[
+        'https://stac-extensions.github.io/file/v2.1.0/schema.json',
+        'https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json'
+    ]::text[],  
+    '{"type": "Polygon", "coordinates": [[[-7.882190080512502, 37.13739173208318], [-7.882190080512502, 58.21798141355221], [27.911651652899923, 58.21798141355221], [27.911651652899923, 37.13739173208318], [-7.882190080512502, 37.13739173208318]]]}',
+    ARRAY[-7.882190080512502, 37.13739173208318, 27.911651652899923, 58.21798141355221]::double precision[],
+    '{
+        "start_datetime": "1900-01-01T00:00:00Z", "end_datetime": "9999-01-01T00:00:00Z", 
+        "description": "Sourced from satlas source code released by Allen AI under Apache 2.0",
+        "mlm:framework": "pytorch", "mlm:framework_version": "2.3.0+cu121",
+        "file:size": 333000000, "mlm:memory_size": 1, "mlm:batch_size_suggestion": 10,
+        "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
+        "mlm:accelerator_summary": "It is necessary to use GPU since it was compiled for NVIDIA Ampere and newer architectures with AOTInductor and the computational demands of the model.",
+        "mlm:name": "Satlas Solar Farm Segmentation", 
+        "mlm:architecture": "Swin Transformer V2 with U-Net head", 
+        "mlm:tasks": ["semantic-segmentation", "segmentation"],
+        "mlm:input": [{
+            "name": "9 Band Sentinel-2 4 Time Step Series Batch",
+            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
+            "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
+            "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
+            "pre_processing_function": {
+                "format": "documentation-link", 
+                "expression": "https://github.com/allenai/satlas/blob/main/CustomInference.md#sentinel-2-inference-example"
+            }
+        }],
+        "mlm:output": [{
+            "name": "confidence array", "tasks": ["semantic-segmentation"],
+            "result": {"shape": [-1, 1, 1024, 1024], "dim_order": ["batch", "height", "width"], "data_type": "float32"},
+            "classification:classes": [{"value": 1, "name": "Solar Farm", "description": "Solar Farm"}]
+        }],
+        "mlm:total_parameters": 89748193, "mlm:pretrained": true,
+        "mlm:pretrained_source": "Sentinel-2 imagery and SATLAS labels",
+        "datetime": null
+    }',
+    ARRAY[
+        '{"rel": "derived_from", "href": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c", "type": "application/json"}',
+        '{"rel": "self", "href": "http://localhost:8000/collections/MLM_Collection/items/solar_satlas_sentinel2_7", "type": "application/json"}',
+        '{"rel": "parent", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}',
+        '{"rel": "root", "href": "http://localhost:8000/", "type": "application/json"}',
+        '{"rel": "collection", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}'
+    ]::jsonb[], 
+    '{
+        "model": {
+            "href": "s3://wherobots-modelhub-prod/professional/semantic-segmentation/solar-satlas-sentinel2/inductor/gpu/aot_inductor_gpu_tensor_cores.zip",
+            "type": "application/zip; application=pytorch",
+            "title": "AOTInductor model exported from private, edited, hard fork of Satlas github repo.",
+            "description": "A Swin Transformer backbone with a U-net head trained on the 9-band Sentinel-2 Top of Atmosphere product.",
+            "mlm_artifact_type": "torch.jit.script", "file:size": 333000000,
+            "roles": ["mlm:model", "data"]
+        },
+        "source_code": {
+            "href": "https://github.com/wherobots/modelhub/blob/main/model-forge/satlas/solar/export.py",
+            "type": "text/x-python",
+            "title": "Model implementation.", 
+            "description": "Source code to export the model.",
+            "roles": ["mlm:model", "code"]
+        }
+    }'::jsonb, 
+    (SELECT id FROM collections WHERE title = 'Example Collection 2'), 
+    NOW(), 
+    NOW(),
+    '#F5A623'
+),
+(
+    'solar_satlas_sentinel2_8', 
+    'Feature', 
+    '1.0.0', 
+    ARRAY[
+        'https://stac-extensions.github.io/file/v2.1.0/schema.json',
+        'https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json'
+    ]::text[],  
+    '{"type": "Polygon", "coordinates": [[[-7.882190080512502, 37.13739173208318], [-7.882190080512502, 58.21798141355221], [27.911651652899923, 58.21798141355221], [27.911651652899923, 37.13739173208318], [-7.882190080512502, 37.13739173208318]]]}',
+    ARRAY[-7.882190080512502, 37.13739173208318, 27.911651652899923, 58.21798141355221]::double precision[],
+    '{
+        "start_datetime": "1900-01-01T00:00:00Z", "end_datetime": "9999-01-01T00:00:00Z", 
+        "description": "Sourced from satlas source code released by Allen AI under Apache 2.0",
+        "mlm:framework": "pytorch", "mlm:framework_version": "2.3.0+cu121",
+        "file:size": 333000000, "mlm:memory_size": 1, "mlm:batch_size_suggestion": 10,
+        "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
+        "mlm:accelerator_summary": "It is necessary to use GPU since it was compiled for NVIDIA Ampere and newer architectures with AOTInductor and the computational demands of the model.",
+        "mlm:name": "Satlas Solar Farm Segmentation", 
+        "mlm:architecture": "Swin Transformer V2 with U-Net head", 
+        "mlm:tasks": ["semantic-segmentation", "segmentation"],
+        "mlm:input": [{
+            "name": "9 Band Sentinel-2 4 Time Step Series Batch",
+            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
+            "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
+            "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
+            "pre_processing_function": {
+                "format": "documentation-link", 
+                "expression": "https://github.com/allenai/satlas/blob/main/CustomInference.md#sentinel-2-inference-example"
+            }
+        }],
+        "mlm:output": [{
+            "name": "confidence array", "tasks": ["semantic-segmentation"],
+            "result": {"shape": [-1, 1, 1024, 1024], "dim_order": ["batch", "height", "width"], "data_type": "float32"},
+            "classification:classes": [{"value": 1, "name": "Solar Farm", "description": "Solar Farm"}]
+        }],
+        "mlm:total_parameters": 89748193, "mlm:pretrained": true,
+        "mlm:pretrained_source": "Sentinel-2 imagery and SATLAS labels",
+        "datetime": null
+    }',
+    ARRAY[
+        '{"rel": "derived_from", "href": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c", "type": "application/json"}',
+        '{"rel": "self", "href": "http://localhost:8000/collections/MLM_Collection/items/solar_satlas_sentinel2_8", "type": "application/json"}',
+        '{"rel": "parent", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}',
+        '{"rel": "root", "href": "http://localhost:8000/", "type": "application/json"}',
+        '{"rel": "collection", "href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json"}'
+    ]::jsonb[], 
+    '{
+        "model": {
+            "href": "s3://wherobots-modelhub-prod/professional/semantic-segmentation/solar-satlas-sentinel2/inductor/gpu/aot_inductor_gpu_tensor_cores.zip",
+            "type": "application/zip; application=pytorch",
+            "title": "AOTInductor model exported from private, edited, hard fork of Satlas github repo.",
+            "description": "A Swin Transformer backbone with a U-net head trained on the 9-band Sentinel-2 Top of Atmosphere product.",
+            "mlm_artifact_type": "torch.jit.script", "file:size": 333000000,
+            "roles": ["mlm:model", "data"]
+        },
+        "source_code": {
+            "href": "https://github.com/wherobots/modelhub/blob/main/model-forge/satlas/solar/export.py",
+            "type": "text/x-python",
+            "title": "Model implementation.", 
+            "description": "Source code to export the model.",
+            "roles": ["mlm:model", "code"]
+        }
+    }'::jsonb, 
+    (SELECT id FROM collections WHERE title = 'Example Collection 2'), 
+    NOW(), 
+    NOW(),
+    '#4A90E2'
+)
