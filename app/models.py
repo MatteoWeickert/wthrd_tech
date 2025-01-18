@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, Boolean, BigInteger, JSON, ARRAY, Text, TIMESTAMP, ForeignKey
+    Column, Integer, String, Boolean, BigInteger, JSON, ARRAY, Text, TIMESTAMP, ForeignKey, Float
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -57,7 +57,7 @@ class Item(Base):
     stac_version = Column(String, nullable=False)
     stac_extensions = Column(ARRAY(String))  # List of extension identifiers
     geometry = Column(JSON)  # GeoJSON geometry object
-    bbox = Column(ARRAY(BigInteger))  # Bounding Box (Array of coordinates)
+    bbox = Column(ARRAY(Float))  # Bounding Box (Array of coordinates)
     properties = Column(JSON, nullable=False)
     links = Column(ARRAY(JSON), nullable=False)
     assets = Column(JSON, nullable=False)
