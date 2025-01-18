@@ -21,8 +21,17 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Initialize DB with the init.sql script
     ports:
-      - "5999:5999"  # Expose PostgreSQL on port 5432
+      - "5999:5432"  # Expose PostgreSQL on port 5432
   adminer:
     image: adminer
     ports:
       - "8081:8080"  # Expose Adminer on port 8081
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-server
+    ports:
+      - "8082:80"  # Expose HTML page on port 8082
+    volumes:
+    - ./app/frontend:/usr/share/nginx/html:ro  # Mount HTML directory
+    - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro  # Benutzerdefinierte NGINX-Konfiguration
