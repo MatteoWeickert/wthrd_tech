@@ -1,16 +1,14 @@
+// Hält die Informationen zu der Map beim hinzufügen von Modellen (Bugfix)
 function getLforMap(){
     const drawnItems = new L.FeatureGroup();
     return drawnItems;
 }
 
-
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
-    //console.log(window.location.pathname)
     switch(data){
         case('/addmodel.html'):
-            //console.log("accessed")
             const drawnItems = getLforMap();
             createInputForm(getExpectedInputs());
             const map = L.map('map').setView([0, 0], 2);
@@ -45,7 +43,6 @@ function startWebsite(){
                     getBounds(bounds);
                 });
         
-                // Event-Listener, wenn ein Rechteck gezeichnet wurde
                 map.on('draw:created', function (event) {
                     const layer = event.layer;
                     drawnItems.addLayer(layer);
@@ -55,7 +52,6 @@ function startWebsite(){
                 });
             break;
         case('/catalog.html'):
-            //console.log("accessed 2")
             fetchItems();
             break;
         default: window.location.href = '/start.html';
@@ -93,56 +89,6 @@ async function fetchItems() {
 // addItems
 async function addItems() {
     const input = getUserInputs();
-    console.log("Testconsole: " + `(
-        '${input.id}', 
-        'Feature', 
-        '${input.stacversion}', 
-        ARRAY['${input.stacextension}'], 
-        ${JSON.stringify(getGeometry())},  // Korrektes GeoJSON
-        ${JSON.stringify(getBounds())},   // Korrektes Bounding Box Format
-        '{
-            "title": "${input.title}",
-            "description": "${input.description}",
-            "datetime": "2024-12-04T16:20:00",
-            "mlm:name": "${input.name}",
-            "mlm:architecture": "${input.architecture}",
-            "mlm:tasks": ["classification", "image"],
-            "mlm:framework": "${input.framework}",
-            "mlm:framework_version": "${input.frameworkversion}",
-            "mlm:pretrained": true,
-            "mlm:pretrained_source": "${input.pretrainedsource}",
-            "mlm:batch_size_suggestion": ${input.batchsizesuggestion},
-            "mlm:input": [{
-                "name": "testname",
-                "bands": ["basnd", "basnd"],
-                "input": ""
-            }],
-            "mlm:output": {
-                "type": "class",
-                "num_classes": 1000
-            },
-            "mlm:hyperparameters": "${getHyperparameters() || ''}"  // Verhindert undefined
-        }', 
-        ARRAY[
-            '{"href": "https://example.com/item", "type": "application/json", "rel": "self"}'::jsonb,
-            '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-            '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
-            '{"href": "http://localhost:8000/collections/${input.collectionid}", "type": "application/json", "rel": "collection"}'::jsonb
-        ],
-        '{
-            "thumbnail": {
-                "href": "https://example.com/thumbnail.png"
-            },
-            "data": {
-                "href": "https://example.com/data"
-            }
-        }', 
-        (SELECT id FROM collections WHERE title = '${input.collectiontitle}'), 
-        NOW(), 
-        NOW(),
-        '${getSelectedColor() || ''}'  // Verhindert undefined
-    )`);
-
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
@@ -282,7 +228,7 @@ function createInputForm(data) {
         <tr id="main-inputgroup">
             <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box</td>
             <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                <div id="map" class="h-100 w-50"></div>
+                <div id="map" style="width:100%;height:100%;"></div>
             </td>
             <td id="" class="main-inputalert"></td>
         </tr>
@@ -512,71 +458,6 @@ function changeInputTOC(data, pois){
         </div>`;
 }
 
-// Testfunktion um Items hinzuzufügen
-function getInputForm(){
-        const item = {
-            "id": "item-67890",
-            "type": "Feature",
-            "stac_version": "1.0.0",
-            "stac_extensions": [
-                "https://stac-extensions.github.io/eo/v1.0.0/schema.json",
-                "https://stac-extensions.github.io/scientific/v1.0.0/schema.json"
-            ],
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [
-                    [
-                        [12.4924, 41.8902],
-                        [12.4934, 41.8902],
-                        [12.4934, 41.8912],
-                        [12.4924, 41.8912],
-                        [12.4924, 41.8902]
-                    ]
-                ]
-            },
-            "bbox": [12.4924, 41.8902, 12.4934, 41.8912],
-            "properties": {
-                "datetime": "2025-01-01T12:00:00Z",
-                "mlm:name": "Sample Model",
-                "mlm:architecture": "EfficientNet-B0",
-                "mlm:tasks": "Image Segmentation",
-                "mlm:input": "Satellite Imagery",
-                "mlm:output": "Land Use Classes",
-                "mlm:color": "#FF5733",
-                "title": "Example STAC Item",
-                "description": "This item represents a demonstration of STAC metadata."
-            },
-            "links": {
-                "self": {
-                    "href": "https://example.com/items/item-67890",
-                    "rel": "self",
-                    "type": "application/json"
-                },
-                "collection": {
-                    "href": "https://example.com/collections/collection-456",
-                    "rel": "collection",
-                    "type": "application/json"
-                }
-            },
-            "assets": {
-                "thumbnail": {
-                    "href": "https://example.com/thumbnails/item-67890.png",
-                    "type": "image/png",
-                    "title": "Thumbnail Image"
-                },
-                "data": {
-                    "href": "https://example.com/data/item-67890.tif",
-                    "type": "image/tiff",
-                    "title": "Data Asset"
-                }
-            },
-            "collection_id": "Example_Collection",
-            "created_at": "2025-01-01T12:00:00Z",
-            "updated_at": "2025-01-01T12:00:00Z"
-        }
- return item;       
-}
-
 // Funktion zum anzeigen aller verfügbaren unique Filtervalues in der Sidebar
 function printAllFilters(items) {
     const filters = extractUniqueFilterValues(items);
@@ -648,7 +529,6 @@ function printAllFilters(items) {
                     }
                 }
             }
-
             displayItems(items, selectedFilters);
         });
     });
@@ -659,6 +539,7 @@ function filterItems(items, filters){
     showAlert(0)
     let selectedItems = [];
     let matchingValues = true;
+    console.log("accessed filterItems")
     if(!filters || Object.keys(filters).length === 0){
         return items
     }
@@ -667,9 +548,7 @@ function filterItems(items, filters){
             try{
                 //Framework filtern
                 if(filters.frameworks && Object.keys(filters.frameworks).length > 0){
-                    //console.log("frameworks")
                     if(item.properties['mlm:framework'].includes(filters.frameworks)){
-                        // console.log("frameworks accessed")
                         matchingValues = true;
                     }
                     else{
@@ -678,9 +557,7 @@ function filterItems(items, filters){
                 }
                 //Accelerators filtern
                 if(filters.accelerators && Object.keys(filters.accelerators).length > 0){
-                    //console.log("accelerator")
                     if(item.properties['mlm:accelerator'].includes(filters.accelerators)){
-                        //console.log("accelerator accessed")
                         matchingValues = true;
                     }
                     else{
@@ -689,11 +566,7 @@ function filterItems(items, filters){
                 }
                 // Tasks filtern
                 if (filters.tasks && Object.keys(filters.tasks).length > 0){
-                    // console.log("tasks")
-                    // console.log(JSON.stringify(filters.tasks))
-                    // console.log(JSON.stringify(item.properties['mlm:tasks']))
                     if (Array.from(item.properties['mlm:tasks']).some(task => filters.tasks.includes(task))) {
-                        //console.log("tasks accessed")
                         matchingValues = true;
                     } else {
                         return;
@@ -701,10 +574,7 @@ function filterItems(items, filters){
                 }
                 //Inputs filtern
                 if(filters.inputTypes && Object.keys(filters.inputTypes).length > 0){
-                    // console.log("input")
-                    // console.log(item.properties['mlm:input'].type.includes(filters.inputTypes))
                     if(item.properties['mlm:input'].type.includes(filters.inputTypes)){
-                        // console.log("input accessed")
                         matchingValues = true;
                     }
                     else{
@@ -715,7 +585,6 @@ function filterItems(items, filters){
                 // Pretrained Sources
                 if (filters.pretrainedSources && item.properties['mlm:pretrained_source'] !== 'None' && Array.isArray(filters.pretrainedSources) && filters.pretrainedSources.length > 0) {
                     if (filters.pretrainedSources.includes(item.properties['mlm:pretrained_source'])) {
-                        // console.log("Pretrained sources accessed");
                         matchingValues = true;
                     } else {
                         return;
@@ -724,10 +593,7 @@ function filterItems(items, filters){
 
                 // Accelerator Summary filtern
                 if (filters.acceleratorSummaries && item.properties['mlm:accelerator_summary'] !== 'None' && Array.isArray(filters.acceleratorSummaries) && filters.acceleratorSummaries.length > 0) {
-                    // console.log(filters.acceleratorSummaries);
-                    // console.log(item.properties['mlm:accelerator_summary']);
                     if (filters.acceleratorSummaries.includes(item.properties['mlm:accelerator_summary'])) {
-                        // console.log("Accelerator summary accessed");
                         matchingValues = true;
                     } else {
                         return;
@@ -745,7 +611,6 @@ function filterItems(items, filters){
         if(Object.keys(selectedItems).length == 0){
             showAlert(2, "Keine Modelle gefunden.", "Nutze andere Suchparameter oder füge ein weiteres Modell mit deinen Anforderungen hinzu.")
         }
-        console.log(selectedItems);
         return selectedItems;
     }
 }
@@ -826,6 +691,9 @@ function displayItems(items, filters) {
     const selectedFilters = filters;
     const filteredItems = filterItems(items, filters);
 
+    console.log(selectedFilters);
+    console.log(items);
+
     filteredItems.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.classList.add('p-3', 'modell-item');
@@ -838,7 +706,7 @@ function displayItems(items, filters) {
                 parameters.classList.add('modell-itemparameter');
                 parameters.id = `modell-itemparameter-${item.id}`;
                 parameters.innerHTML = `
-                    ${fillInParameters(item)}
+                    ${fillInParameters(item, selectedFilters)}
                     <button type="button" 
                             class="btn-expand" 
                             data-bs-toggle="collapse" 
@@ -850,7 +718,6 @@ function displayItems(items, filters) {
                             </svg>
                     </button>
                 `;
-
                 const information = document.createElement('div');
                 information.id = 'modell-itemcollapse'
                 information.innerHTML = `
@@ -913,7 +780,6 @@ function displayItems(items, filters) {
 
 // Funktion zum kopieren von Informationen in die Zwischenablage
 function copyToClipboard(url_text, model_name) {
-    //console.log("reached");
     navigator.clipboard.writeText(url_text).then(() => {
         showAlert(2, `Link des Modells <i>${model_name}</i> erfolgreich in die Zwischenablage kopiert.`, "");
     }).catch(err => {
@@ -921,11 +787,12 @@ function copyToClipboard(url_text, model_name) {
     });
 }
 
-// Funktion um anzuzeigende Informationen zu den Modellen zu generieren
+// Funktion um anzuzeigende Schnellinformationen zu den Modellen zu generieren
 function fillInParameters(item, filters){
-
+        const filters = filters;
+        console.log(filters)
         return `           <span>
-                    ${item.properties['mlm:accelerator'] || 'Unbekannt'} - 
+                    ${item.properties['mlm:architecture'] || 'Unbekannt'} - 
                     ${item.properties['mlm:framework'] || 'Unbekannt'} - 
                     ${item.properties['mlm:accelerator_summary'] || 'Unbekannt'}
                 </span>` 
