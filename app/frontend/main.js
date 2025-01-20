@@ -184,16 +184,13 @@ function getBounds() {
     const lastRectangle = drawnItems.getLayers().pop();
     if (lastRectangle) {
         const bounds = lastRectangle.getBounds();
-        //return bounds.toBBoxString();
-        return `[ -3.1604576110839844, 4.878750341423394, 17.35425710678101, 28.7440977569921 ]
-`;
+        return bounds.toBBoxString();
     }
     return null;
 }
 
 // Erstellt dynmaisch die gefragten Inputs für ein vollständiges Modell
 function createInputForm(data) {
-    //console.log("1");
     const parameters = data;
     const container = document.getElementById('main-inputcontainer');
     createInputTOC(data);
@@ -209,7 +206,6 @@ function createInputForm(data) {
     const tableBody = document.getElementById('input-table-body');
 
     parameters.forEach(parameter => {
-        //console.log("2", parameter);
         count += 1
         tableBody.innerHTML += `
             <tr id="main-inputgroup">
@@ -464,7 +460,7 @@ function printAllFilters(items) {
     let filterContent = '';
     const sidebar = document.getElementById("sidebar");
 
-    sidebar.innerHTML = ''; // Vorherige Inhalte der Sidebar löschen
+    sidebar.innerHTML = '';
 
     const toggleButton = `
         <button class="d-md-none position-absolute top-0 end-0 m-2 btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle Sidebar">
@@ -539,7 +535,6 @@ function filterItems(items, filters){
     showAlert(0)
     let selectedItems = [];
     let matchingValues = true;
-    console.log("accessed filterItems")
     if(!filters || Object.keys(filters).length === 0){
         return items
     }
@@ -788,8 +783,8 @@ function copyToClipboard(url_text, model_name) {
 }
 
 // Funktion um anzuzeigende Schnellinformationen zu den Modellen zu generieren
-function fillInParameters(item, filters){
-        const filters = filters;
+function fillInParameters(item, data){
+        const filters = data;
         console.log(filters)
         return `           <span>
                     ${item.properties['mlm:architecture'] || 'Unbekannt'} - 
