@@ -2,6 +2,7 @@
 # SQLAlchmey macht Vorgaben für die Datenbank (Eigenschaften etc.), Pydantic prüft die Eingaben des Nutzers an FastAPI und die Rückgabe an den Nutzer
 
 from pydantic import BaseModel, Field, validator
+import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
@@ -87,3 +88,10 @@ class ItemCreate(BaseModel):
     #         raise ValueError(f"Invalid value for 'rel'. It must be a string.")
 
     #     return value
+
+    def dict(self, *args, **kwargs):
+        # Überschreiben der dict-Methode, um assets zu serialisieren
+        obj_dict = super().dict(*args, **kwargs)
+        # Wandeln Sie alle Asset-Objekte in Dictionarys um
+        obj_dict["assets"] = {key: asset.to_dict() for key, asset in self.assets.items()}
+        return obj_dict

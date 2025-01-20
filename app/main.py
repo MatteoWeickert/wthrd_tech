@@ -80,21 +80,24 @@ def get_catalogs(catalog_id: int):
 def add_item(item: ItemCreate):
     db = SessionLocal()
     
-    new_item = Item(
-        id = item.id,
-        type = item.type,
-        stac_version = item.stac_version,
-        stac_extensions = item.stac_extensions,
-        geometry = item.geometry,
-        bbox = item.bbox,
-        properties = item.properties,
-        links = item.links,
-        assets = item.assets,
-        collection_id = item.collection_id,
-        created_at = item.created_at,
-        updated_at = item.updated_at
-    )
     try:
+        # Serialisieren der Eingabedaten, einschließlich der Assets
+        item_data = item.dict()  # Die überschriebenen `dict`-Methode sorgt für korrekte Serialisierung
+        new_item = Item(
+            id=item_data["id"],
+            type=item_data["type"],
+            stac_version=item_data["stac_version"],
+            stac_extensions=item_data["stac_extensions"],
+            geometry=item_data["geometry"],
+            bbox=item_data["bbox"],
+            properties=item_data["properties"],
+            links=item_data["links"],
+            assets=item_data["assets"],  # assets ist jetzt ein JSON-serialisierbares Dictionary
+            collection_id=item_data["collection_id"],
+            created_at=item_data["created_at"],
+            updated_at=item_data["updated_at"]
+        )
+        
         db.add(new_item)
         db.commit()
         db.refresh(new_item)
@@ -102,6 +105,8 @@ def add_item(item: ItemCreate):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error adding item: {str(e)}")
+    finally:
+        db.close()
 
 
 ############################################################################################################
