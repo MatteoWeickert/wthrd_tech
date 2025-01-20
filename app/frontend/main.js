@@ -701,7 +701,7 @@ function displayItems(items, filters) {
                 parameters.classList.add('modell-itemparameter');
                 parameters.id = `modell-itemparameter-${item.id}`;
                 parameters.innerHTML = `
-                    ${fillInParameters(item, selectedFilters)}
+                    ${fillInParameters(item)}
                     <button type="button" 
                             class="btn-expand" 
                             data-bs-toggle="collapse" 
@@ -783,8 +783,7 @@ function copyToClipboard(url_text, model_name) {
 }
 
 // Funktion um anzuzeigende Schnellinformationen zu den Modellen zu generieren
-function fillInParameters(item, data){
-        const filters = data;
+function fillInParameters(item){
         console.log(filters)
         return `           <span>
                     ${item.properties['mlm:architecture'] || 'Unbekannt'} - 
