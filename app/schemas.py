@@ -95,3 +95,17 @@ class ItemCreate(BaseModel):
         # Wandeln Sie alle Asset-Objekte in Dictionarys um
         obj_dict["assets"] = {key: asset.to_dict() for key, asset in self.assets.items()}
         return obj_dict
+    
+class CollectionCreate(BaseModel):
+    id: str = Field(..., min_length=1, description="The id cannot be empty")
+    type: str = Field("Collection", const=True, description="The type must always be 'Collection'")  # "type" muss immer "Feature" sein
+    stac_version: str = Field(..., min_length=1, description="The stac_version cannot be empty")  # ... bedeutet, dass das Feld erforderlich ist
+    stac_extensions: List[str]
+    title: str
+    description: str
+    license: str
+    extent: Dict
+    links: List[Dict]
+    catalog_id: str
+    created_at: datetime
+    updated_at: datetime

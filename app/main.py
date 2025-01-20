@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from models import Item, Catalog, Collection
 import os, datetime
-from schemas import ItemCreate
+from schemas import ItemCreate, CollectionCreate
 
 from sqlalchemy.sql.expression import cast
 from sqlalchemy.types import String
@@ -75,6 +75,40 @@ def get_catalogs(catalog_id: int):
     if catalog is None:
         return {"error": "Catalog not found"}
     return catalog
+
+@app.post("/addCollection/")
+def add_collection(collection: CollectionCreate):
+    db = SessionLocal()
+
+    try:
+        # Serialisieren der Eingabedaten, einschließlich der Assets
+        collection_data = collection.dict()  # Die überschriebenen `dict`-Methode sorgt für korrekte Serialisierung
+        new_collection = Collection(
+            id=collection_data["id"],
+            type=collection_data["type"],
+            stac_version=collection_data["stac_version"],
+            stac_extensions=collection_data["stac_extensions"],
+            title=collection_data["title"],
+            description=collection_data["description"],
+            license=collection_data["license"],
+            extent=collection_data["extent"],
+            links=collection_data["links"],
+            catalog_id=collection_data["catalog_id"],
+            created_at=collection_data["created_at"],
+            updated_at=collection_data["updated_at"]
+        )
+        
+        db.add(new_collection)
+        db.commit()
+        db.refresh(new_collection)
+        return {"message": "Collection added successfully", "collection_id": new_collection.id}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error adding collection: {str(e)}")
+    finally:
+        db.close()
+
+
 
 @app.post("/addItem/")
 def add_item(item: ItemCreate):
