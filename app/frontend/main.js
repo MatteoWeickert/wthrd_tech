@@ -1,7 +1,35 @@
-// Hält die Informationen zu der Map beim hinzufügen von Modellen (Bugfix)
-function getLforMap(){
-    const drawnItems = new L.FeatureGroup();
-    return drawnItems;
+let sharedDrawnItems = null;
+let bboxString = null;
+
+let startDatum = null;
+let endDatum = null;
+
+// Singleton-Fkt speichert die angegebenen Daten (range)
+function getDateRange() {
+    if (startDatum && endDatum) {
+        return [
+            { start: startDatum.format('YYYY-MM-DD') },
+            { end: endDatum.format('YYYY-MM-DD') }
+        ];
+    } else {
+        return null;
+    }
+}
+
+// Singleton-Fkt um gezeichnete Elemente zu verwalten
+function getDrawnItems() {
+    if (!sharedDrawnItems) {
+        sharedDrawnItems = new L.FeatureGroup();
+    }
+    return sharedDrawnItems;
+}
+
+// Singleton-Fkt um Bbox zu verwalten
+function setBounds(drawn) {
+    if (!bboxString) {
+        bboxString = drawn;
+    }
+    return bboxString;
 }
 
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
@@ -9,9 +37,62 @@ function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
     switch(data){
         case('/addmodel.html'):
-            const drawnItems = getLforMap();
+            $(function() {
+                $('input[name="daterange"]').daterangepicker({
+                    "locale": {
+                        "format": "MM/DD/YYYY",
+                        "separator": " - ",
+                        "applyLabel": "Anwenden",
+                        "cancelLabel": "Abbrechen",
+                        "fromLabel": "Von",
+                        "toLabel": "bis",
+                        "customRangeLabel": "Custom",
+                        "weekLabel": "W",
+                        "daysOfWeek": [
+                            "So",
+                            "Mo",
+                            "Di",
+                            "Mi",
+                            "Do",
+                            "Fr",
+                            "Sa"
+                        ],
+                        "monthNames": [
+                            "Januar",
+                            "Februar",
+                            "März",
+                            "April",
+                            "Mai",
+                            "Juni",
+                            "Juli",
+                            "August",
+                            "September",
+                            "Oktober",
+                            "November",
+                            "Dezember"
+                        ],
+                        "firstDay": 1
+                    },
+                    opens: 'left',
+                    autoApply:true
+                }, function(start, end, label) {
+                    console.log("Neue Range: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
+                    startDatum = start;
+                    endDatum = end;
+                });
+            });
+            const drawnItems = getDrawnItems();
             createInputForm(getExpectedInputs());
             const map = L.map('map').setView([0, 0], 2);
+
+            map.on('draw:created', function (event) {
+                const layer = event.layer;
+                drawnItems.addLayer(layer);
+                const bounds = layer.getBounds();
+                console.log(bounds);
+                setBounds(bounds.toBBoxString())
+                getBounds()
+            });
 
             L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -35,34 +116,17 @@ function startWebsite(){
                 });
                 map.addControl(drawControl);
         
-                map.on(L.Draw.Event.CREATED, function (event) {
-                    const layer = event.layer;
-                    drawnItems.clearLayers();
-                    drawnItems.addLayer(layer);
-                    const bounds = layer.getBounds();
-                    getBounds(bounds);
-                });
-        
-                map.on('draw:created', function (event) {
-                    const layer = event.layer;
-                    drawnItems.addLayer(layer);
-                    const bounds = layer.getBounds();
-                    console.log("Bounding Box: " + bounds.toBBoxString());
-                    return bounds.toBBoxString();
-                });
             break;
         case('/catalog.html'):
             fetchItems();
-            break;
-        default: window.location.href = '/start.html';
-        break;         
+            break;      
     }
 }
 startWebsite();
 
 // Funktion zum Verwalten der gewollten Userinputs
 function getExpectedInputs(){
-    return ['id', 'stacversion', 'stacextension', 'geometry', 'title', 'description', 'name', 'architecture', 'framework', 'frameworkversion', 'pretrainedsource','batchsizesuggestion','hyperparameter', 'collectionid', 'collectiontitle']
+    return ['id', 'stacversion', 'stacextension', 'geometry', 'title', 'description', 'name', 'tasks','inputname', 'inputtypes', 'architecture', 'framework', 'frameworkversion', 'accelerator','acceleratorsummary','pretrainedsource','batchsizesuggestion','hyperparameter', 'collectionid', 'link']
 }
 
 // Fetchen aller Modelle
@@ -89,6 +153,7 @@ async function fetchItems() {
 // addItems
 async function addItems() {
     const input = getUserInputs();
+
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
@@ -101,7 +166,7 @@ async function addItems() {
                 type: 'Feature',
                 stac_version: input.stacversion,
                 stac_extensions: [input.stacextension],
-                geometry: getGeometry(),
+                geometry: input.geometry,
                 bbox: getBounds(),
                 properties: {
                     title: input.title,
@@ -109,37 +174,45 @@ async function addItems() {
                     datetime: "2024-12-04T16:20:00",
                     "mlm:name": input.name,
                     "mlm:architecture": input.architecture,
-                    "mlm:tasks": ["classification", "image"],
+                    "mlm:tasks": input.tasks.split(',').map(value => value.trim()),
                     "mlm:framework": input.framework,
                     "mlm:framework_version": input.frameworkversion,
-                    "mlm:pretrained": true,
+                    "mlm:pretrained": getPretrained(),
                     "mlm:pretrained_source": input.pretrainedsource,
                     "mlm:batch_size_suggestion": input.batchsizesuggestion,
-                    "mlm:input": [{
-                        "name": "testname",
-                        "bands": ["basnd", "basnd"],
-                        "input": ""
+                    "mlm:accelerator":input.accelerator,
+                    "mlm:accelerator_summary":input.acceleratorsummary,
+                    end_datetime: getDateRange()[1].end,
+                    start_datetime: getDateRange()[0].start,
+                    "mlm:input": [
+                        {
+                            name: input.inputname,
+                            type: input.inputtypes.split(',').map(value => value.trim())
+                        }
+                    ],
+                    "mlm:output":[ {
+                        type: "class",
+                        num_classes: 1000
                     }],
-                    "mlm:output": {
-                        "type": "class",
-                        "num_classes": 1000
-                    },
-                    "mlm:hyperparameters": getHyperparameters() || ''
+                    "mlm:hyperparameters": input.hyperparameter
                 },
                 links: [
-                    { "href": "https://example.com/item", "type": "application/json", "rel": "self" },
-                    { "href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent" },
-                    { "href": "http://localhost:8000/", "type": "application/json", "rel": "root" },
-                    { "href": `http://localhost:8000/collections/${input.collectionid}`, "type": "application/json", "rel": "collection" }
+                    { href: "https://example.com/item", type: "application/json", rel: "self" },
+                    { href: "http://localhost:8000/collections", type: "application/json", rel: "parent" },
+                    { href: "http://localhost:8000/", type: "application/json", rel: "root" },
+                    { href: `http://localhost:8000/collections/${input.collectionid}`, type: "application/json", rel: "collection" }
                 ],
                 assets: {
-                    thumbnail: { "href": "https://example.com/thumbnail.png" },
-                    data: { "href": "https://example.com/data" }
+                    model: {
+                        href: input.link
+                    },
+                    thumbnail: { href: "https://example.com/thumbnail.png" },
+                    data: { href: "https://example.com/data" }
                 },
-                collection_id: input.collectiontitle,
+                collection_id: input.collectionid,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                color: getSelectedColor() || ''
+                color: getSelectedColor()
             })
         });
 
@@ -152,41 +225,30 @@ async function addItems() {
 }
 
 // Funktion um die Geometry auszugeben
-function getGeometry(){
-    const input = getUserInputs()
-    const geometry = (input.geometry).replace(/[^\w\s]/gi, '');
-    //return geometry;
-    return `{
-  "type": "Polygon",
-  "coordinates": [
-    [
-      [7882190080512502, 3713739173208318],
-      [7882190080512502, 5821798141355221],
-      [27911651652899923, 5821798141355221],
-      [27911651652899923, 3713739173208318],
-      [7882190080512502, 3713739173208318]
-    ]
-  ]
-}
-`
-}
-
-// Funktion um die Hyperparameters auszugeben
-function getHyperparameters(){
-    const input = getUserInputs()
-    const hyppara = ((input.hyperparameter).replace(/[^\w\s]/gi, ''));
-    console.log(hyppara)
+function getGeometry() {
+    return {
+        type: "Polygon",
+        coordinates: [
+            [
+                [7882190080512502, 3713739173208318],
+                [7882190080512502, 5821798141355221],
+                [27911651652899923, 5821798141355221],
+                [27911651652899923, 3713739173208318],
+                [7882190080512502, 3713739173208318]
+            ]
+        ]
+    };
 }
 
 // Funktion um immer die aktuelle Bounding Box von der Karte zu extrahieren
 function getBounds() {
-    const drawnItems = getLforMap();
-    const lastRectangle = drawnItems.getLayers().pop();
-    if (lastRectangle) {
-        const bounds = lastRectangle.getBounds();
-        return bounds.toBBoxString();
+    if(bboxString){
+        const bounds = bboxString;
+        console.log(bounds)
+        return bounds.split(',').map(value => parseFloat(value.trim()));
+    }else{
+        return null;
     }
-    return null;
 }
 
 // Erstellt dynmaisch die gefragten Inputs für ein vollständiges Modell
@@ -236,10 +298,34 @@ function createInputForm(data) {
         <tr id="main-inputgroup">
             <td id="inputexp-color" class="main-inputexp">${count}) Farbgebung</td>
             <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                <input id="main-inputelem-color" style="height: 30px;" class="w-50" type="color" />
+                <input style="border: solid 2px black; border-radius: 3px;" id="main-inputelem-color" style="height: 30px;" class="w-50" type="color" />
             </td>
             <td id="" class="main-inputalert"></td>
         </tr>
+    `;
+
+    count += 1;
+
+    // Zeitraumauswahö
+    tableBody.innerHTML += `
+        <tr id="main-inputgroup">
+            <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum</td>
+            <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
+            </td>
+            <td id="" class="main-inputalert"></td>
+        </tr>
+    `;
+
+    // Vortrainiert-Auswahl
+    tableBody.innerHTML += `
+    <tr id="main-inputgroup">
+        <td id="inputexp-pretrained" class="main-inputexp">${count}) Vortrainiert</td>
+        <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+            <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
+        </td>
+        <td id="" class="main-inputalert"></td>
+    </tr>
     `;
 
     // Buttons zum absenden un analysieren
@@ -275,13 +361,16 @@ function analyzeInput(){
     });
     const bounding = getBounds();
     const hex = document.getElementById("main-inputelem-color").value;
+    const date = getDateRange();
     if (bounding === undefined || bounding === null || bounding === "") {
         console.log(bounding)
         missing.push('Bounding')
     }
-    console.log("hex" + hex)
     if (hex === undefined || hex === null || hex === "" || hex === '#000000') {
         missing.push('Color')
+    }
+    if (date === undefined || date === null || date === "") {
+        missing.push('Date')
     }
     changeInputTOC(parameters, missing);
     return missing;
@@ -301,12 +390,12 @@ function sendInput() {
 }
 
 // Funktion um ausgewählte Farbe beim hinzufügen eines Modells zu sichern
-function getSelectedColor(){
+function getSelectedColor() {
     const colorInput = document.getElementById('main-inputelem-color');
-    colorInput.addEventListener('input', function() {
-        const selectedColor = colorInput.value;
-        return selectedColor
-    });
+    if (colorInput) {
+        console.log("Farbcode:" + colorInput.value)
+        return colorInput.value;
+    }
 }
 
 // Funktion zum dynamischen Erstellen des Inhaltsverzeichnisses mit Scrollfunktion
@@ -325,7 +414,7 @@ function createInputTOC(data) {
     parameters.forEach(parameter => {
         sidebarList.innerHTML += `
             <li class="nav-item">
-                <a class="nav-link" style="color:green; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
+                <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
             </li>
         `;
     });
@@ -333,10 +422,13 @@ function createInputTOC(data) {
     // Feststehende Elemente hinzufügen
     sidebarList.innerHTML += `
     <li class="nav-item">
-        <a class="nav-link" style="color:green; margin-top: -10px; " href="#inputexp-map">Bounding Box</a>
+        <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-map">Bounding Box</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" style="color:green; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
+        <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
     </li>
     `;
     
@@ -376,8 +468,8 @@ function changeInputTOC(data, pois){
         if (changeList.includes(parameter)) {
                     sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
+                            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
@@ -386,8 +478,8 @@ function changeInputTOC(data, pois){
         else {
             sidebarList.innerHTML += `
             <li class="nav-item d-flex align-items-center">
-                <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
+                <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                     <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
                 </svg>
             </li>
@@ -398,8 +490,8 @@ function changeInputTOC(data, pois){
     if (changeList.includes('Bounding')){
             sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-map">Bounding Box</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
+                            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
@@ -408,8 +500,8 @@ function changeInputTOC(data, pois){
     else{
         sidebarList.innerHTML += `
         <li class="nav-item d-flex align-items-center">
-            <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-map">Bounding Box</a>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
+            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
             </svg>
         </li>
@@ -419,8 +511,8 @@ function changeInputTOC(data, pois){
     if (changeList.includes('Color')){
             sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+                            <svg style="margin-top: -10px;"xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
@@ -429,12 +521,33 @@ function changeInputTOC(data, pois){
     else{
         sidebarList.innerHTML += `
         <li class="nav-item d-flex align-items-center">
-            <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
             </svg>
         </li>
 `;
+    }
+
+    if (changeList.includes('Date')){
+        sidebarList.innerHTML += `
+                    <li class="nav-item d-flex align-items-center">
+                        <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                        <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                        </svg>
+                    </li>
+        `;
+    }
+    else{
+        sidebarList.innerHTML += `
+        <li class="nav-item d-flex align-items-center">
+            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
+        </li>
+    `;
     }
 
     // Footer hinzufügen
@@ -545,6 +658,7 @@ function filterItems(items, filters){
                 if(filters.frameworks && Object.keys(filters.frameworks).length > 0){
                     if(item.properties['mlm:framework'].includes(filters.frameworks)){
                         matchingValues = true;
+                        console.log("erfolgreich 1")
                     }
                     else{
                         return;
@@ -554,6 +668,7 @@ function filterItems(items, filters){
                 if(filters.accelerators && Object.keys(filters.accelerators).length > 0){
                     if(item.properties['mlm:accelerator'].includes(filters.accelerators)){
                         matchingValues = true;
+                        console.log("erfolgreich 2")
                     }
                     else{
                         return;
@@ -563,37 +678,38 @@ function filterItems(items, filters){
                 if (filters.tasks && Object.keys(filters.tasks).length > 0){
                     if (Array.from(item.properties['mlm:tasks']).some(task => filters.tasks.includes(task))) {
                         matchingValues = true;
+                        console.log("erfolgreich 3")
                     } else {
                         return;
                     }
                 }
-                //Inputs filtern
-                if(filters.inputTypes && Object.keys(filters.inputTypes).length > 0){
-                    if(item.properties['mlm:input'].type.includes(filters.inputTypes)){
-                        matchingValues = true;
-                    }
-                    else{
-                        return;
-                    }
-                }
+                // //Inputs filtern
+                // if(filters.inputTypes && Object.keys(filters.inputTypes).length > 0){
+                //     if(item.properties['mlm:input'].type.includes(filters.inputTypes)){
+                //         matchingValues = true;
+                //     }
+                //     else{
+                //         return;
+                //     }
+                // }
 
-                // Pretrained Sources
-                if (filters.pretrainedSources && item.properties['mlm:pretrained_source'] !== 'None' && Array.isArray(filters.pretrainedSources) && filters.pretrainedSources.length > 0) {
-                    if (filters.pretrainedSources.includes(item.properties['mlm:pretrained_source'])) {
-                        matchingValues = true;
-                    } else {
-                        return;
-                    }
-                }
+                // // Pretrained Sources
+                // if (filters.pretrainedSources && item.properties['mlm:pretrained_source'] !== 'None' && Array.isArray(filters.pretrainedSources) && filters.pretrainedSources.length > 0) {
+                //     if (filters.pretrainedSources.includes(item.properties['mlm:pretrained_source'])) {
+                //         matchingValues = true;
+                //     } else {
+                //         return;
+                //     }
+                // }
 
-                // Accelerator Summary filtern
-                if (filters.acceleratorSummaries && item.properties['mlm:accelerator_summary'] !== 'None' && Array.isArray(filters.acceleratorSummaries) && filters.acceleratorSummaries.length > 0) {
-                    if (filters.acceleratorSummaries.includes(item.properties['mlm:accelerator_summary'])) {
-                        matchingValues = true;
-                    } else {
-                        return;
-                    }
-                }
+                // // Accelerator Summary filtern
+                // if (filters.acceleratorSummaries && item.properties['mlm:accelerator_summary'] !== 'None' && Array.isArray(filters.acceleratorSummaries) && filters.acceleratorSummaries.length > 0) {
+                //     if (filters.acceleratorSummaries.includes(item.properties['mlm:accelerator_summary'])) {
+                //         matchingValues = true;
+                //     } else {
+                //         return;
+                //     }
+                // }
                 if(matchingValues){
                     selectedItems.push(item)
                 }
@@ -627,6 +743,16 @@ function isPretrained(bool,source){
                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
             </svg>
         `
+    }
+}
+
+// Funktion zum Checken ob User ein vortrainiertes Modell hochgeladen hat
+function getPretrained(){
+    const pretrained = document.getElementById('input-pretrained')
+    if(pretrained.checked){
+        return true;
+    } else{
+        return false;
     }
 }
 
@@ -686,8 +812,7 @@ function displayItems(items, filters) {
     const selectedFilters = filters;
     const filteredItems = filterItems(items, filters);
 
-    console.log(selectedFilters);
-    console.log(items);
+    console.log(selectedFilters)
 
     filteredItems.forEach(item => {
                 const itemDiv = document.createElement('div');
@@ -701,7 +826,7 @@ function displayItems(items, filters) {
                 parameters.classList.add('modell-itemparameter');
                 parameters.id = `modell-itemparameter-${item.id}`;
                 parameters.innerHTML = `
-                    ${fillInParameters(item)}
+                    ${fillInParameters(item, filters)}
                     <button type="button" 
                             class="btn-expand" 
                             data-bs-toggle="collapse" 
@@ -744,7 +869,7 @@ function displayItems(items, filters) {
                                             <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
                                             <span>Empfohlener Zeitraum: ${item.properties.start_datetime || 'Unbekannt'} bis ${item.properties.end_datetime || 'Unbekannt'} </span><br>
                                             <span>Erwartete Eingabe: ${item.properties['mlm:input'][0].name || 'Unbekannt'} </span><br>
-                                            <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].bands || 'Unbekannt'}</span><br>
+                                            <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].type || 'Unbekannt'}</span><br>
                                             <span>Accelerator: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
                                             <span>Architektur: ${item.properties['mlm:architecture'] || 'Unbekannt'}</span><br>
                                             <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} in der Version: ${item.properties['mlm:framework_version'] || 'Unbekannt'} </span><br>
@@ -783,8 +908,9 @@ function copyToClipboard(url_text, model_name) {
 }
 
 // Funktion um anzuzeigende Schnellinformationen zu den Modellen zu generieren
-function fillInParameters(item){
-        console.log(filters)
+function fillInParameters(item, data){
+    const filters = data
+    console.log(filters)
         return `           <span>
                     ${item.properties['mlm:architecture'] || 'Unbekannt'} - 
                     ${item.properties['mlm:framework'] || 'Unbekannt'} - 
