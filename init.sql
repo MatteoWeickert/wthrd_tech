@@ -126,7 +126,7 @@ VALUES (
         "mlm:tasks": ["semantic-segmentation", "segmentation"],
         "mlm:input": [{
             "name": "9 Band Sentinel-2 4 Time Step Series Batch",
-            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "type": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
             "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
             "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
@@ -195,7 +195,7 @@ VALUES (
         "mlm:tasks": ["semantic-segmentation", "segmentation"],
         "mlm:input": [{
             "name": "9 Band Sentinel-2 4 Time Step Series Batch",
-            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "type": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
             "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
             "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
@@ -264,7 +264,7 @@ VALUES (
         "mlm:tasks": ["semantic-segmentation", "segmentation"],
         "mlm:input": [{
             "name": "9 Band Sentinel-2 4 Time Step Series Batch",
-            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "type": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
             "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
             "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
@@ -333,7 +333,7 @@ VALUES (
         "mlm:tasks": ["semantic-segmentation", "segmentation"],
         "mlm:input": [{
             "name": "9 Band Sentinel-2 4 Time Step Series Batch",
-            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "type": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
             "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
             "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
@@ -402,7 +402,7 @@ VALUES (
         "mlm:tasks": ["semantic-segmentation", "segmentation"],
         "mlm:input": [{
             "name": "9 Band Sentinel-2 4 Time Step Series Batch",
-            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "type": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
             "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
             "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
@@ -471,7 +471,7 @@ VALUES (
         "mlm:tasks": ["semantic-segmentation", "segmentation"],
         "mlm:input": [{
             "name": "9 Band Sentinel-2 4 Time Step Series Batch",
-            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "type": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
             "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
             "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
@@ -540,7 +540,7 @@ VALUES (
         "mlm:tasks": ["semantic-segmentation", "segmentation"],
         "mlm:input": [{
             "name": "9 Band Sentinel-2 4 Time Step Series Batch",
-            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "type": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
             "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
             "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
@@ -609,7 +609,7 @@ VALUES (
         "mlm:tasks": ["semantic-segmentation", "segmentation"],
         "mlm:input": [{
             "name": "9 Band Sentinel-2 4 Time Step Series Batch",
-            "bands": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
+            "type": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
             "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
             "statistics": [{"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}, {"minimum": 0, "maximum": 255}],
