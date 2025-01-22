@@ -129,7 +129,8 @@ def add_item(item: ItemCreate):
             assets=item_data["assets"],  # assets ist jetzt ein JSON-serialisierbares Dictionary
             collection_id=item_data["collection_id"],
             created_at=item_data["created_at"],
-            updated_at=item_data["updated_at"]
+            updated_at=item_data["updated_at"],
+            color=item_data["color"]
         )
         
         db.add(new_item)
