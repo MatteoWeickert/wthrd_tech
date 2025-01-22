@@ -126,7 +126,92 @@ startWebsite();
 
 // Funktion zum Verwalten der gewollten Userinputs
 function getExpectedInputs(){
-    return ['id', 'stacversion', 'stacextension', 'geometry', 'title', 'description', 'name', 'tasks','inputname', 'inputtypes', 'architecture', 'framework', 'frameworkversion', 'accelerator','acceleratorsummary','pretrainedsource','batchsizesuggestion','hyperparameter', 'collectionid', 'link']
+    return [    'name',
+                'tasks',
+                'description', 
+                'id', 
+                'geometry',
+                'inputname', 
+                'inputtypes', 
+                'architecture', 
+                'framework', 
+                'frameworkversion', 
+                'accelerator',
+                'acceleratorsummary',
+                'pretrainedsource',
+                'batchsizesuggestion',
+                'hyperparameter', 
+                'collectionid', 
+                'link']
+}
+
+// Funktion um Informationen zu den gewollten Userinputs zu verwalten
+function getExpectedInputsInfo(){
+    return[ 'Wähle einen aussagekräftigen Namen. Dieser wird später im Modellkatalog angezeigt.', 
+            `Wähle aus den <a href=howto.html>verfügbaren Aufgaben</a> die zutreffenden für dein Modell.`, 
+            'Füge eine umfassende Beschreibung deines Modells ein. Beschreibe dabei vor allem den Nutzen deines Modells.', 
+            'Wähle eine eindeutige Modell-ID. Diese wird später nicht angezeigt.', 
+            `Füge eine geschlossene Geometry ein. Für weitere Informationen besuche das <a href=howto.html>How-To</>.`,
+            'Füge das benötigte Eingabemedium für dein Modell ein. Z.B. "Imagery".', 
+            'Nenne hier alle benötigen Bestandteile der Eingabe, z.B. alle Bänder wie folgt: "B02, B03, ..".', 
+            'Gebe an, nach welcher Architektur dein Modell erstellt wurde.', 
+            'Füge ein, nach welchem Framework das Modell trainiert wurde.', 
+            'Gebe an, in welcher Version sich das verwendete Framework befindet.', 
+            'Beschreibe, welchen Hardwarebeschleuniger benutzt wurde.',
+            'Gebe weitere Informationen zu der benötigten Hardware an, z.B. ob nur GPU genutzt wurde.',
+            'Füge ein, von welcher Quelle die Daten zum vortrainieren benutzt wurden.',
+            'Gebe an, wie viele Trainingsdatensätze im Optimalfall benötigt werden.',
+            'Füge <a href=howto.html>weitere Informationen</a> zum Modell ein.', 
+            'Wähle aus den verfügbaren Collections eine oder <a href=addcollection.html>füge eine neue hinzu.</a>', 
+            'Füge den Modellink ein.'
+    ]
+}
+
+// Funktion um vorhandene Tasks zu verwalten
+function getPredefinedTasks(){
+    return [
+        'Any-to-Any',
+        'Audio Classification',
+        'Audio-Text-to-Text',
+        'Audio-to-Audio',
+        'Automatic Speech Recognition',
+        'Depth Estimation',
+        'Document Question Answering',
+        'Feature Extraction',
+        'Fill-Mask',
+        'Image Classification',
+        'Image Feature Extraction',
+        'Image Segmentation',
+        'Image-Text-to-Text',
+        'Image-to-3D',
+        'Image-to-Image',
+        'Image-to-Text',
+        'Keypoint Detection',
+        'Msaak Generation',
+        'Object Detection',
+        'Question Answering',
+        'Reinforcement Learning',
+        'Sentence Similarity',
+        'Summarization',
+        'Table Question Answering',
+        'Tabular Classification',
+        'Tabular Regression',
+        'Text Classification',
+        'Text Generation',
+        'Text-to-3D',
+        'Text-to-Image',
+        'Text-to-Speech',
+        'Text-to-Video',
+        'Token Classification',
+        'Translation',
+        'Unconditional Image Generation',
+        'Video Classification',
+        'Video-Text-to-Text',
+        'Visual Question Answering',
+        'Zero-Shot Classification',
+        'Zero-Shot Image Classification',
+        'Zero-Shot Object Detection'
+    ]    
 }
 
 // Fetchen aller Modelle
@@ -156,12 +241,12 @@ async function addItems() {
     console.log(JSON.stringify({
         id: input.id,
         type: 'Feature',
-        stac_version: input.stacversion,
-        stac_extensions: [input.stacextension],
+        stac_version: '1.0.0',
+        stac_extensions: ['https://stac-extensions.github.io/file/v2.1.0/schema.json,https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json'],
         geometry: getGeometry(),
         bbox: getBounds(),
         properties: {
-            title: input.title,
+            title: input.name,
             description: input.description,
             datetime: "2024-12-04T16:20:00",
             "mlm:name": input.name,
@@ -299,6 +384,7 @@ function getBounds() {
 function createInputForm(data) {
     const parameters = data;
     const container = document.getElementById('main-inputcontainer');
+    const info = getExpectedInputsInfo();
     createInputTOC(data);
     container.innerHTML = '';
     var count = 0
@@ -315,9 +401,11 @@ function createInputForm(data) {
         count += 1
         tableBody.innerHTML += `
             <tr id="main-inputgroup">
-                <td id="inputexp-${parameter}" class="main-inputexp">${count}) ${parameter}</td>
+                <td id="inputexp-${parameter}" class="main-inputexp">${count}) ${parameter}<br><span class="main-inputinfo">${info[count-1]}</span></td>
                 <td id="main-inputelem" class="main-inputelem flex-grow-1 d-flex justify-content-center">
-                    <input id="input-${parameter}" class="main-inputwindow" />
+                    <div id="input-${parameter}-div">
+                        <input id="input-${parameter}" class="main-inputwindow" />
+                    </div>
                 </td>
                 <td id="" class="main-inputalert"></td>
             </tr>
@@ -328,9 +416,9 @@ function createInputForm(data) {
     // Bounding Box-Option
     tableBody.innerHTML += `
         <tr id="main-inputgroup">
-            <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box</td>
+            <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box<br><span class="main-inputinfo">Markiere auf der Karte den Bereich, auf den das Modell anwendbar ist.</span></td>
             <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                <div id="map" style="width:100%;height:100%;"></div>
+                <div id="map" style="width:120%;height:100%;"></div>
             </td>
             <td id="" class="main-inputalert"></td>
         </tr>
@@ -340,7 +428,7 @@ function createInputForm(data) {
     // Farbcode-Option hinzufügen
     tableBody.innerHTML += `
         <tr id="main-inputgroup">
-            <td id="inputexp-color" class="main-inputexp">${count}) Farbgebung</td>
+            <td id="inputexp-color" class="main-inputexp">${count}) Farbgebung<br><span class="main-inputinfo">Wähle eine individuelle Farbe, in welcher später das Modell angezeigt wird.</span></td>
             <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
                 <input style="border: solid 2px black; border-radius: 3px;" id="main-inputelem-color" style="height: 30px;" class="w-50" type="color" />
             </td>
@@ -353,7 +441,7 @@ function createInputForm(data) {
     // Zeitraumauswahö
     tableBody.innerHTML += `
         <tr id="main-inputgroup">
-            <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum</td>
+            <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum das Modell trainiert ist.</span></td>
             <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
                 <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
             </td>
@@ -361,15 +449,17 @@ function createInputForm(data) {
         </tr>
     `;
 
+    count += 1;
+
     // Vortrainiert-Auswahl
     tableBody.innerHTML += `
-    <tr id="main-inputgroup">
-        <td id="inputexp-pretrained" class="main-inputexp">${count}) Vortrainiert</td>
-        <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
-            <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
-        </td>
-        <td id="" class="main-inputalert"></td>
-    </tr>
+        <tr id="main-inputgroup">
+            <td id="inputexp-pretrained" class="main-inputexp">${count}) Vortrainiert<br><span class="main-inputinfo">Gebe an, ob dein Modell vortrainiert wurde.</span></td>
+            <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
+            </td>
+            <td id="" class="main-inputalert"></td>
+        </tr>
     `;
 
     // Buttons zum absenden un analysieren
@@ -379,6 +469,55 @@ function createInputForm(data) {
             <button class="button-input" onclick="sendInput()"id="main-button-send">Abschicken</button>
         </div>
     `
+    createDynamicInputs();
+}
+
+// Funktion um Tasks
+function createDynamicInputs() {
+    const taskDiv = document.getElementById('input-tasks-div');
+    taskDiv.innerHTML = ''
+    const inputField = document.createElement('input');
+    const dropdown = document.createElement('div');
+    const tasks = getPredefinedTasks();
+
+    inputField.setAttribute('class', 'main-inputwindow');
+    inputField.setAttribute('id', 'input-tasks');
+    inputField.setAttribute('placeholder', 'Tasks..');
+    inputField.setAttribute('readonly', 'true');
+    taskDiv.appendChild(inputField);
+
+    dropdown.setAttribute('id', 'dropdown-options');
+    dropdown.setAttribute('class', 'main-inputdynamic');
+    dropdown.style.cssText = 'position: inherit; top: 100%; left: 0; max-height: 350px; overflow-y: auto; display: none;';
+    taskDiv.appendChild(dropdown);
+    tasks.forEach(task => {
+        const checkboxItem = document.createElement('div');
+        checkboxItem.style.cssText = 'padding: 5px; cursor: pointer;';
+        checkboxItem.innerHTML = `
+            <input type="checkbox" id="task-${task}" value="${task}" style="margin-right: 5px;" />
+            <label for="task-${task}">${task}</label>
+        `;
+        checkboxItem.querySelector('input').addEventListener('change', updateSelectedTasks);
+        dropdown.appendChild(checkboxItem);
+    });
+
+    inputField.addEventListener('click', () => {
+        dropdown.style.cssText = 'max-width: 150px;'
+        dropdown.style.display = dropdown.style.display === 'inherit' ? 'none' : 'inherit';
+    });
+
+    document.addEventListener('click', event => {
+        if (!taskDiv.contains(event.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+}
+
+// Aktualisiert die Auswahl im Eingabefeld
+function updateSelectedTasks() {
+    const checkboxes = document.querySelectorAll('#dropdown-options input:checked');
+    const selectedTasks = Array.from(checkboxes).map(checkbox => checkbox.value);
+    document.getElementById('input-tasks').value = selectedTasks.join(', ');
 }
 
 // Funktion um alle User Eingaben abzugreifen und in ein Array zu bündeln
