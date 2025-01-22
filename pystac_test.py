@@ -14,3 +14,6 @@ print(api.title)
 print(api.links)
 for collection in api.get_all_collections():
     print(collection)
+
+for item in api.get_all_items():
+    print(item)

@@ -57,7 +57,9 @@ VALUES (
         '{"href": "http://localhost:8000/", "type": "application/json", "rel": "self"}'::jsonb,
         '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
         '{"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"}'::jsonb,
-        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}'::jsonb
+        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "child"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection_2", "type": "application/json", "rel": "child"}'::jsonb
         ], 
     NOW(), 
     NOW()
@@ -78,7 +80,8 @@ VALUES
         '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "self"}'::jsonb,
         '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
         '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"}'::jsonb
+        '{"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"}'::jsonb        
+
     ], 
     (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW()
 ),

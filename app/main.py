@@ -158,7 +158,6 @@ def get_catalog():
         # Fügt conformsTo dynamisch als Attribut hinzu
         conforms_to = [
             "http://api.stacspec.org/v1.0.0/core",
-            "https://stac-extensions.github.io/mlm/v1.3.0/schema.json",
             "http://api.stacspec.org/v1.0.0/collections",
             "http://api.stacspec.org/v1.0.0/item-search",
             "http://api.stacspec.org/v1.0.0/features"
@@ -181,10 +180,10 @@ def get_conformance():
         content={
             "conformsTo": [
                 "http://api.stacspec.org/v1.0.0/core",
-                "https://stac-extensions.github.io/mlm/v1.3.0/schema.json",
                 "http://api.stacspec.org/v1.0.0/collections",
                 "http://api.stacspec.org/v1.0.0/item-search",
-                "http://api.stacspec.org/v1.0.0/features"
+                "http://api.stacspec.org/v1.0.0/features",
+                "https://stac-extensions.github.io/mlm/v1.3.0/schema.json"
             ]
         }
     )
