@@ -310,3 +310,8 @@
 #footer-linkoption:hover,#footer-linkoption:active {
   color: #ededed;
 }
+
+#disableOverlay {
+  background-color: #9ec4f2;
+  border-color: #9ec4f2;
+}
