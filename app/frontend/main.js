@@ -1,5 +1,6 @@
 let sharedDrawnItems = null;
 let bboxString = null;
+let usedFilters= null;
 
 let startDatum = null;
 let endDatum = null;
@@ -37,6 +38,7 @@ function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
     switch(data){
         case('/addmodel.html'):
+         //Daterange picker Einstellungen
             $(function() {
                 $('input[name="daterange"]').daterangepicker({
                     "locale": {
@@ -118,8 +120,10 @@ function startWebsite(){
         
             break;
         case('/catalog.html'):
+        setTimeout(function(){
             fetchItems();
-            break;      
+        }, 0) 
+        break;     
     }
 }
 startWebsite();
@@ -224,7 +228,7 @@ async function fetchItems() {
         const data = await response.json();
 
         if (Array.isArray(data) && data.length > 0) {
-            displayItems(data, undefined);
+            displayItems(data, undefined, 'asc');
             printAllFilters(data);
         } else {
             showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
@@ -235,14 +239,14 @@ async function fetchItems() {
     }
 }
 
-// addItems
+// Adden des Items aus Eingabemaske
 async function addItems() {
     const input = getUserInputs();
     console.log(JSON.stringify({
         id: input.id,
         type: 'Feature',
-        stac_version: '1.0.0',
-        stac_extensions: ['https://stac-extensions.github.io/file/v2.1.0/schema.json,https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json'],
+        stac_version: "1.0.0",
+        stac_extensions: ["extension1", "extension2"],
         geometry: getGeometry(),
         bbox: getBounds(),
         properties: {
@@ -302,8 +306,8 @@ async function addItems() {
             body: JSON.stringify({
                 id: input.id,
                 type: 'Feature',
-                stac_version: input.stacversion,
-                stac_extensions: [input.stacextension],
+                stac_version: "1.0.0",
+                stac_extensions: ["https://stac-extensions.github.io/file/v2.1.0/schema.json","https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json"],
                 geometry: getGeometry(),
                 bbox: getBounds(),
                 properties: {
@@ -472,7 +476,7 @@ function createInputForm(data) {
     createDynamicInputs();
 }
 
-// Funktion um Tasks
+// Funktion um Tasks mit Dropdownmenü anzureichern
 function createDynamicInputs() {
     const taskDiv = document.getElementById('input-tasks-div');
     taskDiv.innerHTML = ''
@@ -513,7 +517,7 @@ function createDynamicInputs() {
     });
 }
 
-// Aktualisiert die Auswahl im Eingabefeld
+// Funktion um die ausgewählten Tasks in die Eingabemaske einzufügen
 function updateSelectedTasks() {
     const checkboxes = document.querySelectorAll('#dropdown-options input:checked');
     const selectedTasks = Array.from(checkboxes).map(checkbox => checkbox.value);
@@ -651,20 +655,20 @@ function changeInputTOC(data, pois){
         if (changeList.includes(parameter)) {
                     sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
                             <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
+                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
                         </li>
                     `;
             } 
         else {
             sidebarList.innerHTML += `
             <li class="nav-item d-flex align-items-center">
-                <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
                 <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                     <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
                 </svg>
+                <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
             </li>
         `;
         }
@@ -673,20 +677,20 @@ function changeInputTOC(data, pois){
     if (changeList.includes('Bounding')){
             sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
                             <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
+                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
                         </li>
             `;
         }
     else{
         sidebarList.innerHTML += `
         <li class="nav-item d-flex align-items-center">
-            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
             <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
             </svg>
+             <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
         </li>
 `;
     }
@@ -694,20 +698,20 @@ function changeInputTOC(data, pois){
     if (changeList.includes('Color')){
             sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
                             <svg style="margin-top: -10px;"xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
+                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
                         </li>
             `;
         }
     else{
         sidebarList.innerHTML += `
         <li class="nav-item d-flex align-items-center">
-            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
             <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
             </svg>
+            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
         </li>
 `;
     }
@@ -715,20 +719,20 @@ function changeInputTOC(data, pois){
     if (changeList.includes('Date')){
         sidebarList.innerHTML += `
                     <li class="nav-item d-flex align-items-center">
-                        <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
                         <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                             <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                         </svg>
+                        <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
                     </li>
         `;
     }
     else{
         sidebarList.innerHTML += `
         <li class="nav-item d-flex align-items-center">
-            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
             <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
             </svg>
+            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
         </li>
     `;
     }
@@ -758,18 +762,18 @@ function printAllFilters(items) {
 
     sidebar.innerHTML = '';
 
-    let header = ''
-
-    header += ` <div style="margin-top:15px;">
-                    <a id="sidebar-footerlink" onclick="clearFilters()" class="nav-link">Leeren</a>
-                </div>
-    <hr>`
+    let header = `
+        <div style="margin-top:15px;">
+            <a id="sidebar-footerlink" onclick="clearFilters()" class="nav-link">Leeren</a>
+        </div>
+        <hr>
+    `;
 
     const toggleButton = `
         <button style="text-decoration:none;" class="d-md-none position-absolute top-0 end-0 m-2 btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle Sidebar">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-x-lg" viewBox="0 0 16 16">
-                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
-            </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-right" viewBox="0 0 16 16">
+                <path d="M6 12.796V3.204L11.481 8zm.659.753 5.48-4.796a1 1 0 0 0 0-1.506L6.66 2.451C6.011 1.885 5 2.345 5 3.204v9.592a1 1 0 0 0 1.659.753"/>
+                </svg>
         </button>
     `;
 
@@ -791,7 +795,7 @@ function printAllFilters(items) {
     
         filterContent += `
             <span id="sidebar-groupheader" class="sidebar-heading d-flex mt-3 align-items-center">
-                <button style="text-decoration:none;" class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                <button style="text-decoration:none;" class="btn btn-link toggle-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
                         <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
                     </svg>
@@ -840,89 +844,108 @@ function printAllFilters(items) {
             displayItems(items, selectedFilters);
         });
     });
+
+    const toggleButtons = sidebar.querySelectorAll('.toggle-collapse-btn');
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            const svg = button.querySelector('svg');
+            const isExpanded = button.getAttribute('aria-expanded') === 'true';
+            if (isExpanded) {
+                svg.innerHTML = `
+                <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
+                `;
+            } else {
+                svg.innerHTML = `
+                    <path d="M6 12.796V3.204L11.481 8zm.659.753 5.48-4.796a1 1 0 0 0 0-1.506L6.66 2.451C6.011 1.885 5 2.345 5 3.204v9.592a1 1 0 0 0 1.659.753"/>
+                `;
+            }
+        });
+    });
 }
     
 // Items anhand der angekreuzten Filterparameter filtern
-function filterItems(items, filters){
-    showAlert(0)
+function filterItems(items, filters) {
+    showAlert(0);
     let selectedItems = [];
-    let matchingValues = true;
-    if(!filters || Object.keys(filters).length === 0){
-        return items
+
+    if (!filters || Object.keys(filters).length === 0) {
+        return items;
     }
-    else{
-        items.forEach( item=> {
-            try{
-                //Framework filtern
-                if(filters.frameworks && Object.keys(filters.frameworks).length > 0){
-                    if(item.properties['mlm:framework'].includes(filters.frameworks)){
-                        matchingValues = true;
-                        console.log("erfolgreich 1")
-                    }
-                    else{
-                        return;
-                    }
-                }
-                //Accelerators filtern
-                if(filters.accelerators && Object.keys(filters.accelerators).length > 0){
-                    if(item.properties['mlm:accelerator'].includes(filters.accelerators)){
-                        matchingValues = true;
-                        console.log("erfolgreich 2")
-                    }
-                    else{
-                        return;
-                    }
-                }
-                // Tasks filtern
-                if (filters.tasks && Object.keys(filters.tasks).length > 0){
-                    if (Array.from(item.properties['mlm:tasks']).some(task => filters.tasks.includes(task))) {
-                        matchingValues = true;
-                        console.log("erfolgreich 3")
-                    } else {
-                        return;
-                    }
-                }
-                // //Inputs filtern
-                // if(filters.inputTypes && Object.keys(filters.inputTypes).length > 0){
-                //     if(item.properties['mlm:input'].type.includes(filters.inputTypes)){
-                //         matchingValues = true;
-                //     }
-                //     else{
-                //         return;
-                //     }
-                // }
 
-                // // Pretrained Sources
-                // if (filters.pretrainedSources && item.properties['mlm:pretrained_source'] !== 'None' && Array.isArray(filters.pretrainedSources) && filters.pretrainedSources.length > 0) {
-                //     if (filters.pretrainedSources.includes(item.properties['mlm:pretrained_source'])) {
-                //         matchingValues = true;
-                //     } else {
-                //         return;
-                //     }
-                // }
+    items.forEach(item => {
+        try {
+            const properties = item.properties;
+            let matchingValues = true;
 
-                // // Accelerator Summary filtern
-                // if (filters.acceleratorSummaries && item.properties['mlm:accelerator_summary'] !== 'None' && Array.isArray(filters.acceleratorSummaries) && filters.acceleratorSummaries.length > 0) {
-                //     if (filters.acceleratorSummaries.includes(item.properties['mlm:accelerator_summary'])) {
-                //         matchingValues = true;
-                //     } else {
-                //         return;
-                //     }
-                // }
-                if(matchingValues){
-                    selectedItems.push(item)
+            // Collection filtern
+            if (filters.collection && filters.collection.length > 0) {
+                if (!filters.collection.includes(item.collection_id)) {
+                    matchingValues = false;
                 }
             }
-            catch (error){
-                showAlert(1, "Nicht alle Modelle wurden betrachtet. Fehlerhaftes Modell: ", item.id)
-                return;
+
+            // Frameworks filtern
+            if (filters.frameworks && filters.frameworks.length > 0) {
+                if (!filters.frameworks.includes(properties['mlm:framework'])) {
+                    matchingValues = false;
+                }
             }
-        });
-        if(Object.keys(selectedItems).length == 0){
-            showAlert(2, "Keine Modelle gefunden.", "Nutze andere Suchparameter oder füge ein weiteres Modell mit deinen Anforderungen hinzu.")
+
+            // Accelerators filtern
+            if (filters.accelerators && filters.accelerators.length > 0) {
+                if (!filters.accelerators.includes(properties['mlm:accelerator'])) {
+                    matchingValues = false;
+                }
+            }
+
+            // Tasks filtern
+            if (filters.tasks && filters.tasks.length > 0) {
+                if (!properties['mlm:tasks'].some(task => filters.tasks.includes(task))) {
+                    matchingValues = false;
+                }
+            }
+
+            // Input Name filtern
+            if (filters.inputName && filters.inputName.length > 0) {
+                if (!filters.inputName.includes(properties['mlm:input'][0]?.name)) {
+                    matchingValues = false;
+                }
+            }
+
+            // Architecture filtern
+            if (filters.architecture && filters.architecture.length > 0) {
+                if (!filters.architecture.includes(properties['mlm:architecture'])) {
+                    matchingValues = false;
+                }
+            }
+
+            // Batch Size filtern
+            if (filters.batchSize && filters.batchSize.length > 0) {
+                if (!filters.batchSize.includes(properties['mlm:batch_size_suggestion'])) {
+                    matchingValues = false;
+                }
+            }
+
+            // Pretrained Source filtern
+            if (filters.pretrainedSource && filters.pretrainedSource.length > 0) {
+                if (!filters.pretrainedSource.includes(properties['mlm:pretrained_source'])) {
+                    matchingValues = false;
+                }
+            }
+
+            if (matchingValues) {
+                selectedItems.push(item);
+            }
+        } catch (error) {
+            showAlert(1, "Nicht alle Modelle wurden betrachtet. Fehlerhaftes Modell: ", item.id);
         }
-        return selectedItems;
+    });
+
+    if (selectedItems.length === 0) {
+        showAlert(2, "Keine Modelle gefunden.", "Nutze andere Suchparameter oder füge ein weiteres Modell mit deinen Anforderungen hinzu.");
     }
+
+    return selectedItems;
 }
 
 // Funktion zum Anzeigen der Pretrained Variale im Frontend Modellkatalog
@@ -1011,7 +1034,6 @@ function displayItems(items, filters) {
     const selectedFilters = filters;
     const filteredItems = filterItems(items, filters);
 
-    console.log(selectedFilters)
 
     filteredItems.forEach(item => {
                 const itemDiv = document.createElement('div');
@@ -1026,15 +1048,10 @@ function displayItems(items, filters) {
                 parameters.id = `modell-itemparameter-${item.id}`;
                 parameters.innerHTML = `
                     ${fillInParameters(item, filters)}
-                    <button type="button" 
-                            class="btn-expand" 
-                            data-bs-toggle="collapse" 
-                            data-bs-target="#collapse-${item.id}" 
-                            aria-expanded="false" 
-                            aria-controls="collapse-${item.id}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
-                                <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
-                            </svg>
+                    <button type="button" class="btn-expand" data-bs-toggle="collapse" data-bs-target="#collapse-${item.id}" aria-expanded="false" aria-controls="collapse-${item.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
+                        <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
+                    </svg>
                     </button>
                 `;
                 const information = document.createElement('div');
@@ -1094,12 +1111,33 @@ function displayItems(items, filters) {
                 container.appendChild(itemDiv);
 
                 createMapOnModell(item);
+
+        const button = parameters.querySelector('.btn-expand');
+        button.addEventListener('click', () => {
+            const svg = button.querySelector('svg');
+            if (button.getAttribute('aria-expanded') === 'true') {
+                svg.outerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
+                        <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
+                    </svg>
+                `;
+            } else {
+                svg.outerHTML = `
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
+                        <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
+                    </svg>
+                `;
+            }
         });
+    });
+        
 }
 
 // Funktion um alle Filter zu clearen
 function clearFilters(){
-    startWebsite();
+    startWebsite()
+    setTimeout(function(){
+        showAlert(3, "Alle Filter entfernt.", "")}, 100)
 }
 
 // Funktion zum kopieren von Informationen in die Zwischenablage
