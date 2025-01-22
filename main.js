@@ -1,3 +1,5 @@
+const drawnItems = new L.FeatureGroup();
+
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
@@ -6,22 +8,62 @@ function startWebsite(){
         case('/addmodel.html'):
             //console.log("accessed")
             createInputForm(getExpectedInputs());
+
+            const map = L.map('map').setView([0, 0], 2);
+
+            L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            map.addLayer(drawnItems);
+
+            const drawControl = new L.Control.Draw({
+            draw: {
+                polyline: false,
+                polygon: false,
+                circle: false,
+                marker: false,
+                circlemarker: false,
+                rectangle: true
+            },
+            edit: {
+                featureGroup: drawnItems,
+                remove: true
+            }
+            });
+            map.addControl(drawControl);
+
+            map.on(L.Draw.Event.CREATED, function (event) {
+                const layer = event.layer;
+                drawnItems.clearLayers();
+                drawnItems.addLayer(layer);
+                const bounds = layer.getBounds();
+                getBounds(bounds);
+            });
+
+            // Event-Listener, wenn ein Rechteck gezeichnet wurde
+            map.on('draw:created', function (event) {
+                const layer = event.layer;
+                drawnItems.addLayer(layer);
+                const bounds = layer.getBounds();
+                console.log("Bounding Box: " + bounds.toBBoxString());
+                return bounds.toBBoxString();
+            });
+
             break;
         case('/catalog.html'):
             //console.log("accessed 2")
             fetchItems();
-            addItems();
             break;
         default: window.location.href = '/unknown.html';
-            break;
-            
+        break;         
     }
 }
 startWebsite();
 
 // Funktion zum Verwalten der gewollten Userinputs
 function getExpectedInputs(){
-    return ['Name', 'Beschreibung','Architektur', 'Aufgaben', 'Eingabe', 'Ausgabe', 'Links', 'Assets']
+    return ['id', 'stacversion', 'stacextension', 'geometry', 'title', 'description', 'name', 'architecture', 'framework', 'frameworkversion', 'pretrainedsource','batchsizesuggestion','hyperparameter', 'collectionid', 'collectiontitle']
 }
 
 // Fetchen aller Modelle
@@ -40,67 +82,163 @@ async function fetchItems() {
             showAlert(4, "Fehler beim Abrufen der Items.", "Überprüfe die Netzwerkverbindung.")
         }
     } catch (error) {
+        console.log(error)
         showAlert(4, "Fehler beim Abrufen der Items oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.")
     }
 }
 
 // addItems
-async function addItems(){
+async function addItems() {
+    const input = getUserInputs();
+    console.log("Testconsole: " + `(
+        '${input.id}', 
+        'Feature', 
+        '${input.stacversion}', 
+        ARRAY['${input.stacextension}'], 
+        ${JSON.stringify(getGeometry())},  // Korrektes GeoJSON
+        ${JSON.stringify(getBounds())},   // Korrektes Bounding Box Format
+        '{
+            "title": "${input.title}",
+            "description": "${input.description}",
+            "datetime": "2024-12-04T16:20:00",
+            "mlm:name": "${input.name}",
+            "mlm:architecture": "${input.architecture}",
+            "mlm:tasks": ["classification", "image"],
+            "mlm:framework": "${input.framework}",
+            "mlm:framework_version": "${input.frameworkversion}",
+            "mlm:pretrained": true,
+            "mlm:pretrained_source": "${input.pretrainedsource}",
+            "mlm:batch_size_suggestion": ${input.batchsizesuggestion},
+            "mlm:input": [{
+                "name": "testname",
+                "bands": ["basnd", "basnd"],
+                "input": ""
+            }],
+            "mlm:output": {
+                "type": "class",
+                "num_classes": 1000
+            },
+            "mlm:hyperparameters": "${getHyperparameters() || ''}"  // Verhindert undefined
+        }', 
+        ARRAY[
+            '{"href": "https://example.com/item", "type": "application/json", "rel": "self"}'::jsonb,
+            '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
+            '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
+            '{"href": "http://localhost:8000/collections/${input.collectionid}", "type": "application/json", "rel": "collection"}'::jsonb
+        ],
+        '{
+            "thumbnail": {
+                "href": "https://example.com/thumbnail.png"
+            },
+            "data": {
+                "href": "https://example.com/data"
+            }
+        }', 
+        (SELECT id FROM collections WHERE title = '${input.collectiontitle}'), 
+        NOW(), 
+        NOW(),
+        '${getSelectedColor() || ''}'  // Verhindert undefined
+    )`);
+
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(gtInputForm())
-         });
-         const data = await response.json();
-         console.log("to add:" + data);
-       } catch(error) {
-          showAlert(4, "Item konnte nicht hinzugefügt werden.", "")
-         } 
+            
+            body: JSON.stringify({
+                id: input.id,
+                type: 'Feature',
+                stac_version: input.stacversion,
+                stac_extensions: [input.stacextension],
+                geometry: getGeometry(),
+                bbox: getBounds(),
+                properties: {
+                    title: input.title,
+                    description: input.description,
+                    datetime: "2024-12-04T16:20:00",
+                    "mlm:name": input.name,
+                    "mlm:architecture": input.architecture,
+                    "mlm:tasks": ["classification", "image"],
+                    "mlm:framework": input.framework,
+                    "mlm:framework_version": input.frameworkversion,
+                    "mlm:pretrained": true,
+                    "mlm:pretrained_source": input.pretrainedsource,
+                    "mlm:batch_size_suggestion": input.batchsizesuggestion,
+                    "mlm:input": [{
+                        "name": "testname",
+                        "bands": ["basnd", "basnd"],
+                        "input": ""
+                    }],
+                    "mlm:output": {
+                        "type": "class",
+                        "num_classes": 1000
+                    },
+                    "mlm:hyperparameters": getHyperparameters() || ''
+                },
+                links: [
+                    { "href": "https://example.com/item", "type": "application/json", "rel": "self" },
+                    { "href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent" },
+                    { "href": "http://localhost:8000/", "type": "application/json", "rel": "root" },
+                    { "href": `http://localhost:8000/collections/${input.collectionid}`, "type": "application/json", "rel": "collection" }
+                ],
+                assets: {
+                    thumbnail: { "href": "https://example.com/thumbnail.png" },
+                    data: { "href": "https://example.com/data" }
+                },
+                collection_id: input.collectiontitle,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                color: getSelectedColor() || ''
+            })
+        });
+
+        const data = await response.json();
+        console.log("to add:", data);
+    } catch (error) {
+        console.log("Error aus addItems", error);
+        showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
+    }
 }
 
-const map = L.map('map').setView([0, 0], 2);
+// Funktion um die Geometry auszugeben
+function getGeometry(){
+    const input = getUserInputs()
+    const geometry = (input.geometry).replace(/[^\w\s]/gi, '');
+    //return geometry;
+    return `{
+  "type": "Polygon",
+  "coordinates": [
+    [
+      [7882190080512502, 3713739173208318],
+      [7882190080512502, 5821798141355221],
+      [27911651652899923, 5821798141355221],
+      [27911651652899923, 3713739173208318],
+      [7882190080512502, 3713739173208318]
+    ]
+  ]
+}
+`
+}
 
-L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
+// Funktion um die Hyperparameters auszugeben
+function getHyperparameters(){
+    const input = getUserInputs()
+    const hyppara = ((input.hyperparameter).replace(/[^\w\s]/gi, ''));
+    console.log(hyppara)
+}
 
-
-const drawnItems = new L.FeatureGroup();
-map.addLayer(drawnItems);
-
-const drawControl = new L.Control.Draw({
-  draw: {
-    polyline: false,
-    polygon: false,
-    circle: false,
-    marker: false,
-    circlemarker: false,
-    rectangle: true
-  },
-  edit: {
-    featureGroup: drawnItems,
-    remove: true
-  }
-});
-map.addControl(drawControl);
-
-map.on(L.Draw.Event.CREATED, function (event) {
-    const layer = event.layer;
-    drawnItems.clearLayers();
-    drawnItems.addLayer(layer);
-    const bounds = layer.getBounds();
-    getBounds(bounds);
-});
-
-function getBounds(data){
-    if (data && data.toBBoxString) {
-        return data.toBBoxString();
-    } else {
-        return null;
+// Funktion um immer die aktuelle Bounding Box von der Karte zu extrahieren
+function getBounds() {
+    const lastRectangle = drawnItems.getLayers().pop();
+    if (lastRectangle) {
+        const bounds = lastRectangle.getBounds();
+        //return bounds.toBBoxString();
+        return `[ -3.1604576110839844, 4.878750341423394, 17.35425710678101, 28.7440977569921 ]
+`;
     }
+    return null;
 }
 
 // Erstellt dynmaisch die gefragten Inputs für ein vollständiges Modell
@@ -135,6 +273,7 @@ function createInputForm(data) {
     });
     count += 1;
 
+    // Bounding Box-Option
     tableBody.innerHTML += `
         <tr id="main-inputgroup">
             <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box</td>
@@ -157,6 +296,7 @@ function createInputForm(data) {
         </tr>
     `;
 
+    // Buttons zum absenden un analysieren
     container.innerHTML += `
         <div id="main-buttonarea">
             <button class="button-input" onclick="analyzeInput()"id="main-button-analyse">Analysieren</button>
@@ -178,7 +318,7 @@ function getUserInputs() {
 //Funktion um den Inhalt des Input forms vor dem Abschicken zu analysieren
 function analyzeInput(){
     const parameters = getExpectedInputs();
-    const data = getUserInputs();  
+    const data = getUserInputs(); 
     const missing = [];
     parameters.forEach(parameter =>{
         if (data[parameter] === undefined || data[parameter] === null || data[parameter] === "") {
@@ -190,18 +330,28 @@ function analyzeInput(){
     const bounding = getBounds();
     const hex = document.getElementById("main-inputelem-color").value;
     if (bounding === undefined || bounding === null || bounding === "") {
+        console.log(bounding)
         missing.push('Bounding')
     }
     console.log("hex" + hex)
     if (hex === undefined || hex === null || hex === "" || hex === '#000000') {
         missing.push('Color')
     }
-    changeInputTOC(parameters, missing, 2);
+    changeInputTOC(parameters, missing);
+    return missing;
 }
 
 // Funktion um den Inputform abzusenden, falls korrekt gefüllt
-function sendInput(){
+function sendInput() {
+    const missing = analyzeInput();
 
+    if (missing.length > 0) {
+        showAlert(4, "Bitte füllen Sie alle Eingabefelder korrekt aus.", "");
+    } else {
+        const userInputs = getUserInputs();
+        console.log("SendInputs => addItems")
+        addItems(); 
+    }
 }
 
 // Funktion um ausgewählte Farbe beim hinzufügen eines Modells zu sichern
@@ -229,7 +379,7 @@ function createInputTOC(data) {
     parameters.forEach(parameter => {
         sidebarList.innerHTML += `
             <li class="nav-item">
-                <a class="nav-link" style="color:green;" href="#inputexp-${parameter}">${parameter}</a>
+                <a class="nav-link" style="color:green; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
             </li>
         `;
     });
@@ -237,10 +387,10 @@ function createInputTOC(data) {
     // Feststehende Elemente hinzufügen
     sidebarList.innerHTML += `
     <li class="nav-item">
-        <a class="nav-link" style="color:green;" href="#inputexp-map">Bounding Box</a>
+        <a class="nav-link" style="color:green; margin-top: -10px; " href="#inputexp-map">Bounding Box</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" style="color:green;" href="#inputexp-color">Farbgebung</a>
+        <a class="nav-link" style="color:green; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
     </li>
     `;
     
@@ -262,10 +412,9 @@ function createInputTOC(data) {
 }
 
 // Funktion zum anpassen vom Inhaltsverzeichnis des Inputsforms je nach Eingabe 
-function changeInputTOC(data, pois, value){
+function changeInputTOC(data, pois){
     const parameters = data;
     const changeList = pois;
-    const changetype = value;
 
     const sidebar = document.getElementById("sidebar");
     const sidebarList = sidebar.querySelector(".nav.flex-column");
@@ -279,98 +428,67 @@ function changeInputTOC(data, pois, value){
     // Dynamisch alle Parameter hinzufügen
     parameters.forEach(parameter => {
         if (changeList.includes(parameter)) {
-            switch(changetype){
-                // 1 Success 2 Error
-                case(1):
                     sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:green;" href="#inputexp-${parameter}">${parameter}</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                            </svg>
-                        </li>
-                    `;
-                    break;
-                case(2):
-                    sidebarList.innerHTML += `
-                        <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red;" href="#inputexp-${parameter}">${parameter}</a>
+                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
                     `;
-                    break;
             } 
-        } else {
+        else {
             sidebarList.innerHTML += `
-                <li class="nav-item">
-                    <a class="nav-link" style="color:grey;" href="#inputexp-${parameter}">${parameter}</a>
-                </li>
-            `;
+            <li class="nav-item d-flex align-items-center">
+                <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                </svg>
+            </li>
+        `;
         }
     });
 
     if (changeList.includes('Bounding')){
-        switch(changetype){
-            case(1):
             sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:green;" href="#inputexp-map">Bounding Box</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                            </svg>
-                        </li>
-            `;
-            break;
-            case(2):
-            sidebarList.innerHTML += `
-                        <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red;" href="#inputexp-map">Bounding Box</a>
+                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-map">Bounding Box</a>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
             `;
-            break;
         }
-    }else{
+    else{
         sidebarList.innerHTML += `
-        <li class="nav-item">
-            <a class="nav-link" style="color:grey;" href="#inputexp-map">Bounding Box</a>
+        <li class="nav-item d-flex align-items-center">
+            <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-map">Bounding Box</a>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
         </li>
-        `;
+`;
     }
 
     if (changeList.includes('Color')){
-        switch(changetype){
-            case(1):
             sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:green;" href="#inputexp-color">Farbgebung</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                            </svg>
-                        </li>
-            `;
-            break;
-            case(2):
-            sidebarList.innerHTML += `
-                        <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red;" href="#inputexp-color">Farbgebung</a>
+                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
             `;
-            break;
         }
-    }else{
-        sidebarList.innerHTML += `        
-        <li class="nav-item">
-            <a class="nav-link" style="color:grey;" href="#inputexp-color">Farbgebung</a>
+    else{
+        sidebarList.innerHTML += `
+        <li class="nav-item d-flex align-items-center">
+            <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
         </li>
-        `;
+`;
     }
 
     // Footer hinzufügen
@@ -635,6 +753,7 @@ function displayItems(items, filters) {
     container.innerHTML = '';
     const selectedFilters = filters;
     const filteredItems = filterItems(items, filters);
+    console.log("1" + items)
 
     filteredItems.forEach(item => { 
                 const itemDiv = document.createElement('div');
@@ -642,6 +761,7 @@ function displayItems(items, filters) {
 
                 const title = document.createElement('span');
                 title.innerHTML = `${item.properties.title || 'Unbekannter Titel'}`;
+                title.style.color = `${item.color|| ''}`;
 
                 const parameters = document.createElement('div');
                 parameters.classList.add('modell-itemparameter');
@@ -669,7 +789,7 @@ function displayItems(items, filters) {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
                                     <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
                                 </svg>
-                                <span style="font-size: 10px;">${item.properties['mlm:name']} /   </span><span style="font-size:20px;">${item.properties.title}</span>
+                                <span style="font-size: 10px;">${item.properties['mlm:name']} /   </span><span style="font-size:20px; color:${item.color}">${item.properties.title}</span>
                                 <img src="${item.assets.data['thumbnail']}" width="10px" height="10px" alt="" />
                             </div>
                             <hr>
