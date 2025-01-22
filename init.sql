@@ -67,15 +67,18 @@ VALUES (
 INSERT INTO collections (id, type, stac_version, stac_extensions, title, description, license, extent, links, catalog_ID, created_at, updated_at)
 VALUES 
 (
-    'MLM_Collection', 'Collection', '1.0.0', ARRAY['stac-core', 'extended'], 'Example Collection', 
+    'MLM_Collection',
+    'Collection',
+    '1.0.0',
+    ARRAY[]::text[],
+    'Example Collection', 
     'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
-    '{"spatial": {"bbox": [-180, -90, 180, 90]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
+    '{"spatial": {"bbox": [[-180, -90, 180, 90]]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
     ARRAY[
-        '{"href": "https://example.com/collection", "type": "application/json", "rel": "self"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "self"}'::jsonb,
         '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
         '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "child"}'::jsonb
+        '{"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"}'::jsonb
     ], 
     (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW()
 ),
@@ -83,17 +86,16 @@ VALUES
     'MLM_Collection_2', -- Neue eindeutige ID
     'Collection', 
     '1.0.0', 
-    ARRAY['stac-core', 'extended'], 
+    ARRAY[]::text[], 
     'Example Collection 2', -- Neuer Titel
     'Eine zweite Beispiel-Collection, die innerhalb desselben Beispielkatalogs enthalten ist.', -- Neue Beschreibung
     'CC BY 4.0', 
-    '{"spatial": {"bbox": [-180, -90, 180, 90]}, "temporal": {"interval": [["2023-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]]}}', 
+    '{"spatial": {"bbox": [[-180, -90, 180, 90]]}, "temporal": {"interval": [["2023-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]]}}', 
     ARRAY[
-        '{"href": "https://example.com/collection2", "type": "application/json", "rel": "self"}'::jsonb,
+        '{"href": "http://localhost:8000/collections/MLM_Collection_2", "type": "application/json", "rel": "self"}'::jsonb,
         '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
         '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection_2/items", "type": "application/json", "rel": "items"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection_2", "type": "application/json", "rel": "child"}'::jsonb
+        '{"href": "http://localhost:8000/collections/MLM_Collection_2/items", "type": "application/json", "rel": "items"}'::jsonb
     ], 
     (SELECT id FROM catalogs WHERE title = 'Example Catalog'), 
     NOW(), 
