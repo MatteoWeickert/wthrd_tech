@@ -9,6 +9,7 @@
 
   #sidebar-groupheader{
     color:  #1C3D86;
+    text-decoration: none !important;
     font-size: 13px;
     font-weight: bold;
     text-transform:uppercase;

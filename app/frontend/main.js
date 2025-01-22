@@ -153,7 +153,60 @@ async function fetchItems() {
 // addItems
 async function addItems() {
     const input = getUserInputs();
-
+    console.log(JSON.stringify({
+        id: input.id,
+        type: 'Feature',
+        stac_version: input.stacversion,
+        stac_extensions: [input.stacextension],
+        geometry: getGeometry(),
+        bbox: getBounds(),
+        properties: {
+            title: input.title,
+            description: input.description,
+            datetime: "2024-12-04T16:20:00",
+            "mlm:name": input.name,
+            "mlm:architecture": input.architecture,
+            "mlm:tasks": input.tasks.split(',').map(value => value.trim()),
+            "mlm:framework": input.framework,
+            "mlm:framework_version": input.frameworkversion,
+            "mlm:pretrained": getPretrained(),
+            "mlm:pretrained_source": input.pretrainedsource,
+            "mlm:batch_size_suggestion": input.batchsizesuggestion,
+            "mlm:accelerator":input.accelerator,
+            "mlm:accelerator_summary":input.acceleratorsummary,
+            end_datetime: getDateRange()[1].end,
+            start_datetime: getDateRange()[0].start,
+            "mlm:input": [
+                {
+                    name: input.inputname,
+                    type: input.inputtypes.split(',').map(value => value.trim())
+                }
+            ],
+            "mlm:output":[ {
+                type: "class",
+                num_classes: 1000
+            }],
+            "mlm:hyperparameters": input.hyperparameter
+        },
+        links: [
+            { href: "https://example.com/item", type: "application/json", rel: "self" },
+            { href: "http://localhost:8000/collections", type: "application/json", rel: "parent" },
+            { href: "http://localhost:8000/", type: "application/json", rel: "root" },
+            { href: `http://localhost:8000/collections/${input.collectionid}`, type: "application/json", rel: "collection" }
+        ],
+        assets: {
+            model: {
+                href: input.link
+            },
+            thumbnail: { href: "https://example.com/thumbnail.png" },
+            data: { href: "https://example.com/data" }
+        },
+        collection_id: input.collectionid,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        color: getSelectedColor()
+    })
+)
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
@@ -166,7 +219,7 @@ async function addItems() {
                 type: 'Feature',
                 stac_version: input.stacversion,
                 stac_extensions: [input.stacextension],
-                geometry: input.geometry,
+                geometry: getGeometry(),
                 bbox: getBounds(),
                 properties: {
                     title: input.title,
@@ -226,18 +279,9 @@ async function addItems() {
 
 // Funktion um die Geometry auszugeben
 function getGeometry() {
-    return {
-        type: "Polygon",
-        coordinates: [
-            [
-                [7882190080512502, 3713739173208318],
-                [7882190080512502, 5821798141355221],
-                [27911651652899923, 5821798141355221],
-                [27911651652899923, 3713739173208318],
-                [7882190080512502, 3713739173208318]
-            ]
-        ]
-    };
+    const userInputs = getUserInputs()
+    const geometry = userInputs.geometry
+    return JSON.parse(geometry)
 }
 
 // Funktion um immer die aktuelle Bounding Box von der Karte zu extrahieren
@@ -394,7 +438,7 @@ function getSelectedColor() {
     const colorInput = document.getElementById('main-inputelem-color');
     if (colorInput) {
         console.log("Farbcode:" + colorInput.value)
-        return colorInput.value;
+        return colorInput.value.toUpperCase();
     }
 }
 
@@ -575,18 +619,27 @@ function printAllFilters(items) {
 
     sidebar.innerHTML = '';
 
+    let header = ''
+
+    header += ` <div style="margin-top:15px;">
+                    <a id="sidebar-footerlink" onclick="clearFilters()" class="nav-link">Leeren</a>
+                </div>
+    <hr>`
+
     const toggleButton = `
-        <button class="d-md-none position-absolute top-0 end-0 m-2 btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle Sidebar">
+        <button style="text-decoration:none;" class="d-md-none position-absolute top-0 end-0 m-2 btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle Sidebar">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-x-lg" viewBox="0 0 16 16">
                 <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
             </svg>
         </button>
     `;
 
-    let selectedFilters = []; // Zur Speicherung der ausgewählten Filter
+    let selectedFilters = [];
 
     Object.keys(filters).forEach(group => {
         let options = '';
+        const collapseId = `collapse-${group}`;
+    
         filters[group].forEach(option => {
             const optionId = `filter-${group}-${option}`;
             options += `
@@ -596,17 +649,24 @@ function printAllFilters(items) {
                 </div>
             `;
         });
-
+    
         filterContent += `
             <span id="sidebar-groupheader" class="sidebar-heading d-flex mt-3 align-items-center">
-                <span>${group}</span>
+                <button style="text-decoration:none;" class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
+                        <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
+                    </svg>
+                    <span id="sidebar-groupheader">${group}</span>
+                </button>
             </span>
-            <div class="d-flex flex-wrap">
-                ${options}
+            <div class="collapse" id="${collapseId}">
+                <div class="d-flex flex-wrap">
+                    ${options}
+                </div>
             </div>
         `;
     });
-
+    
     const footer = `
         <div id="sidebar-footer" class="mt-auto">
             <hr>
@@ -614,15 +674,15 @@ function printAllFilters(items) {
             <a id="sidebar-footerlink" href="#" class="nav-link">Settings</a>
         </div>
     `;
-
-    sidebar.innerHTML = toggleButton + filterContent + footer;
-
+    
+    sidebar.innerHTML += header + toggleButton + filterContent + footer;
+    
     const checkboxes = sidebar.querySelectorAll('.form-check-input');
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
             const group = checkbox.dataset.group;
             const value = checkbox.value;
-
+    
             if (checkbox.checked) {
                 if (!selectedFilters[group]) {
                     selectedFilters[group] = [];
@@ -642,7 +702,7 @@ function printAllFilters(items) {
         });
     });
 }
-
+    
 // Items anhand der angekreuzten Filterparameter filtern
 function filterItems(items, filters){
     showAlert(0)
@@ -896,6 +956,11 @@ function displayItems(items, filters) {
 
                 createMapOnModell(item);
         });
+}
+
+// Funktion um alle Filter zu clearen
+function clearFilters(){
+    startWebsite();
 }
 
 // Funktion zum kopieren von Informationen in die Zwischenablage
