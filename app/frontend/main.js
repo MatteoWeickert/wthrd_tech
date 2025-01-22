@@ -1,69 +1,132 @@
-const drawnItems = new L.FeatureGroup();
+let sharedDrawnItems = null;
+let bboxString = null;
+
+let startDatum = null;
+let endDatum = null;
+
+// Singleton-Fkt speichert die angegebenen Daten (range)
+function getDateRange() {
+    if (startDatum && endDatum) {
+        return [
+            { start: startDatum.format('YYYY-MM-DD') },
+            { end: endDatum.format('YYYY-MM-DD') }
+        ];
+    } else {
+        return null;
+    }
+}
+
+// Singleton-Fkt um gezeichnete Elemente zu verwalten
+function getDrawnItems() {
+    if (!sharedDrawnItems) {
+        sharedDrawnItems = new L.FeatureGroup();
+    }
+    return sharedDrawnItems;
+}
+
+// Singleton-Fkt um Bbox zu verwalten
+function setBounds(drawn) {
+    if (!bboxString) {
+        bboxString = drawn;
+    }
+    return bboxString;
+}
 
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
-    //console.log(window.location.pathname)
     switch(data){
         case('/addmodel.html'):
-            //console.log("accessed")
+            $(function() {
+                $('input[name="daterange"]').daterangepicker({
+                    "locale": {
+                        "format": "MM/DD/YYYY",
+                        "separator": " - ",
+                        "applyLabel": "Anwenden",
+                        "cancelLabel": "Abbrechen",
+                        "fromLabel": "Von",
+                        "toLabel": "bis",
+                        "customRangeLabel": "Custom",
+                        "weekLabel": "W",
+                        "daysOfWeek": [
+                            "So",
+                            "Mo",
+                            "Di",
+                            "Mi",
+                            "Do",
+                            "Fr",
+                            "Sa"
+                        ],
+                        "monthNames": [
+                            "Januar",
+                            "Februar",
+                            "März",
+                            "April",
+                            "Mai",
+                            "Juni",
+                            "Juli",
+                            "August",
+                            "September",
+                            "Oktober",
+                            "November",
+                            "Dezember"
+                        ],
+                        "firstDay": 1
+                    },
+                    opens: 'left',
+                    autoApply:true
+                }, function(start, end, label) {
+                    console.log("Neue Range: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
+                    startDatum = start;
+                    endDatum = end;
+                });
+            });
+            const drawnItems = getDrawnItems();
             createInputForm(getExpectedInputs());
-
             const map = L.map('map').setView([0, 0], 2);
 
-            L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-
-            map.addLayer(drawnItems);
-
-            const drawControl = new L.Control.Draw({
-            draw: {
-                polyline: false,
-                polygon: false,
-                circle: false,
-                marker: false,
-                circlemarker: false,
-                rectangle: true
-            },
-            edit: {
-                featureGroup: drawnItems,
-                remove: true
-            }
-            });
-            map.addControl(drawControl);
-
-            map.on(L.Draw.Event.CREATED, function (event) {
-                const layer = event.layer;
-                drawnItems.clearLayers();
-                drawnItems.addLayer(layer);
-                const bounds = layer.getBounds();
-                getBounds(bounds);
-            });
-
-            // Event-Listener, wenn ein Rechteck gezeichnet wurde
             map.on('draw:created', function (event) {
                 const layer = event.layer;
                 drawnItems.addLayer(layer);
                 const bounds = layer.getBounds();
-                console.log("Bounding Box: " + bounds.toBBoxString());
-                return bounds.toBBoxString();
+                console.log(bounds);
+                setBounds(bounds.toBBoxString())
+                getBounds()
             });
 
+            L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+        
+                map.addLayer(drawnItems);
+        
+                const drawControl = new L.Control.Draw({
+                draw: {
+                    polyline: false,
+                    polygon: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false,
+                    rectangle: true
+                },
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                }
+                });
+                map.addControl(drawControl);
+        
             break;
         case('/catalog.html'):
-            //console.log("accessed 2")
             fetchItems();
-            break;
-        default: window.location.href = '/unknown.html';
-        break;         
+            break;      
     }
 }
 startWebsite();
 
 // Funktion zum Verwalten der gewollten Userinputs
 function getExpectedInputs(){
-    return ['id', 'stacversion', 'stacextension', 'geometry', 'title', 'description', 'name', 'architecture', 'framework', 'frameworkversion', 'pretrainedsource','batchsizesuggestion','hyperparameter', 'collectionid', 'collectiontitle']
+    return ['id', 'stacversion', 'stacextension', 'geometry', 'title', 'description', 'name', 'tasks','inputname', 'inputtypes', 'architecture', 'framework', 'frameworkversion', 'accelerator','acceleratorsummary','pretrainedsource','batchsizesuggestion','hyperparameter', 'collectionid', 'link']
 }
 
 // Fetchen aller Modelle
@@ -77,9 +140,9 @@ async function fetchItems() {
 
         if (Array.isArray(data) && data.length > 0) {
             displayItems(data, undefined);
-            console.log(printAllFilters(data));
+            printAllFilters(data);
         } else {
-            showAlert(4, "Fehler beim Abrufen der Items.", "Überprüfe die Netzwerkverbindung.")
+            showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
         }
     } catch (error) {
         console.log(error)
@@ -90,56 +153,60 @@ async function fetchItems() {
 // addItems
 async function addItems() {
     const input = getUserInputs();
-    console.log("Testconsole: " + `(
-        '${input.id}', 
-        'Feature', 
-        '${input.stacversion}', 
-        ARRAY['${input.stacextension}'], 
-        ${JSON.stringify(getGeometry())},  // Korrektes GeoJSON
-        ${JSON.stringify(getBounds())},   // Korrektes Bounding Box Format
-        '{
-            "title": "${input.title}",
-            "description": "${input.description}",
-            "datetime": "2024-12-04T16:20:00",
-            "mlm:name": "${input.name}",
-            "mlm:architecture": "${input.architecture}",
-            "mlm:tasks": ["classification", "image"],
-            "mlm:framework": "${input.framework}",
-            "mlm:framework_version": "${input.frameworkversion}",
-            "mlm:pretrained": true,
-            "mlm:pretrained_source": "${input.pretrainedsource}",
-            "mlm:batch_size_suggestion": ${input.batchsizesuggestion},
-            "mlm:input": [{
-                "name": "testname",
-                "bands": ["basnd", "basnd"],
-                "input": ""
+    console.log(JSON.stringify({
+        id: input.id,
+        type: 'Feature',
+        stac_version: input.stacversion,
+        stac_extensions: [input.stacextension],
+        geometry: getGeometry(),
+        bbox: getBounds(),
+        properties: {
+            title: input.title,
+            description: input.description,
+            datetime: "2024-12-04T16:20:00",
+            "mlm:name": input.name,
+            "mlm:architecture": input.architecture,
+            "mlm:tasks": input.tasks.split(',').map(value => value.trim()),
+            "mlm:framework": input.framework,
+            "mlm:framework_version": input.frameworkversion,
+            "mlm:pretrained": getPretrained(),
+            "mlm:pretrained_source": input.pretrainedsource,
+            "mlm:batch_size_suggestion": input.batchsizesuggestion,
+            "mlm:accelerator":input.accelerator,
+            "mlm:accelerator_summary":input.acceleratorsummary,
+            end_datetime: getDateRange()[1].end,
+            start_datetime: getDateRange()[0].start,
+            "mlm:input": [
+                {
+                    name: input.inputname,
+                    type: input.inputtypes.split(',').map(value => value.trim())
+                }
+            ],
+            "mlm:output":[ {
+                type: "class",
+                num_classes: 1000
             }],
-            "mlm:output": {
-                "type": "class",
-                "num_classes": 1000
-            },
-            "mlm:hyperparameters": "${getHyperparameters() || ''}"  // Verhindert undefined
-        }', 
-        ARRAY[
-            '{"href": "https://example.com/item", "type": "application/json", "rel": "self"}'::jsonb,
-            '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-            '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
-            '{"href": "http://localhost:8000/collections/${input.collectionid}", "type": "application/json", "rel": "collection"}'::jsonb
+            "mlm:hyperparameters": input.hyperparameter
+        },
+        links: [
+            { href: "https://example.com/item", type: "application/json", rel: "self" },
+            { href: "http://localhost:8000/collections", type: "application/json", rel: "parent" },
+            { href: "http://localhost:8000/", type: "application/json", rel: "root" },
+            { href: `http://localhost:8000/collections/${input.collectionid}`, type: "application/json", rel: "collection" }
         ],
-        '{
-            "thumbnail": {
-                "href": "https://example.com/thumbnail.png"
+        assets: {
+            model: {
+                href: input.link
             },
-            "data": {
-                "href": "https://example.com/data"
-            }
-        }', 
-        (SELECT id FROM collections WHERE title = '${input.collectiontitle}'), 
-        NOW(), 
-        NOW(),
-        '${getSelectedColor() || ''}'  // Verhindert undefined
-    )`);
-
+            thumbnail: { href: "https://example.com/thumbnail.png" },
+            data: { href: "https://example.com/data" }
+        },
+        collection_id: input.collectionid,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        color: getSelectedColor()
+    })
+)
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
@@ -160,37 +227,45 @@ async function addItems() {
                     datetime: "2024-12-04T16:20:00",
                     "mlm:name": input.name,
                     "mlm:architecture": input.architecture,
-                    "mlm:tasks": ["classification", "image"],
+                    "mlm:tasks": input.tasks.split(',').map(value => value.trim()),
                     "mlm:framework": input.framework,
                     "mlm:framework_version": input.frameworkversion,
-                    "mlm:pretrained": true,
+                    "mlm:pretrained": getPretrained(),
                     "mlm:pretrained_source": input.pretrainedsource,
                     "mlm:batch_size_suggestion": input.batchsizesuggestion,
-                    "mlm:input": [{
-                        "name": "testname",
-                        "bands": ["basnd", "basnd"],
-                        "input": ""
+                    "mlm:accelerator":input.accelerator,
+                    "mlm:accelerator_summary":input.acceleratorsummary,
+                    end_datetime: getDateRange()[1].end,
+                    start_datetime: getDateRange()[0].start,
+                    "mlm:input": [
+                        {
+                            name: input.inputname,
+                            type: input.inputtypes.split(',').map(value => value.trim())
+                        }
+                    ],
+                    "mlm:output":[ {
+                        type: "class",
+                        num_classes: 1000
                     }],
-                    "mlm:output": {
-                        "type": "class",
-                        "num_classes": 1000
-                    },
-                    "mlm:hyperparameters": getHyperparameters() || ''
+                    "mlm:hyperparameters": input.hyperparameter
                 },
                 links: [
-                    { "href": "https://example.com/item", "type": "application/json", "rel": "self" },
-                    { "href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent" },
-                    { "href": "http://localhost:8000/", "type": "application/json", "rel": "root" },
-                    { "href": `http://localhost:8000/collections/${input.collectionid}`, "type": "application/json", "rel": "collection" }
+                    { href: "https://example.com/item", type: "application/json", rel: "self" },
+                    { href: "http://localhost:8000/collections", type: "application/json", rel: "parent" },
+                    { href: "http://localhost:8000/", type: "application/json", rel: "root" },
+                    { href: `http://localhost:8000/collections/${input.collectionid}`, type: "application/json", rel: "collection" }
                 ],
                 assets: {
-                    thumbnail: { "href": "https://example.com/thumbnail.png" },
-                    data: { "href": "https://example.com/data" }
+                    model: {
+                        href: input.link
+                    },
+                    thumbnail: { href: "https://example.com/thumbnail.png" },
+                    data: { href: "https://example.com/data" }
                 },
-                collection_id: input.collectiontitle,
+                collection_id: input.collectionid,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                color: getSelectedColor() || ''
+                color: getSelectedColor()
             })
         });
 
@@ -203,47 +278,25 @@ async function addItems() {
 }
 
 // Funktion um die Geometry auszugeben
-function getGeometry(){
-    const input = getUserInputs()
-    const geometry = (input.geometry).replace(/[^\w\s]/gi, '');
-    //return geometry;
-    return `{
-  "type": "Polygon",
-  "coordinates": [
-    [
-      [7882190080512502, 3713739173208318],
-      [7882190080512502, 5821798141355221],
-      [27911651652899923, 5821798141355221],
-      [27911651652899923, 3713739173208318],
-      [7882190080512502, 3713739173208318]
-    ]
-  ]
-}
-`
-}
-
-// Funktion um die Hyperparameters auszugeben
-function getHyperparameters(){
-    const input = getUserInputs()
-    const hyppara = ((input.hyperparameter).replace(/[^\w\s]/gi, ''));
-    console.log(hyppara)
+function getGeometry() {
+    const userInputs = getUserInputs()
+    const geometry = userInputs.geometry
+    return JSON.parse(geometry)
 }
 
 // Funktion um immer die aktuelle Bounding Box von der Karte zu extrahieren
 function getBounds() {
-    const lastRectangle = drawnItems.getLayers().pop();
-    if (lastRectangle) {
-        const bounds = lastRectangle.getBounds();
-        //return bounds.toBBoxString();
-        return `[ -3.1604576110839844, 4.878750341423394, 17.35425710678101, 28.7440977569921 ]
-`;
+    if(bboxString){
+        const bounds = bboxString;
+        console.log(bounds)
+        return bounds.split(',').map(value => parseFloat(value.trim()));
+    }else{
+        return null;
     }
-    return null;
 }
 
 // Erstellt dynmaisch die gefragten Inputs für ein vollständiges Modell
 function createInputForm(data) {
-    //console.log("1");
     const parameters = data;
     const container = document.getElementById('main-inputcontainer');
     createInputTOC(data);
@@ -259,7 +312,6 @@ function createInputForm(data) {
     const tableBody = document.getElementById('input-table-body');
 
     parameters.forEach(parameter => {
-        //console.log("2", parameter);
         count += 1
         tableBody.innerHTML += `
             <tr id="main-inputgroup">
@@ -278,7 +330,7 @@ function createInputForm(data) {
         <tr id="main-inputgroup">
             <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box</td>
             <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                <div id="map" class="h-100 w-50"></div>
+                <div id="map" style="width:100%;height:100%;"></div>
             </td>
             <td id="" class="main-inputalert"></td>
         </tr>
@@ -290,10 +342,34 @@ function createInputForm(data) {
         <tr id="main-inputgroup">
             <td id="inputexp-color" class="main-inputexp">${count}) Farbgebung</td>
             <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                <input id="main-inputelem-color" style="height: 30px;" class="w-50" type="color" />
+                <input style="border: solid 2px black; border-radius: 3px;" id="main-inputelem-color" style="height: 30px;" class="w-50" type="color" />
             </td>
             <td id="" class="main-inputalert"></td>
         </tr>
+    `;
+
+    count += 1;
+
+    // Zeitraumauswahö
+    tableBody.innerHTML += `
+        <tr id="main-inputgroup">
+            <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum</td>
+            <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
+            </td>
+            <td id="" class="main-inputalert"></td>
+        </tr>
+    `;
+
+    // Vortrainiert-Auswahl
+    tableBody.innerHTML += `
+    <tr id="main-inputgroup">
+        <td id="inputexp-pretrained" class="main-inputexp">${count}) Vortrainiert</td>
+        <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+            <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
+        </td>
+        <td id="" class="main-inputalert"></td>
+    </tr>
     `;
 
     // Buttons zum absenden un analysieren
@@ -329,13 +405,16 @@ function analyzeInput(){
     });
     const bounding = getBounds();
     const hex = document.getElementById("main-inputelem-color").value;
+    const date = getDateRange();
     if (bounding === undefined || bounding === null || bounding === "") {
         console.log(bounding)
         missing.push('Bounding')
     }
-    console.log("hex" + hex)
     if (hex === undefined || hex === null || hex === "" || hex === '#000000') {
         missing.push('Color')
+    }
+    if (date === undefined || date === null || date === "") {
+        missing.push('Date')
     }
     changeInputTOC(parameters, missing);
     return missing;
@@ -355,12 +434,12 @@ function sendInput() {
 }
 
 // Funktion um ausgewählte Farbe beim hinzufügen eines Modells zu sichern
-function getSelectedColor(){
+function getSelectedColor() {
     const colorInput = document.getElementById('main-inputelem-color');
-    colorInput.addEventListener('input', function() {
-        const selectedColor = colorInput.value;
-        return selectedColor
-    });
+    if (colorInput) {
+        console.log("Farbcode:" + colorInput.value)
+        return colorInput.value.toUpperCase();
+    }
 }
 
 // Funktion zum dynamischen Erstellen des Inhaltsverzeichnisses mit Scrollfunktion
@@ -379,7 +458,7 @@ function createInputTOC(data) {
     parameters.forEach(parameter => {
         sidebarList.innerHTML += `
             <li class="nav-item">
-                <a class="nav-link" style="color:green; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
+                <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
             </li>
         `;
     });
@@ -387,10 +466,13 @@ function createInputTOC(data) {
     // Feststehende Elemente hinzufügen
     sidebarList.innerHTML += `
     <li class="nav-item">
-        <a class="nav-link" style="color:green; margin-top: -10px; " href="#inputexp-map">Bounding Box</a>
+        <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-map">Bounding Box</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" style="color:green; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
+        <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
     </li>
     `;
     
@@ -430,8 +512,8 @@ function changeInputTOC(data, pois){
         if (changeList.includes(parameter)) {
                     sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
+                            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
@@ -440,8 +522,8 @@ function changeInputTOC(data, pois){
         else {
             sidebarList.innerHTML += `
             <li class="nav-item d-flex align-items-center">
-                <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-${parameter}">${parameter}</a>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
+                <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                     <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
                 </svg>
             </li>
@@ -452,8 +534,8 @@ function changeInputTOC(data, pois){
     if (changeList.includes('Bounding')){
             sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-map">Bounding Box</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
+                            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
@@ -462,8 +544,8 @@ function changeInputTOC(data, pois){
     else{
         sidebarList.innerHTML += `
         <li class="nav-item d-flex align-items-center">
-            <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-map">Bounding Box</a>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
+            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
             </svg>
         </li>
@@ -473,8 +555,8 @@ function changeInputTOC(data, pois){
     if (changeList.includes('Color')){
             sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
-                            <a class="nav-link me-2" style="color:red; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+                            <svg style="margin-top: -10px;"xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
                                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
                             </svg>
                         </li>
@@ -483,12 +565,33 @@ function changeInputTOC(data, pois){
     else{
         sidebarList.innerHTML += `
         <li class="nav-item d-flex align-items-center">
-            <a class="nav-link me-2" style="color:green; margin-top: -10px;" href="#inputexp-color">Farbgebung</a>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
             </svg>
         </li>
 `;
+    }
+
+    if (changeList.includes('Date')){
+        sidebarList.innerHTML += `
+                    <li class="nav-item d-flex align-items-center">
+                        <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                        <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                        </svg>
+                    </li>
+        `;
+    }
+    else{
+        sidebarList.innerHTML += `
+        <li class="nav-item d-flex align-items-center">
+            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
+        </li>
+    `;
     }
 
     // Footer hinzufügen
@@ -508,94 +611,37 @@ function changeInputTOC(data, pois){
         </div>`;
 }
 
-
-// Testfunktion um Items hinzuzufügen
-function getInputForm(){
-        const item = {
-            "id": "item-67890",
-            "type": "Feature",
-            "stac_version": "1.0.0",
-            "stac_extensions": [
-                "https://stac-extensions.github.io/eo/v1.0.0/schema.json",
-                "https://stac-extensions.github.io/scientific/v1.0.0/schema.json"
-            ],
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [
-                    [
-                        [12.4924, 41.8902],
-                        [12.4934, 41.8902],
-                        [12.4934, 41.8912],
-                        [12.4924, 41.8912],
-                        [12.4924, 41.8902]
-                    ]
-                ]
-            },
-            "bbox": [12.4924, 41.8902, 12.4934, 41.8912],
-            "properties": {
-                "datetime": "2025-01-01T12:00:00Z",
-                "mlm:name": "Sample Model",
-                "mlm:architecture": "EfficientNet-B0",
-                "mlm:tasks": "Image Segmentation",
-                "mlm:input": "Satellite Imagery",
-                "mlm:output": "Land Use Classes",
-                "mlm:color": "#FF5733",
-                "title": "Example STAC Item",
-                "description": "This item represents a demonstration of STAC metadata."
-            },
-            "links": {
-                "self": {
-                    "href": "https://example.com/items/item-67890",
-                    "rel": "self",
-                    "type": "application/json"
-                },
-                "collection": {
-                    "href": "https://example.com/collections/collection-456",
-                    "rel": "collection",
-                    "type": "application/json"
-                }
-            },
-            "assets": {
-                "thumbnail": {
-                    "href": "https://example.com/thumbnails/item-67890.png",
-                    "type": "image/png",
-                    "title": "Thumbnail Image"
-                },
-                "data": {
-                    "href": "https://example.com/data/item-67890.tif",
-                    "type": "image/tiff",
-                    "title": "Data Asset"
-                }
-            },
-            "collection_id": "Example_Collection",
-            "created_at": "2025-01-01T12:00:00Z",
-            "updated_at": "2025-01-01T12:00:00Z"
-        }
- return item;       
-}
-
 // Funktion zum anzeigen aller verfügbaren unique Filtervalues in der Sidebar
 function printAllFilters(items) {
     const filters = extractUniqueFilterValues(items);
     let filterContent = '';
     const sidebar = document.getElementById("sidebar");
 
-    sidebar.innerHTML = ''; // Vorherige Inhalte der Sidebar löschen
+    sidebar.innerHTML = '';
+
+    let header = ''
+
+    header += ` <div style="margin-top:15px;">
+                    <a id="sidebar-footerlink" onclick="clearFilters()" class="nav-link">Leeren</a>
+                </div>
+    <hr>`
 
     const toggleButton = `
-        <button class="d-md-none position-absolute top-0 end-0 m-2 btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle Sidebar">
+        <button style="text-decoration:none;" class="d-md-none position-absolute top-0 end-0 m-2 btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle Sidebar">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-x-lg" viewBox="0 0 16 16">
                 <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
             </svg>
         </button>
     `;
 
-    let selectedFilters = []; // Zur Speicherung der ausgewählten Filter
+    let selectedFilters = [];
 
     Object.keys(filters).forEach(group => {
         let options = '';
+        const collapseId = `collapse-${group}`;
+    
         filters[group].forEach(option => {
-            const optionId = `filter-${group}-${option.replace(/[^a-zA-Z0-9-_]/g, '')}`;
+            const optionId = `filter-${group}-${option}`;
             options += `
                 <div class="form-check form-check-inline">
                     <input type="checkbox" class="form-check-input" id="${optionId}" value="${option}" data-group="${group}">
@@ -603,17 +649,24 @@ function printAllFilters(items) {
                 </div>
             `;
         });
-
+    
         filterContent += `
             <span id="sidebar-groupheader" class="sidebar-heading d-flex mt-3 align-items-center">
-                <span>${group}</span>
+                <button style="text-decoration:none;" class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
+                        <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
+                    </svg>
+                    <span id="sidebar-groupheader">${group}</span>
+                </button>
             </span>
-            <div class="d-flex flex-wrap">
-                ${options}
+            <div class="collapse" id="${collapseId}">
+                <div class="d-flex flex-wrap">
+                    ${options}
+                </div>
             </div>
         `;
     });
-
+    
     const footer = `
         <div id="sidebar-footer" class="mt-auto">
             <hr>
@@ -621,15 +674,15 @@ function printAllFilters(items) {
             <a id="sidebar-footerlink" href="#" class="nav-link">Settings</a>
         </div>
     `;
-
-    sidebar.innerHTML = toggleButton + filterContent + footer;
-
+    
+    sidebar.innerHTML += header + toggleButton + filterContent + footer;
+    
     const checkboxes = sidebar.querySelectorAll('.form-check-input');
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
             const group = checkbox.dataset.group;
             const value = checkbox.value;
-
+    
             if (checkbox.checked) {
                 if (!selectedFilters[group]) {
                     selectedFilters[group] = [];
@@ -645,12 +698,11 @@ function printAllFilters(items) {
                     }
                 }
             }
-
             displayItems(items, selectedFilters);
         });
     });
 }
-
+    
 // Items anhand der angekreuzten Filterparameter filtern
 function filterItems(items, filters){
     showAlert(0)
@@ -664,10 +716,9 @@ function filterItems(items, filters){
             try{
                 //Framework filtern
                 if(filters.frameworks && Object.keys(filters.frameworks).length > 0){
-                    //console.log("frameworks")
                     if(item.properties['mlm:framework'].includes(filters.frameworks)){
-                        // console.log("frameworks accessed")
                         matchingValues = true;
+                        console.log("erfolgreich 1")
                     }
                     else{
                         return;
@@ -675,10 +726,9 @@ function filterItems(items, filters){
                 }
                 //Accelerators filtern
                 if(filters.accelerators && Object.keys(filters.accelerators).length > 0){
-                    //console.log("accelerator")
                     if(item.properties['mlm:accelerator'].includes(filters.accelerators)){
-                        //console.log("accelerator accessed")
                         matchingValues = true;
+                        console.log("erfolgreich 2")
                     }
                     else{
                         return;
@@ -686,50 +736,40 @@ function filterItems(items, filters){
                 }
                 // Tasks filtern
                 if (filters.tasks && Object.keys(filters.tasks).length > 0){
-                    // console.log("tasks")
-                    // console.log(JSON.stringify(filters.tasks))
-                    // console.log(JSON.stringify(item.properties['mlm:tasks']))
                     if (Array.from(item.properties['mlm:tasks']).some(task => filters.tasks.includes(task))) {
-                        //console.log("tasks accessed")
                         matchingValues = true;
+                        console.log("erfolgreich 3")
                     } else {
                         return;
                     }
                 }
-                //Inputs filtern
-                if(filters.inputTypes && Object.keys(filters.inputTypes).length > 0){
-                    // console.log("input")
-                    // console.log(item.properties['mlm:input'].type.includes(filters.inputTypes))
-                    if(item.properties['mlm:input'].type.includes(filters.inputTypes)){
-                        // console.log("input accessed")
-                        matchingValues = true;
-                    }
-                    else{
-                        return;
-                    }
-                }
+                // //Inputs filtern
+                // if(filters.inputTypes && Object.keys(filters.inputTypes).length > 0){
+                //     if(item.properties['mlm:input'].type.includes(filters.inputTypes)){
+                //         matchingValues = true;
+                //     }
+                //     else{
+                //         return;
+                //     }
+                // }
 
-                // Pretrained Sources
-                if (filters.pretrainedSources && item.properties['mlm:pretrained_source'] !== 'None' && Array.isArray(filters.pretrainedSources) && filters.pretrainedSources.length > 0) {
-                    if (filters.pretrainedSources.includes(item.properties['mlm:pretrained_source'])) {
-                        // console.log("Pretrained sources accessed");
-                        matchingValues = true;
-                    } else {
-                        return;
-                    }
-                }
+                // // Pretrained Sources
+                // if (filters.pretrainedSources && item.properties['mlm:pretrained_source'] !== 'None' && Array.isArray(filters.pretrainedSources) && filters.pretrainedSources.length > 0) {
+                //     if (filters.pretrainedSources.includes(item.properties['mlm:pretrained_source'])) {
+                //         matchingValues = true;
+                //     } else {
+                //         return;
+                //     }
+                // }
 
-                // Accelerator Summary filtern
-                if (filters.acceleratorSummaries && item.properties['mlm:accelerator_summary'] !== 'None' && Array.isArray(filters.acceleratorSummaries) && filters.acceleratorSummaries.length > 0) {
-                    // console.log(filters.acceleratorSummaries);
-                    // console.log(item.properties['mlm:accelerator_summary']);
-                    if (filters.acceleratorSummaries.includes(item.properties['mlm:accelerator_summary'])) {
-                        // console.log("Accelerator summary accessed");
-                        matchingValues = true;
-                    } else {
-                        return;
-                    }
-                }
+                // // Accelerator Summary filtern
+                // if (filters.acceleratorSummaries && item.properties['mlm:accelerator_summary'] !== 'None' && Array.isArray(filters.acceleratorSummaries) && filters.acceleratorSummaries.length > 0) {
+                //     if (filters.acceleratorSummaries.includes(item.properties['mlm:accelerator_summary'])) {
+                //         matchingValues = true;
+                //     } else {
+                //         return;
+                //     }
+                // }
                 if(matchingValues){
                     selectedItems.push(item)
                 }
@@ -742,9 +782,87 @@ function filterItems(items, filters){
         if(Object.keys(selectedItems).length == 0){
             showAlert(2, "Keine Modelle gefunden.", "Nutze andere Suchparameter oder füge ein weiteres Modell mit deinen Anforderungen hinzu.")
         }
-        console.log(selectedItems);
         return selectedItems;
     }
+}
+
+// Funktion zum Anzeigen der Pretrained Variale im Frontend Modellkatalog
+function isPretrained(bool,source){
+    const boolean = bool
+    const text = source
+    if(boolean){
+        return `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg> <span>   </span><span>${source}</span>
+        `
+    }
+    else{
+        return `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+            </svg>
+        `
+    }
+}
+
+// Funktion zum Checken ob User ein vortrainiertes Modell hochgeladen hat
+function getPretrained(){
+    const pretrained = document.getElementById('input-pretrained')
+    if(pretrained.checked){
+        return true;
+    } else{
+        return false;
+    }
+}
+
+// Funktion zum erstellen der individuellen Kartenansicht für jedes Modell
+function createMapOnModell(data) {
+    const item = data;
+    //console.log("test " + item.id);
+
+    const mapContainer = document.getElementById(`map-${item.id}`);
+
+    // Observer für langsames laden
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                //console.log("Lade Karte " + item.id);
+                const map = L.map(`map-${item.id}`, {
+                    center: [0, 0], 
+                    zoom: 3, 
+                    zoomControl: false,
+                    scrollWheelZoom: false
+                });
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                }).addTo(map);
+
+                const bbox = item.bbox || [];
+
+                if (bbox.length === 0) {
+                    document.getElementById(`map-${item.id}`).innerHTML = "Keine Kartenansicht verfügbar.";
+                }
+
+                if (bbox.length === 4) {
+                    const bounds = [
+                        [bbox[1], bbox[0]],
+                        [bbox[3], bbox[2]]
+                    ];
+                    L.rectangle(bounds, { color: "#ff7800", weight: 1 }).addTo(map);
+
+                    map.fitBounds(bounds, { padding: [40, 40] });
+                }
+
+                observer.unobserve(mapContainer);
+            }
+        });
+    }, {
+        rootMargin: '100px',
+        threshold: 0.01
+    });
+
+    observer.observe(mapContainer);
 }
 
 // Funktion zum Anzeigen aller Modelle
@@ -753,21 +871,22 @@ function displayItems(items, filters) {
     container.innerHTML = '';
     const selectedFilters = filters;
     const filteredItems = filterItems(items, filters);
-    console.log("1" + items)
 
-    filteredItems.forEach(item => { 
+    console.log(selectedFilters)
+
+    filteredItems.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.classList.add('p-3', 'modell-item');
 
                 const title = document.createElement('span');
-                title.innerHTML = `${item.properties.title || 'Unbekannter Titel'}`;
+                title.innerHTML = `${item.properties['mlm:name']}`;
                 title.style.color = `${item.color|| ''}`;
 
                 const parameters = document.createElement('div');
                 parameters.classList.add('modell-itemparameter');
                 parameters.id = `modell-itemparameter-${item.id}`;
                 parameters.innerHTML = `
-                    ${fillInParameters(item)}
+                    ${fillInParameters(item, filters)}
                     <button type="button" 
                             class="btn-expand" 
                             data-bs-toggle="collapse" 
@@ -779,7 +898,6 @@ function displayItems(items, filters) {
                             </svg>
                     </button>
                 `;
-
                 const information = document.createElement('div');
                 information.id = 'modell-itemcollapse'
                 information.innerHTML = `
@@ -789,16 +907,15 @@ function displayItems(items, filters) {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
                                     <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
                                 </svg>
-                                <span style="font-size: 10px;">${item.properties['mlm:name']} /   </span><span style="font-size:20px; color:${item.color}">${item.properties.title}</span>
-                                <img src="${item.assets.data['thumbnail']}" width="10px" height="10px" alt="" />
+                                <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
                             </div>
                             <hr>
                             <span style="font-size:15px;">Beschreibung:</span>
                             <span style="font-size:12px;">${item.properties.description}</span>
                             <hr>
                             <div class="card-body-download">
-                                <span style="font-size:15px;">Einbinden:</span><br> <span style="font-size:12px;">${item.assets.data['href']}</span>
-                                    <button type="button" class="btn-clipboard" onclick="copyToClipboard('${item.assets.data['href']}', '${item.properties['mlm:name']}')" id="clipboard-${item.id}">
+                                <span style="font-size:15px;">Einbinden:</span><br> <span style="font-size:12px;">${item.assets.model['href']}</span>
+                                    <button type="button" class="btn-clipboard" onclick="copyToClipboard('${item.assets.model['href']}', '${item.properties['mlm:name']}')" id="clipboard-${item.id}">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-clipboard" viewBox="0 0 16 16">
                                             <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
                                             <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
@@ -806,15 +923,29 @@ function displayItems(items, filters) {
                                     </button>
                             </div>
                             <hr>
-                            <div style="font-size:12px;"class="card-body-parameters">
-                                <span>Tasks: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
-                                <span>Modell: ${item.properties['mlm:tasks']}</span><br>
-                                <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} </span><br>
-                                <span>Link: ${item.assets.data['href'] || 'Unbekannt'} </span>
+                            <div class="row">
+                                <div class="col-md-6 col-lg-8">
+                                        <div style="font-size:12px;"class="card-body-parameters">
+                                            <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
+                                            <span>Empfohlener Zeitraum: ${item.properties.start_datetime || 'Unbekannt'} bis ${item.properties.end_datetime || 'Unbekannt'} </span><br>
+                                            <span>Erwartete Eingabe: ${item.properties['mlm:input'][0].name || 'Unbekannt'} </span><br>
+                                            <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].type || 'Unbekannt'}</span><br>
+                                            <span>Accelerator: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
+                                            <span>Architektur: ${item.properties['mlm:architecture'] || 'Unbekannt'}</span><br>
+                                            <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} in der Version: ${item.properties['mlm:framework_version'] || 'Unbekannt'} </span><br>
+                                            <span>Empfohlene Batchgröße: ${item.properties['mlm:batch_size_suggestion'] || 'Unbekannt'}
+                                            <hr>
+                                            <span>Weitere Information: ${item.properties['mlm:accelerator_summary'] || 'Keine weiteren Informationen hinterlegt.'} </span><br>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-lg-4">
+                                            <div style="width: 100%;height:100%;" id="map-${item.id}"></div>
+                                    </div>
+                                </div>
                                 <hr>
+                                <span style="font-size:10px;">Vortrainiert: ${isPretrained(item.properties['mlm:pretrained'] || undefined, item.properties['mlm:pretrained_source'] || undefined)} </span>
+                                <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
                             </div>
-                            <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
-                        </div>
                     </div>
                 `;
 
@@ -822,12 +953,18 @@ function displayItems(items, filters) {
                 itemDiv.appendChild(parameters);
                 itemDiv.appendChild(information);
                 container.appendChild(itemDiv);
+
+                createMapOnModell(item);
         });
+}
+
+// Funktion um alle Filter zu clearen
+function clearFilters(){
+    startWebsite();
 }
 
 // Funktion zum kopieren von Informationen in die Zwischenablage
 function copyToClipboard(url_text, model_name) {
-    //console.log("reached");
     navigator.clipboard.writeText(url_text).then(() => {
         showAlert(2, `Link des Modells <i>${model_name}</i> erfolgreich in die Zwischenablage kopiert.`, "");
     }).catch(err => {
@@ -835,11 +972,12 @@ function copyToClipboard(url_text, model_name) {
     });
 }
 
-// Funktion um anzuzeigende Informationen zu den Modellen zu generieren
-function fillInParameters(item, filters){
-
+// Funktion um anzuzeigende Schnellinformationen zu den Modellen zu generieren
+function fillInParameters(item, data){
+    const filters = data
+    console.log(filters)
         return `           <span>
-                    ${item.properties['mlm:accelerator'] || 'Unbekannt'} - 
+                    ${item.properties['mlm:architecture'] || 'Unbekannt'} - 
                     ${item.properties['mlm:framework'] || 'Unbekannt'} - 
                     ${item.properties['mlm:accelerator_summary'] || 'Unbekannt'}
                 </span>` 
@@ -883,17 +1021,22 @@ function showAlert(type, text, optional){
 // Funktion um einzigartige Werte aus Items zu extrahieren
 function extractUniqueFilterValues(items) {
     const filters = {
+        collection: new Set(),
         tasks: new Set(),
         frameworks: new Set(),
-        inputTypes: new Set(),
         accelerators: new Set(),
-        pretrainedSources: new Set(),
-        acceleratorSummaries: new Set(),
-        bboxes: new Set()
+        inputName: new Set(),
+        architecture: new Set(),
+        batchSize: new Set(),
+        pretrainedSource: new Set()
     };
 
     items.forEach(item => {
         const properties = item.properties;
+
+        if (item.collection_id) {
+            filters.collection.add(item.collection_id);
+        }
 
         if (properties['mlm:tasks']) {
             properties['mlm:tasks'].forEach(task => filters.tasks.add(task));
@@ -903,8 +1046,8 @@ function extractUniqueFilterValues(items) {
             filters.frameworks.add(properties['mlm:framework']);
         }
 
-        if (properties['mlm:input']?.type) {
-            filters.inputTypes.add(properties['mlm:input'].type);
+        if (properties['mlm:input'][0].name) {
+            filters.inputName.add(properties['mlm:input'][0].name);
         }
 
         if (properties['mlm:accelerator']) {
@@ -912,24 +1055,27 @@ function extractUniqueFilterValues(items) {
         }
 
         if (properties['mlm:pretrained_source']) {
-            filters.pretrainedSources.add(properties['mlm:pretrained_source']);
+            filters.pretrainedSource.add(properties['mlm:pretrained_source']);
         }
 
-        if (properties['mlm:accelerator_summary']) {
-            filters.acceleratorSummaries.add(properties['mlm:accelerator_summary']);
+        if (properties['mlm:architecture']) {
+            filters.architecture.add(properties['mlm:architecture']);
         }
 
-        if (item.bbox) {
-            filters.bboxes.add(JSON.stringify(item.bbox));
+        if (properties['mlm:batch_size_suggestion']) {
+            filters.batchSize.add(properties['mlm:batch_size_suggestion']);
         }
     });
 
     return {
         tasks: Array.from(filters.tasks),
         frameworks: Array.from(filters.frameworks),
-        inputTypes: Array.from(filters.inputTypes),
         accelerators: Array.from(filters.accelerators),
-        pretrainedSources: Array.from(filters.pretrainedSources),
-        acceleratorSummaries: Array.from(filters.acceleratorSummaries),
+        pretrainedSource: Array.from(filters.pretrainedSource),
+        accelerators: Array.from(filters.accelerators),
+        collection: Array.from(filters.collection),
+        inputName: Array.from(filters.inputName),
+        architecture: Array.from(filters.architecture),
+        batchSize: Array.from(filters.batchSize)
     };
 }

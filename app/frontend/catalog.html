@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- ICON -->
+        <title>Modellkatalog</title>
+        <link rel="icon" type="image/x-icon" href="wthrdicon.svg">
+
+        <!--Imports:-->
+        <!--leaflet-->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+        <!--JS main script-->
+        <script defer src="main.js"></script>
+        <!--stylesheet-->
+        <link rel="stylesheet" href="style.css">
+        <!--bootstrap-->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
+
+    </head>
+
+    <!-- IDs for JS and CSS:
+     [component]-[function]
+     i.e. sidebar-option
+     OR
+     [component]
+    -->
+     
+    <body>
+            <!-- Welcome-Overlay -->
+            <div class="modal show" id="overlayWelcome" tabindex="-1" aria-labelledby="overlayWelcome" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" style="max-width:60%">  
+                    <div class="modal-content">
+                        <div class="modal-body text-center">
+                            <img src="wthrdlogo.svg" alt="Welcome Image" style="width: 40%; height: auto;">
+                            <h5 class="mt-3">Welcome to wthrd.tech</h5>
+                            <p>At wthrd.tech, we specialise in the field of technology and Earth observation, with the aim of unlocking the full potential of geospatial data.As a startup driven by innovation, we've developed a comprehensive catalog for STAC-compatible machine learning models working with Earth observation data.  
+                                <br>Our mission is to simplify access to machine learning models, enabling seamless integration and meaningful insights for projects that matter, whether it's monitoring environmental changes or advancing sustainable development.
+                                <br>Explore our catalog and join us in shaping the future of Earth observation.</p>
+                            <button type="button" class="btn btn-danger" id="disableOverlay">Let's start</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                  const modal = new bootstrap.Modal(document.getElementById('overlayWelcome'));
+                  if (sessionStorage.getItem('overlayWelcome') !== 'true') modal.show();
+                  document.getElementById('disableOverlay').onclick = () => {
+                    modal.hide();
+                    sessionStorage.setItem('overlayWelcome', 'true');
+                  };
+                });
+            </script>
+              
+
+            <!-- Overlayfenster -->
+            <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <!-- Nav tabs innerhalb des Overlays -->
+                            <ul class="nav nav-tabs nav-justified" id="authTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Anmelden</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Registrieren</button>
+                                </li>
+                            </ul>
+                            <!-- Tab Content -->
+                            <div class="tab-content mt-3" id="authTabContent">
+                                <!-- Login Form -->
+                                <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                                    <form id="loginForm">
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="login-username" placeholder="Nutzername">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="password" class="form-control overlay-input" id="login-password" placeholder="Passwort">
+                                        </div>
+                                        <button type="submit" class="btn-login p-2 w-100">Anmelden</button>
+                                    </form>
+                                    <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
+                                        <span>Made by <img href="#" src="wthrdicon.svg" width="30px" height="30px"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Register Form -->
+                                <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
+                                    <form id="registerForm">
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-name" placeholder="Vorname">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-lastname" placeholder="Nachname">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nutzername">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="email" class="form-control overlay-input" id="register-email" placeholder="E-Mail">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="password" class="form-control overlay-input" id="register-password" placeholder="Passwort">
+                                        </div>
+                                        <button type="submit" class="btn-login p-2 w-100">Registrieren</button>
+                                    </form>
+                                    <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
+                                        <span>Mit dem Registrieren bestätigt der Nutzer die geltenen <a href="#">AGB</a> sowie <a href="#">Nutzungsbedingungen</a> der jeweiligen Unterprodukte.</span><br>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid">
+                <div class="row">
+                <!-- Sidebar-->
+                <nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
+                        <div class="position-sticky">
+                            <ul class="nav flex-column">
+
+                                <!-- Sidebar: Topbar für Filterungsoptionen -->
+                                <div id="sidebar-topbar" class="col-md-9 col-lg-9 d-flex px-0 py-3"></div>
+                                <hr>
+                                <!-- Sidebar: Footer -->
+                                <div id="sidebar-footer" class="mt-auto"></div>
+                            </ul>
+                        </div>  
+            
+
+                </nav>
+
+                <!-- Topbar für Mainsite -->
+                <div id="topbar" class="col-md-9 col-lg-9 ms-sm-auto d-flex align-items-center flex-shrink">
+
+                    <!-- Topbar: Text- oder Symbolelement -->
+                    <span id="topbar-symbol" class="text-dark text-decoration-none fw-bold px-3 py-2">
+
+                        <!-- Button für das Zusammenklappen der Sidebar -->
+                        <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+                                </svg>
+                            </span>
+                        </button>
+                    </span>
+
+                    <!-- Topbar: Linkelement -->
+                    <a id="topbar-option" href="catalog.html" class="text-decoration-none fw-bold px-3 py-2">
+                        Modellkatalog
+                    </a>
+                    <a id="topbar-option" href="addmodel.html" class="text-decoration-none fw-bold px-3 py-2">
+                        Modell hinzufügen
+                    </a>
+                    <a id="topbar-option" href="howto.html" class="text-decoration-none fw-bold px-3 py-2">
+                        How-To
+                    </a>
+                    <div id="topbar-logo" class="d-lg-block d-md-none d-none">
+                        <img id="topbar-logo"  href="#" src="wthrdicon.svg" style="right:52%;"height="40px" width="40px">
+                    </div>
+                    <div id="topbar-menuoptions" class="ms-auto d-flex justify-content-end px-3 py-2">
+                        <!-- Topbar: Suchelement -->
+                        <a id="topbar-search" class="d-none d-lg-block text-decoration-none px-3 py-2">
+                            <div id="topbar-searchicon">
+                                <svg style="margin-right: 10px;"xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-search" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                                </svg>
+                                <input type="text" placeholder="..."></input>
+                            </div>
+                        </a>
+                        <!-- Topbar: Loginelement -->
+                        <span id="topbar-login" class="text-dark text-decoration-none fw-bold px-3 py-2 d-flex ms-auto">
+                            <!-- Login/Register Button -->
+                            <button id="login-button" class="d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">
+                                <span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-person-circle" viewBox="0 0 16 16">
+                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                                </svg>
+                                </span>
+                            </button>
+                        <!-- Topbar: Settingselement -->
+                        <span id="topbar-settings" class="text-dark text-decoration-none fw-bold px-3 py-2 d-flex ms-auto">
+                            <!-- Settingsbutton -->
+                            <button id="settings-button"class="d-none d-md-block border-0 bg-transparent" type="button">
+                                <span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
+                                        <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+                                    </svg>
+                                </span>
+                            </button>
+                        </span>
+                    </div>
+
+                </div>
+
+                <main id="main" class="col-md-9 col-lg-9 ms-sm-auto px-md-4">
+                    <!-- Overlay für Ladeanzeige, Popups etc. -->
+                    <div id="main-loadoverlay">
+
+                        <!-- Alert Container -->
+                        <div id="main-alert" class="container mt-5">
+                        </div>
+
+                        <!-- Main Container -->
+                        <div id="main-content" class="container mt-5">
+
+                            <!-- Modell Container -->
+                            <div id="main-modell" class="container">
+                                <div id="modell-container"></div>
+                        </div>
+                        
+                        <!-- FOOTER -->
+                        <div id="main-footer" class="container mt-5">
+                            <hr>
+                            <div class="footer-content">
+                                <!-- Logo -->
+                                <img id="footer-logo" src="wthrdlogo.svg" alt="Footer Logo" width="200" height="100">
+                                <!-- Footer Links -->
+                                <div id="footer-links">
+                                    <span class="footer-group">Company</span>
+                                    <ul class="footer-links list-unstyled">
+                                        <li><a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">wthrd.tech</a></li>
+                                        <li><a id="footer-linkoption" href="impressum.html" class="text-decoration-none px-1 py-1">Impressum</a></li>
+                                        <li><a id="footer-linkoption" href="https://de.wikipedia.org/wiki/Allgemeine_Gesch%C3%A4ftsbedingungen" class="text-decoration-none px-1 py-1">AGB</a></li>
+                                        <li><a id="footer-linkoption" href="https://de.wikipedia.org/wiki/Allgemeine_Gesch%C3%A4ftsbedingungen" class="text-decoration-none px-1 py-1">Nutzungs-<br>bedingungen</a></li>
+                                    </ul>
+                                </div>
+                                <div id="footer-links">
+                                    <span class="footer-group">Resources</span>
+                                    <ul class="footer-links list-unstyled">
+                                        <li><a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">How-To</a></li>
+                                        <li><a id="footer-linkoption" href="#" class="text-decoration-none px-1 py-1">Dokumentation</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            </div>
+                        </div>      
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </body>
+</html>
