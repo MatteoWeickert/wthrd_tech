@@ -10,10 +10,13 @@ try:
 except Exception as e:
     print(f"Fehler beim Verbinden mit der STAC-API: {e}")
 
-print(api.title)
-print(api.links)
-for collection in api.get_all_collections():
-    print(collection)
+# print(api.title)
+# print(api.links)
+# for collection in api.get_all_collections():
+#     print(collection)
 
-for item in api.get_all_items():
-    print(item)
+collection_id = "MLM_Collection"  # Replace with your collection ID
+search = api.search(collections=[collection_id])
+
+for item in search.get_items():
+    print(item.to_dict())

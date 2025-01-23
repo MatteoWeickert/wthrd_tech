@@ -5,7 +5,6 @@ CREATE TABLE catalogs (
     stac_extensions TEXT[],                          -- Eine Liste von Erweiterungs-IDs, die der Katalog implementiert
     title TEXT,                                     -- Ein kurzer beschreibender Titel des Katalogs
     description TEXT NOT NULL,                      -- Eine detaillierte Beschreibung des Katalogs
-    links JSONB[] NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Katalogs
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update des Katalogs
 );
@@ -19,7 +18,6 @@ CREATE TABLE collections (
     description TEXT NOT NULL,                      -- Eine detaillierte Beschreibung der Collection
     license TEXT NOT NULL,                          -- Lizenz der Daten-Collection als SPDX Lizenzbezeichner oder Ausdruck
     extent JSONB NOT NULL,                          -- Spatial und Temporal Extent (als JSON-Objekt)
-    links JSONB[] NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     catalog_ID VARCHAR(50) REFERENCES catalogs(id),                                -- Die ID des Katalogs, zu dem diese Collection gehört
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum der Collection
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update der Collection
@@ -51,7 +49,7 @@ CREATE TABLE users (
 -- Beispiel-Daten
 -----------------------------------------------------------------------------------------------------------------------
 -- Insert into `catalogs` table
-INSERT INTO catalogs (id, type, stac_version, stac_extensions, title, description, links, created_at, updated_at)
+INSERT INTO catalogs (id, type, stac_version, stac_extensions, title, description, created_at, updated_at)
 VALUES (
     'Catalog for MLM', 
     'Catalog', 
@@ -59,20 +57,12 @@ VALUES (
     ARRAY['stac-core', 'extended'], 
     'Example Catalog', 
     'Dies ist ein Beispielkatalog für STAC-Daten.',
-    ARRAY[
-        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "self"}'::jsonb,
-        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
-        '{"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"}'::jsonb,
-        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "child"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection_2", "type": "application/json", "rel": "child"}'::jsonb
-        ], 
     NOW(), 
     NOW()
 );
 
 -- Insert into `collections` table
-INSERT INTO collections (id, type, stac_version, stac_extensions, title, description, license, extent, links, catalog_ID, created_at, updated_at)
+INSERT INTO collections (id, type, stac_version, stac_extensions, title, description, license, extent, catalog_ID, created_at, updated_at)
 VALUES 
 (
     'MLM_Collection',
@@ -82,13 +72,6 @@ VALUES
     'Example Collection', 
     'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
     '{"spatial": {"bbox": [[-180, -90, 180, 90]]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
-    ARRAY[
-        '{"href": "http://localhost:8000/collections/MLM_Collection", "type": "application/json", "rel": "self"}'::jsonb,
-        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
-        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection/items", "type": "application/json", "rel": "items"}'::jsonb        
-
-    ], 
     (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW()
 ),
 (
@@ -100,12 +83,6 @@ VALUES
     'Eine zweite Beispiel-Collection, die innerhalb desselben Beispielkatalogs enthalten ist.', -- Neue Beschreibung
     'CC BY 4.0', 
     '{"spatial": {"bbox": [[-180, -90, 180, 90]]}, "temporal": {"interval": [["2023-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]]}}', 
-    ARRAY[
-        '{"href": "http://localhost:8000/collections/MLM_Collection_2", "type": "application/json", "rel": "self"}'::jsonb,
-        '{"href": "http://localhost:8000/", "type": "application/json", "rel": "root"}'::jsonb,
-        '{"href": "http://localhost:8000/collections", "type": "application/json", "rel": "parent"}'::jsonb,
-        '{"href": "http://localhost:8000/collections/MLM_Collection_2/items", "type": "application/json", "rel": "items"}'::jsonb
-    ], 
     (SELECT id FROM catalogs WHERE title = 'Example Catalog'), 
     NOW(), 
     NOW()

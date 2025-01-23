@@ -115,7 +115,6 @@ def add_collection(collection: CollectionCreate):
             description=collection_data["description"],
             license=collection_data["license"],
             extent=collection_data["extent"],
-            links=collection_data["links"],
             catalog_id=collection_data["catalog_id"],
             created_at=collection_data["created_at"],
             updated_at=collection_data["updated_at"]
@@ -185,12 +184,27 @@ def get_catalog():
             "http://api.stacspec.org/v1.0.0/item-search",
             "http://api.stacspec.org/v1.0.0/features"
         ]
+
+        collections = db.query(Collection).filter(Collection.catalog_id == catalog.id).all()
+        links = [
+            {"href": "http://localhost:8000/", "type": "application/json", "rel": "self"},
+            {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
+            {"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"},
+            {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}
+        ]
+        for collection in collections:
+            links.append({
+                "rel": "child",
+                "type": "application/json",
+                "href": f"http://localhost:8000/collections/{collection.id}",
+                "title": collection.title
+            })
         
         # Wandelt das Catalog-Objekt in ein Dictionary (z. B. mit einer Methode oder mit vars())
         catalog_dict = catalog.__dict__.copy()
         
-        # Füge das neue Attribut hinzu
         catalog_dict["conformsTo"] = conforms_to
+        # catalog_dict["links"] = links
 
         # Rückgabe als JSON-kompatible Daten
         return catalog_dict
@@ -377,6 +391,20 @@ def get_all_collections():
     db = SessionLocal()
     try:
         collections = db.query(Collection).all()
+        if collections is None:
+            return {"error": "Collections not found"}
+        for collection in collections:
+            collection.links = [
+                {"rel": "self", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}"},
+                {"rel": "items", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}/items"},
+                {"rel": "parent", "type": "application/json", "href": "http://localhost:8000/"},
+                {"rel": "root", "type": "application/json", "href": "http://localhost:8000/"}
+            ]
+            items = db.query(Item).filter(Item.collection_id == collection.id).all()
+            for item in items:
+                collection.links.append(
+                    {"rel": "child", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}/items/{item.id}"}
+                )
         return {"collections": collections}
     except Exception as e:
         return {"error: " + str(e)}
@@ -386,10 +414,27 @@ def get_all_collections():
 @app.get("/collections/{collection_id}")
 def get_collections(collection_id: str):
     db = SessionLocal()
-    collection = db.query(Collection).filter(Collection.id == collection_id).first()
-    if collection is None:
-        return {"error": "Collection not found"}
-    return collection
+    try:
+        collection = db.query(Collection).filter(Collection.id == collection_id).first()
+        if collection is None:
+            return {"error": "Collection not found"}
+        collection.links = [
+                {"rel": "self", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}"},
+                {"rel": "items", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}/items"},
+                {"rel": "parent", "type": "application/json", "href": "http://localhost:8000/"},
+                {"rel": "root", "type": "application/json", "href": "http://localhost:8000/"}
+            ]
+        items = db.query(Item).filter(Item.collection_id == collection.id).all()
+        for item in items:
+            collection.links.append(
+                {"rel": "child", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}/items/{item.id}"}
+            )
+        return collection
+    except Exception as e:
+        return {"error: " + str(e)}
+    finally:
+        db.close()
+
 
 @app.get("/collections/{collection_id}/items")
 def get_collection_items(collection_id: str):
