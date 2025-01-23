@@ -100,9 +100,13 @@ def get_catalogs(catalog_id: int):
     return catalog
 
 @app.post("/addCollection/")
-def add_collection(collection: CollectionCreate):
-    db = SessionLocal()
+def add_collection(collection: CollectionCreate, user: user_dependency):
+    
+    if user is None:
+        raise HTTPException(status_code=401, detail="Authentifikation fehlgeschlagen")
 
+    db = SessionLocal()
+    
     try:
         # Serialisieren der Eingabedaten, einschließlich der Assets
         collection_data = collection.dict()  # Die überschriebenen `dict`-Methode sorgt für korrekte Serialisierung
@@ -133,7 +137,11 @@ def add_collection(collection: CollectionCreate):
 
 
 @app.post("/addItem/")
-def add_item(item: ItemCreate):
+def add_item(item: ItemCreate, user: user_dependency):
+
+    if user is None:
+        raise HTTPException(status_code=401, detail="Authentifikation fehlgeschlagen")
+    
     db = SessionLocal()
     
     try:
