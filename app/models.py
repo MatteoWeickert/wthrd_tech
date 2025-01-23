@@ -67,3 +67,11 @@ class Item(Base):
     color = Column(String, nullable=True)
 
     collection = relationship("Collection", back_populates="items")
+
+class User(Base):
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True)
+    hashed_password = Column(String)

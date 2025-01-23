@@ -4,3 +4,6 @@ sqlalchemy==1.4.49
 psycopg2-binary==2.9.7  
 pydantic==1.10.11  
 python-dotenv==1.0.0  
+passlib[bcrypt]
+python-jose
+python-multipart

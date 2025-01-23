@@ -41,6 +41,12 @@ CREATE TABLE items (
     color VARCHAR(50) 
 );
 
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,                         
+    username VARCHAR(50) NOT NULL,
+    hashed_password VARCHAR(200) NOT NULL
+);
+
 -----------------------------------------------------------------------------------------------------------------------
 -- Beispiel-Daten
 -----------------------------------------------------------------------------------------------------------------------

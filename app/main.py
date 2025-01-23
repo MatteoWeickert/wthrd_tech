@@ -1,12 +1,14 @@
-from fastapi import FastAPI, HTTPException, Query
-from typing import Optional, List
+from fastapi import FastAPI, HTTPException, Query, status, Depends
+from typing import Optional, List, Annotated
 from pydantic import BaseModel
 from sqlalchemy import create_engine, and_, or_ 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from models import Item, Catalog, Collection
+from sqlalchemy.orm import sessionmaker, Session
+from models import Item, Catalog, Collection, User
 import os, datetime
 from schemas import ItemCreate, CollectionCreate
+import auth
+from auth import get_current_user
 
 from sqlalchemy.sql.expression import cast
 from sqlalchemy.types import String
@@ -28,6 +30,7 @@ Base = declarative_base()
 
 # Create FastAPI instance
 app = FastAPI()
+app.include_router(auth.router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,6 +39,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# UserDatabase
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+db_dependency = Annotated[Session, Depends(get_db)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
+
+
+@app.get("/user", status_code=status.HTTP_200_OK)
+async def user(user: user_dependency, db: db_dependency):
+    if user is None:
+        raise HTTPException(status_code=401, detail="Authentifikation fehlgeschlagen")
+    return {"User": user}
+
+
 
 # Example database operation
 @app.get("/items")
