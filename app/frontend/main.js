@@ -1034,7 +1034,6 @@ function displayItems(items, filters) {
     const selectedFilters = filters;
     const filteredItems = filterItems(items, filters);
 
-
     filteredItems.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.classList.add('p-3', 'modell-item');
@@ -1047,7 +1046,7 @@ function displayItems(items, filters) {
                 parameters.classList.add('modell-itemparameter');
                 parameters.id = `modell-itemparameter-${item.id}`;
                 parameters.innerHTML = `
-                    ${fillInParameters(item, filters)}
+                    ${fillInParameters(item, selectedFilters)}
                     <button type="button" class="btn-expand" data-bs-toggle="collapse" data-bs-target="#collapse-${item.id}" aria-expanded="false" aria-controls="collapse-${item.id}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
                         <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
@@ -1129,9 +1128,56 @@ function displayItems(items, filters) {
                 `;
             }
         });
-    });
-        
+    });      
 }
+
+// Funktion um Modellparameter Schnellansicht je nach Auswahl der Filterparameter anpassen
+function fillInParameters(item, data) {
+    const parameterMapping = [
+        { mlmKey: 'mlm:tasks', filterKey: 'tasks' },
+        { mlmKey: 'mlm:accelerator', filterKey: 'accelerators' },
+        { mlmKey: 'mlm:framework', filterKey: 'frameworks' },
+        { mlmKey: 'mlm:architecture', filterKey: 'architecture' },
+        { mlmKey: 'mlm:pretrained_source', filterKey: 'pretrainedSource' }
+    ];
+
+    if (data !== undefined) {
+        const activeFilters = Object.keys(data);
+        const notFiltered = parameterMapping
+            .filter(mapping => !activeFilters.includes(mapping.filterKey))
+            .map(mapping => mapping.mlmKey);
+
+        const displayParameters = notFiltered.slice(0, 3);
+
+        if(displayParameters.length > 0){
+            return `
+            <span>
+                ${displayParameters
+                    .map(prop => item.properties[prop] || 'Unbekannt')
+                    .join(' - ')}
+            </span>
+        `;
+        } else{
+            return `
+            <span>
+                ${item.properties['mlm:architecture'] || 'Unbekannt'} - 
+                ${item.properties['mlm:framework'] || 'Unbekannt'} - 
+                ${item.properties['mlm:accelerator'] || 'Unbekannt'}
+            </span> 
+        `;
+        }
+
+    } else {
+        return `
+            <span>
+                ${item.properties['mlm:architecture'] || 'Unbekannt'} - 
+                ${item.properties['mlm:framework'] || 'Unbekannt'} - 
+                ${item.properties['mlm:accelerator'] || 'Unbekannt'}
+            </span> 
+        `;
+    }
+}
+
 
 // Funktion um alle Filter zu clearen
 function clearFilters(){
@@ -1147,18 +1193,6 @@ function copyToClipboard(url_text, model_name) {
     }).catch(err => {
         showAlert(1, `Link des Modells ${model_name} konnte nicht kopiert werden.`, "");
     });
-}
-
-// Funktion um anzuzeigende Schnellinformationen zu den Modellen zu generieren
-function fillInParameters(item, data){
-    const filters = data
-    console.log(filters)
-        return `           <span>
-                    ${item.properties['mlm:architecture'] || 'Unbekannt'} - 
-                    ${item.properties['mlm:framework'] || 'Unbekannt'} - 
-                    ${item.properties['mlm:accelerator_summary'] || 'Unbekannt'}
-                </span>` 
-
 }
 
 // Funktion zum erstellen von dynmaischen Clean 0 Alerts 1 Warnung 2 Info 3 Erfolg 4 Error
