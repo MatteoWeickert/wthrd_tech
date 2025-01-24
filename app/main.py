@@ -58,8 +58,6 @@ async def user(user: user_dependency, db: db_dependency):
         raise HTTPException(status_code=401, detail="Authentifikation fehlgeschlagen")
     return {"User": user}
 
-
-
 # Example database operation
 @app.get("/items")
 def get_all_items():

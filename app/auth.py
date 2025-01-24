@@ -24,7 +24,11 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 # Pydantic Modell, um User-Eingabe auf Richtigkeit zu prüfen, bevor er angelegt wird (=> in Schemas auslagern?)
 class CreateUserRequest(BaseModel):
     username: str
+    prename: str
+    lastname: str
+    email: str
     password: str
+
 
 class Token(BaseModel):
     access_token: str
@@ -43,6 +47,9 @@ db_dependency = Annotated[Session, Depends(get_db)]
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     create_user_model = User(
         username = create_user_request.username,
+        prename = create_user_request.prename,
+        lastname = create_user_request.lastname,
+        email = create_user_request.email,
         hashed_password = bcrypt_context.hash(create_user_request.password))
     
     db.add(create_user_model)
