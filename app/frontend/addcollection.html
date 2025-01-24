@@ -64,7 +64,7 @@
                                         <div class="mb-3">
                                             <input type="password" class="form-control overlay-input" id="login-password" placeholder="Passwort">
                                         </div>
-                                        <button type="submit" class="btn-login p-2 w-100">Anmelden</button>
+                                        <button type="button" onclick="closeLoginTab(); loginUser()" class="btn-login p-2 w-100">Anmelden</button>
                                     </form>
                                     <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
                                         <span>Made by <img href="#" src="wthrdicon.svg" width="30px" height="30px"></span>
@@ -89,7 +89,7 @@
                                         <div class="mb-3">
                                             <input type="password" class="form-control overlay-input" id="register-password" placeholder="Passwort">
                                         </div>
-                                        <button type="submit" class="btn-login p-2 w-100">Registrieren</button>
+                                        <button type="button" onclick="closeLoginTab(); registerUser()" class="btn-login p-2 w-100">Registrieren</button>
                                     </form>
                                     <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
                                         <span>Mit dem Registrieren bestätigt der Nutzer die geltenen <a href="#">AGB</a> sowie <a href="#">Nutzungsbedingungen</a> der jeweiligen Unterprodukte.</span><br>
@@ -198,7 +198,6 @@
 
                         <!-- Main Container -->
                         <div id="main-content" class="container mt-5">
-                            <div id="main-alert" style="display: none;"></div>
                             <div id="main-contentdesc">
                                 <div id="main-contenttitle" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700; margin: 20px;">
                                     Collection hinzufügen

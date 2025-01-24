@@ -34,99 +34,131 @@ function setBounds(drawn) {
 }
 
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
-function startWebsite(){
+async function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
     switch(data){
         case('/addmodel.html'):
-         //Daterange picker Einstellungen
-            $(function() {
-                $('input[name="daterange"]').daterangepicker({
-                    "locale": {
-                        "format": "MM/DD/YYYY",
-                        "separator": " - ",
-                        "applyLabel": "Anwenden",
-                        "cancelLabel": "Abbrechen",
-                        "fromLabel": "Von",
-                        "toLabel": "bis",
-                        "customRangeLabel": "Custom",
-                        "weekLabel": "W",
-                        "daysOfWeek": [
-                            "So",
-                            "Mo",
-                            "Di",
-                            "Mi",
-                            "Do",
-                            "Fr",
-                            "Sa"
-                        ],
-                        "monthNames": [
-                            "Januar",
-                            "Februar",
-                            "März",
-                            "April",
-                            "Mai",
-                            "Juni",
-                            "Juli",
-                            "August",
-                            "September",
-                            "Oktober",
-                            "November",
-                            "Dezember"
-                        ],
-                        "firstDay": 1
+            const loggedIn = await isLoggedIn();
+            if (loggedIn) {
+                $(function() {
+                    $('input[name="daterange"]').daterangepicker({
+                        "locale": {
+                            "format": "MM/DD/YYYY",
+                            "separator": " - ",
+                            "applyLabel": "Anwenden",
+                            "cancelLabel": "Abbrechen",
+                            "fromLabel": "Von",
+                            "toLabel": "bis",
+                            "customRangeLabel": "Custom",
+                            "weekLabel": "W",
+                            "daysOfWeek": [
+                                "So",
+                                "Mo",
+                                "Di",
+                                "Mi",
+                                "Do",
+                                "Fr",
+                                "Sa"
+                            ],
+                            "monthNames": [
+                                "Januar",
+                                "Februar",
+                                "März",
+                                "April",
+                                "Mai",
+                                "Juni",
+                                "Juli",
+                                "August",
+                                "September",
+                                "Oktober",
+                                "November",
+                                "Dezember"
+                            ],
+                            "firstDay": 1
+                        },
+                        opens: 'left',
+                        autoApply:true
+                    }, function(start, end, label) {
+                        console.log("Neue Range: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
+                        startDatum = start;
+                        endDatum = end;
+                    });
+                });
+                const drawnItems = getDrawnItems();
+                createInputForm(getExpectedInputs());
+                const map = L.map('map').setView([0, 0], 2);
+
+                map.on('draw:created', function (event) {
+                    const layer = event.layer;
+                    drawnItems.addLayer(layer);
+                    const bounds = layer.getBounds();
+                    console.log(bounds);
+                    setBounds(bounds.toBBoxString())
+                    getBounds()
+                });
+
+                L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+            
+                    map.addLayer(drawnItems);
+            
+                    const drawControl = new L.Control.Draw({
+                    draw: {
+                        polyline: false,
+                        polygon: false,
+                        circle: false,
+                        marker: false,
+                        circlemarker: false,
+                        rectangle: true
                     },
-                    opens: 'left',
-                    autoApply:true
-                }, function(start, end, label) {
-                    console.log("Neue Range: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
-                    startDatum = start;
-                    endDatum = end;
-                });
-            });
-            const drawnItems = getDrawnItems();
-            createInputForm(getExpectedInputs());
-            const map = L.map('map').setView([0, 0], 2);
-
-            map.on('draw:created', function (event) {
-                const layer = event.layer;
-                drawnItems.addLayer(layer);
-                const bounds = layer.getBounds();
-                console.log(bounds);
-                setBounds(bounds.toBBoxString())
-                getBounds()
-            });
-
-            L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
-        
-                map.addLayer(drawnItems);
-        
-                const drawControl = new L.Control.Draw({
-                draw: {
-                    polyline: false,
-                    polygon: false,
-                    circle: false,
-                    marker: false,
-                    circlemarker: false,
-                    rectangle: true
-                },
-                edit: {
-                    featureGroup: drawnItems,
-                    remove: true
-                }
-                });
-                map.addControl(drawControl);
-        
+                    edit: {
+                        featureGroup: drawnItems,
+                        remove: true
+                    }
+                    });
+                    map.addControl(drawControl);
+            } else {
+                createStandardView();
+            }
             break;
+        case('/addcollection.html'):
+            setTimeout(function(){
+                isLoggedIn()
+            }, 50) 
+        break;
         case('/catalog.html'):
-        setTimeout(function(){
             fetchItems();
-        }, 0) 
+            setTimeout(function(){
+                isLoggedIn()
+            }, 50) 
         break;     
+        case('/impressum.html'):
+            setTimeout(function(){
+                isLoggedIn()
+            }, 50)
+        break;
+        case('/welcome.html'):
+            setTimeout(function(){
+                isLoggedIn()
+            }, 50)
+        break;
     }
 }
 startWebsite();
+
+// Schließt beim klicken des Anmelde/Register Buttons das Fenster ohne zu refreshen
+function closeLoginTab() {
+    const modalElement = document.getElementById('authModal');
+    if (modalElement) {
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        } 
+    } else {
+        console.error("Modal-Element nicht gefunden!");
+    }
+}
 
 // Funktion zum Verwalten der gewollten Userinputs
 function getExpectedInputs(){
@@ -227,47 +259,91 @@ async function loginUser(){
     formData.append('username', username);
     formData.append('password', password);
 
-    console.log(Object.fromEntries(formData.entries()));
-
     try{
-        console.log("hallo2")
         const response = await fetch('http://localhost:8000/auth/token',{
             method: 'POST',
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
             body: formData.toString()
         });
         if(response.ok){
-            setTimeout(function(){
-                showAlert(3, "Herzlichen Willkommen", username)
-            }, 2000)
+                const data = await response.json()
+                showAlert(3, "Erfolgreich angemeldet. Willkommen zurück ", username)
+                sessionStorage.setItem('token', data.access_token)
+                successfulLoggedIn(username)
         } else{
-            setTimeout(function(){
-                showAlert(4, "Fehler", "")
-            }, 2000)
+            showAlert(4, "Ungültige Anmeldedaten. Probiere es erneut.", "")
         }
     }
     catch(error){
-        console.log(error)
-        setTimeout(function(){
-            showAlert(3, "Invalid error aus code", "")
-        }, 1000)
+        showAlert(4, "Fehler beim Anmelden.", "Passwort oder Nutzername falsch.")
     }
 }
 
 // Funktion um Authentifizierungsdaten abzufragen
-async function getAuthData(){
-    try{
-        const response = await fetch('http://localhost:8000/user')
-        if(response.ok){
-            const response = await response.json
-            return response
+async function getAuthData() {
+    const token = sessionStorage.getItem('token');
+
+    try {
+        const response = await fetch('http://localhost:8000/user', {
+            method: 'GET',
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : ''
+            },
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (data.username === null && data.id === null) {
+            return null;
         } else {
-            return false
+            return data;
         }
+    } catch (error) {
+        console.error('Error:', error);
+        return null;
     }
-    catch(error){
-        showAlert(4,"Keine Verbindung zum Server","")
+}
+
+// Funktion fragt den Authorisierungsstatus ab
+async function isLoggedIn() {
+    const logged = await getAuthData();
+    console.log("Logged data:", logged);
+    if (logged && logged.username && logged.id) {
+        successfulLoggedIn(logged.username)
+        return true;
+    } else {
+        return false;
     }
+}
+
+// Funktion um Standardansicht ohne Anmeldung zu generieren.
+function createStandardView(){
+    const sidebar = document.getElementById('sidebar')
+    const main = document.getElementById('main-contentdesc')
+
+    sidebar.innerHTML = ''
+    sidebar.innerHTML = `
+<nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
+    <div class="position-sticky d-flex flex-column h-100">
+        <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="height: 75%;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="82" height="82" fill="#1C3D86" class="bi bi-person-fill-x mb-3" viewBox="0 0 16 16">
+                <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
+                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m-.646-4.854.646.647.646-.647a.5.5 0 0 1 .708.708l-.647.646.647.646a.5.5 0 0 1-.708.708l-.646-.647-.646.647a.5.5 0 0 1-.708-.708l.647-.646-.647-.646a.5.5 0 0 1 .708-.708"/>
+            </svg>
+            <div class="text-center" style="font-weight: 300; color:#1C3D86; text-transform: uppercase; font-size: 10px; ">
+                <span>Melde dich an, um eigene Modelle hinzuzufügen!</span>
+            </div>
+        </div>
+        <div id="sidebar-footer" class="mt-auto" style="height: 25%;">
+            <hr>
+            <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
+            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
+        </div>
+    </div>  
+</nav>
+
+`
 }
 
 // Funktion um Registrierungsdaten an den Server zu senden
@@ -286,30 +362,21 @@ async function registerUser(){
         email: email
     };
 
-    console.log(body)
-
     try{
-        console.log("hallo2")
         const response = await fetch('http://localhost:8000/auth/',{
             method: 'POST',
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify(body)
         });
         if(response.ok){
-            setTimeout(function(){
-                showAlert(3, "Herzlichen Willkommen", username)
-            }, 2000)
+            showAlert(3, "Erfolgreich registriert.")
         } else{
-            setTimeout(function(){
-                showAlert(4, "Fehler", "")
-            }, 2000)
+            showAlert(4, "Fehler bei der Registrierung. Nutze ggf. einen anderen Nutzername oder E-Mail.", "")
         }
     }
     catch(error){
         console.log(error)
-        setTimeout(function(){
-            showAlert(3, "Invalid error aus code", "")
-        }, 1000)
+        showAlert(4, "Fehler", "aus registerUser")
     }
 }
 
@@ -665,12 +732,12 @@ function createInputTOC(data) {
         <div id="sidebar-footer" class="mt-auto">
             <hr>
             <li class="nav-item">
-                <a id="sidebar-footerlink" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
+                <a id="sidebar-footerlink-login" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
                     Login
                 </a>
             </li>
             <li class="nav-item">
-                <a id="sidebar-footerlink" class="nav-link" href="#">
+                <a id="sidebar-footerlink-settings" class="nav-link" href="#">
                     Settings
                 </a>
             </li>
@@ -783,12 +850,12 @@ function changeInputTOC(data, pois){
         <div id="sidebar-footer" class="mt-auto">
             <hr>
             <li class="nav-item">
-                <a id="sidebar-footerlink" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
+                <a id="sidebar-footerlink-login" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
                     Login
                 </a>
             </li>
             <li class="nav-item">
-                <a id="sidebar-footerlink" class="nav-link" href="#">
+                <a id="sidebar-footerlink-settings" class="nav-link" href="#">
                     Settings
                 </a>
             </li>
@@ -854,8 +921,8 @@ function printAllFilters(items) {
     const footer = `
         <div id="sidebar-footer" class="mt-auto">
             <hr>
-            <a id="sidebar-footerlink" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
-            <a id="sidebar-footerlink" href="#" class="nav-link">Settings</a>
+            <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
+            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
         </div>
     `;
     
@@ -1330,4 +1397,18 @@ function extractUniqueFilterValues(items) {
         architecture: Array.from(filters.architecture),
         batchSize: Array.from(filters.batchSize)
     };
+}
+
+// Funktion um Anmeldetabs bei erfolgreicher Anmeldung anzupassen
+function successfulLoggedIn(user){
+    const name = user
+    const sidebarlogin = document.getElementById('sidebar-footerlink-login')
+    const topbarlogin = document.getElementById('login-button')
+    sidebarlogin.innerHTML = ' '
+    sidebarlogin.innerHTML = `<span>Bereits angemeldet: <strong>${name}</strong></span>`
+    topbarlogin.innerHTML = ' '
+    topbarlogin.innerHTML = `<button style="margin-top: 5px;"class="d-none d-md-block border-0 bg-transparent" type="button"><span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-check-circle" viewBox="0 0 16 16">
+  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+  <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
+</svg></span><br><span style="font-weight: bold; font-size:10px; color: #1C3D86; ">${name}</span></button>`
 }
