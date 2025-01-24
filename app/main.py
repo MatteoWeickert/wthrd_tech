@@ -60,7 +60,7 @@ async def user(token: Optional[str] = Depends(oauth2_scheme)):
         return {'username': None, 'id': None}
     
     current_user = await get_current_user(token)
-    if current_user['username'] == 'null':
+    if current_user is None:
         return {'username': None, 'id': None}
     
     return current_user
