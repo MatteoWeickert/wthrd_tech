@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, status, Depends
+from fastapi.security import OAuth2PasswordBearer
 from typing import Optional, List, Annotated
 from pydantic import BaseModel
 from sqlalchemy import create_engine, and_, or_ 
@@ -50,11 +51,16 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(get_current_user)]
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
 
 
 @app.get("/user", status_code=status.HTTP_200_OK)
-async def user(current_user: dict = Depends(get_current_user)):
-    if current_user is None:
+async def user(token: Optional[str] = Depends(oauth2_scheme)):
+    if token is None:
+        return {'username': None, 'id': None}
+    
+    current_user = await get_current_user(token)
+    if current_user['username'] == 'null':
         return {'username': None, 'id': None}
     
     return current_user
