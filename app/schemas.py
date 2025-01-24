@@ -109,3 +109,11 @@ class CollectionCreate(BaseModel):
     catalog_id: str
     created_at: datetime
     updated_at: datetime
+
+class UserCreate(BaseModel):
+    id: int = Field(...)
+    username: str
+    prename: str
+    lastname: str
+    email: str
+    hashed_password: str
