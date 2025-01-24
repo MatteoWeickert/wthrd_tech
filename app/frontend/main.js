@@ -218,6 +218,101 @@ function getPredefinedTasks(){
     ]    
 }
 
+// Funktion um Anmeldedaten vom Server anzufragen
+async function loginUser(){
+    const username = document.getElementById('login-username').value
+    const password = document.getElementById('login-password').value
+
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+
+    console.log(Object.fromEntries(formData.entries()));
+
+    try{
+        console.log("hallo2")
+        const response = await fetch('http://localhost:8000/auth/token',{
+            method: 'POST',
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: formData.toString()
+        });
+        if(response.ok){
+            setTimeout(function(){
+                showAlert(3, "Herzlichen Willkommen", username)
+            }, 2000)
+        } else{
+            setTimeout(function(){
+                showAlert(4, "Fehler", "")
+            }, 2000)
+        }
+    }
+    catch(error){
+        console.log(error)
+        setTimeout(function(){
+            showAlert(3, "Invalid error aus code", "")
+        }, 1000)
+    }
+}
+
+// Funktion um Authentifizierungsdaten abzufragen
+async function getAuthData(){
+    try{
+        const response = await fetch('http://localhost:8000/user')
+        if(response.ok){
+            const response = await response.json
+            return response
+        } else {
+            return false
+        }
+    }
+    catch(error){
+        showAlert(4,"Keine Verbindung zum Server","")
+    }
+}
+
+// Funktion um Registrierungsdaten an den Server zu senden
+async function registerUser(){
+    const username = document.getElementById('register-username').value
+    const prename = document.getElementById('register-prename').value
+    const lastname = document.getElementById('register-lastname').value
+    const email = document.getElementById('register-email').value
+    const password = document.getElementById('register-password').value
+
+    const body ={
+        username: username,
+        password: password,
+        prename: prename,
+        lastname: lastname,
+        email: email
+    };
+
+    console.log(body)
+
+    try{
+        console.log("hallo2")
+        const response = await fetch('http://localhost:8000/auth/',{
+            method: 'POST',
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(body)
+        });
+        if(response.ok){
+            setTimeout(function(){
+                showAlert(3, "Herzlichen Willkommen", username)
+            }, 2000)
+        } else{
+            setTimeout(function(){
+                showAlert(4, "Fehler", "")
+            }, 2000)
+        }
+    }
+    catch(error){
+        console.log(error)
+        setTimeout(function(){
+            showAlert(3, "Invalid error aus code", "")
+        }, 1000)
+    }
+}
+
 // Fetchen aller Modelle
 async function fetchItems() {
     try {
@@ -242,60 +337,6 @@ async function fetchItems() {
 // Adden des Items aus Eingabemaske
 async function addItems() {
     const input = getUserInputs();
-    console.log(JSON.stringify({
-        id: input.id,
-        type: 'Feature',
-        stac_version: "1.0.0",
-        stac_extensions: ["extension1", "extension2"],
-        geometry: getGeometry(),
-        bbox: getBounds(),
-        properties: {
-            title: input.name,
-            description: input.description,
-            datetime: "2024-12-04T16:20:00",
-            "mlm:name": input.name,
-            "mlm:architecture": input.architecture,
-            "mlm:tasks": input.tasks.split(',').map(value => value.trim()),
-            "mlm:framework": input.framework,
-            "mlm:framework_version": input.frameworkversion,
-            "mlm:pretrained": getPretrained(),
-            "mlm:pretrained_source": input.pretrainedsource,
-            "mlm:batch_size_suggestion": input.batchsizesuggestion,
-            "mlm:accelerator":input.accelerator,
-            "mlm:accelerator_summary":input.acceleratorsummary,
-            end_datetime: getDateRange()[1].end,
-            start_datetime: getDateRange()[0].start,
-            "mlm:input": [
-                {
-                    name: input.inputname,
-                    type: input.inputtypes.split(',').map(value => value.trim())
-                }
-            ],
-            "mlm:output":[ {
-                type: "class",
-                num_classes: 1000
-            }],
-            "mlm:hyperparameters": input.hyperparameter
-        },
-        links: [
-            { href: "https://example.com/item", type: "application/json", rel: "self" },
-            { href: "http://localhost:8000/collections", type: "application/json", rel: "parent" },
-            { href: "http://localhost:8000/", type: "application/json", rel: "root" },
-            { href: `http://localhost:8000/collections/${input.collectionid}`, type: "application/json", rel: "collection" }
-        ],
-        assets: {
-            model: {
-                href: input.link
-            },
-            thumbnail: { href: "https://example.com/thumbnail.png" },
-            data: { href: "https://example.com/data" }
-        },
-        collection_id: input.collectionid,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        color: getSelectedColor()
-    })
-)
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
