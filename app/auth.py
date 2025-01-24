@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -20,7 +20,7 @@ SECRET_KEY = '901234803984309809809890bdf09vf9dvfd09v8df908v90fd8vf09v809f'
 ALGORITHM = 'HS256'
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token', auto_error=False)
 
 # Pydantic Modell, um User-Eingabe auf Richtigkeit zu prüfen, bevor er angelegt wird (=> in Schemas auslagern?)
 class CreateUserRequest(BaseModel):
@@ -76,8 +76,8 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-    
+        return {"no token available because not registrated"}
+
     token = create_access_token(user.username, user.id, timedelta(minutes=30))
 
     return {"access_token": token, "token_type": "bearer"}
@@ -97,9 +97,13 @@ def create_access_token(username: str, user_id: int, expires_delta: timedelta):
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
+async def get_current_user(token: Optional[str] = Depends(oauth2_bearer)) -> Optional[str]:
+
+    if not token:
+        return None
+
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]) # Payload ist alles was in dem Token steht (bei uns: username und id)
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get('sub')
         user_id: int = payload.get('id')
         if username is None or user_id is None:
@@ -107,4 +111,5 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         return {'username': username, 'id': user_id}
     
     except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Could not validate user.")
+    # Token konnte nicht validiert werden
+        return None
