@@ -64,7 +64,7 @@
                                         <div class="mb-3">
                                             <input type="password" class="form-control overlay-input" id="login-password" placeholder="Passwort">
                                         </div>
-                                        <button type="submit" class="btn-login p-2 w-100">Anmelden</button>
+                                        <button type="button" onclick="closeLoginTab(); loginUser()" class="btn-login p-2 w-100">Anmelden</button>
                                     </form>
                                     <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
                                         <span>Made by <img href="#" src="wthrdicon.svg" width="30px" height="30px"></span>
@@ -75,10 +75,10 @@
                                 <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
                                     <form id="registerForm">
                                         <div class="mb-3">
-                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Vorname">
+                                            <input type="text" class="form-control overlay-input" id="register-prename" placeholder="Vorname">
                                         </div>
                                         <div class="mb-3">
-                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nachname">
+                                            <input type="text" class="form-control overlay-input" id="register-lastname" placeholder="Nachname">
                                         </div>
                                         <div class="mb-3">
                                             <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nutzername">
@@ -89,7 +89,7 @@
                                         <div class="mb-3">
                                             <input type="password" class="form-control overlay-input" id="register-password" placeholder="Passwort">
                                         </div>
-                                        <button type="submit" class="btn-login p-2 w-100">Registrieren</button>
+                                        <button type="button" onclick="closeLoginTab(); registerUser()"class="btn-login p-2 w-100">Registrieren</button>
                                     </form>
                                     <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
                                         <span>Mit dem Registrieren bestätigt der Nutzer die geltenen <a href="#">AGB</a> sowie <a href="#">Nutzungsbedingungen</a> der jeweiligen Unterprodukte.</span><br>
@@ -154,7 +154,7 @@
                     </div>
                     <div id="topbar-menuoptions" class="ms-auto d-flex justify-content-end px-3 py-2">
                         <!-- Topbar: Suchelement -->
-                        <a id="topbar-search" class="d-none d-lg-block text-decoration-none px-3 py-2">
+                        <a style="margin-top:5px;"id="topbar-search" class="d-none d-lg-block text-decoration-none px-3 py-2">
                             <div id="topbar-searchicon">
                                 <svg style="margin-right: 10px;"xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-search" viewBox="0 0 16 16">
                                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
@@ -197,7 +197,6 @@
 
                         <!-- Main Container -->
                         <div id="main-content" class="container mt-5">
-                            <div id="main-alert" style="display: none;"></div>
                             <div id="main-contentdesc">
                                 <div id="main-contenttitle" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700; margin: 20px;">
                                     Modell hinzufügen

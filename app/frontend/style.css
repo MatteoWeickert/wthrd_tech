@@ -159,6 +159,12 @@
     background-color: #f7faff;
   }
 
+  #topbar-welcome {
+    background-color:#9ec4f2; /* Replace with your desired color */
+    color: white; /* Adjust text color if necessary */
+  }
+
+
 
   /*MAIN*/
   #map{
@@ -338,4 +344,24 @@
 #disableOverlay {
   background-color: #9ec4f2;
   border-color: #9ec4f2;
+}
+
+/* Welcome Page */
+
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card a:hover {
+  text-decoration: none;
 }

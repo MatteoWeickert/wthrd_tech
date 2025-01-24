@@ -40,8 +40,11 @@ CREATE TABLE items (
 );
 
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,                         
-    username VARCHAR(50) NOT NULL,
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    prename VARCHAR(20) NOT NULL,
+    lastname VARCHAR(20) NOT NULL,
+    email VARCHAR(30) NOT NULL,
     hashed_password VARCHAR(200) NOT NULL
 );
 
