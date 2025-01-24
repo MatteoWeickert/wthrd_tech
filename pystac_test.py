@@ -4,19 +4,26 @@ import requests
 import pystac_client
 from pystac_client import Client
 
+url1 = "http://localhost:8000"
+url2 = "https://ai-extensions-stac.terradue.com/"
+
 try:
-    api = Client.open("http://localhost:8000")
+    catalog = Client.open(url2)
     print("Verbindung zu STAC-API erfolgreich!")
 except Exception as e:
     print(f"Fehler beim Verbinden mit der STAC-API: {e}")
 
-# print(api.title)
-# print(api.links)
-# for collection in api.get_all_collections():
-#     print(collection)
+# Alle Items abrufen, indem wir durch die Collections im Katalog iterieren
+all_items = []
 
-collection_id = "MLM_Collection"  # Replace with your collection ID
-search = api.search(collections=[collection_id])
+# Iteriere durch alle Collections im Katalog
+for collection in catalog.get_children():
+    print(f"Collection ID: {collection.id}")
+    
+    # Alle Items der Collection abrufen (nur für Collections, nicht für einzelne Items)
+    for item in collection.get_all_items():
+        all_items.append(item)
 
-for item in search.get_items():
-    print(item.to_dict())
+# Anzahl der Items ausgeben
+print(f"Anzahl der Items im Katalog: {len(all_items)}")
+

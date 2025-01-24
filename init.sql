@@ -130,7 +130,7 @@ VALUES (
         }],
         "mlm:total_parameters": 89748193, "mlm:pretrained": true,
         "mlm:pretrained_source": "Sentinel-2 imagery and SATLAS labels",
-        "datetime": null
+        "datetime": "2023-01-01T12:00:00Z"
     }',
     ARRAY[
         '{"rel": "derived_from", "href": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l1c", "type": "application/json"}',

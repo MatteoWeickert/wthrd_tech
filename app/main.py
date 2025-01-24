@@ -195,24 +195,26 @@ def get_catalog():
 
         collections = db.query(Collection).filter(Collection.catalog_id == catalog.id).all()
         links = [
-            {"href": "http://localhost:8000/", "type": "application/json", "rel": "self"},
-            {"href": "http://localhost:8000/", "type": "application/json", "rel": "root"},
-            {"href": "http://localhost:8000/conformance", "type": "application/json", "rel": "conformance"},
-            {"href": "http://localhost:8000/collections", "type": "application/json", "rel": "data"}
+            {"rel": "self", "type": "application/json", "href": "http://localhost:8000/"},
+            {"rel": "root", "type": "application/json", "href": "http://localhost:8000/"},
+            {"rel": "conformance", "type": "application/json", "href": "http://localhost:8000/conformance"},
+            {"rel": "data", "type": "application/json", "href": "http://localhost:8000/collections"},
+            {"rel": "search", "type": "application/json",  "method": "POST", "href": "http://localhost:8000/search"},
+            {"rel": "search", "type": "application/json",  "method": "GET", "href": "http://localhost:8000/search"}
         ]
         for collection in collections:
             links.append({
                 "rel": "child",
                 "type": "application/json",
-                "href": f"http://localhost:8000/collections/{collection.id}",
-                "title": collection.title
+                "title": collection.title,
+                "href": f"http://localhost:8000/collections/{collection.id}"
             })
         
         # Wandelt das Catalog-Objekt in ein Dictionary (z. B. mit einer Methode oder mit vars())
         catalog_dict = catalog.__dict__.copy()
         
         catalog_dict["conformsTo"] = conforms_to
-        # catalog_dict["links"] = links
+        catalog_dict["links"] = links
 
         # Rückgabe als JSON-kompatible Daten
         return catalog_dict
@@ -246,13 +248,6 @@ def get_collection_item(collection_id: str, item_id: str):
     finally:
         db.close()
 
-# # Eingabeschema für die Suche
-# class SearchRequest(BaseModel):
-#     collections: Optional[List[str]] = None  # Eine Liste
-#     bbox: Optional[List[float]] = None  # [west, south, east, north]
-#     datetime: Optional[str] = None  # ISO8601 Zeitraum, z. B. "2023-01-01T00:00:00Z/2023-01-31T23:59:59Z"
-#     intersects: Optional[dict] = None
-#     limit: Optional[int]
 
 # get "search"-Route is required
 @app.get("/search")
@@ -264,7 +259,7 @@ def search(
 ):
     db = SessionLocal()
     try:
-        query = db.query(Item)
+        query = db.query(Item).all()
 
         # Filter nach Collections
         if collections:
@@ -343,10 +338,8 @@ def search(
             "type": "FeatureCollection",
             "features": features,
             "links": [
-                {
-                    "rel": "self",
-                    "href": "http://localhost:8000/search"
-                }
+                {"rel": "root", "type": "application/json", "href": "http://localhost:8000/"},
+                {"rel": "self", "type": "application/json", "href": "http://localhost:8000/search"}
             ]
         }
 
@@ -358,41 +351,51 @@ def search(
     finally:
         db.close()
 
+class SearchQuery(BaseModel):
+    bbox: Optional[List[float]] = None
+    datetime: Optional[str] = None
+    collections: Optional[List[str]] = None
+    ids: Optional[List[str]] = None
+    limit: Optional[int] = 10
 
 @app.post("/search")
-def search_post(body: dict):
-    return search(**body)
+async def search_items(query: SearchQuery):
+    results = []
+    db = SessionLocal()
+    try:
+        items_all = db.query(Item).all()
+        for item in items_all:
+            if query.collections and item.collection_id not in query.collections:
+                continue
+            if query.ids and item.id not in query.ids:
+                continue
+            if query.bbox:
+                item_bbox = item.bbox
+                if not (
+                    item_bbox[0] <= query.bbox[2] and  # west <= east
+                    item_bbox[2] >= query.bbox[0] and  # east >= west
+                    item_bbox[1] <= query.bbox[3] and  # south <= north
+                    item_bbox[3] >= query.bbox[1]      # north >= south
+                ):
+                    print ("Item mit der ID " + item.id + " wurde nicht hinzugefügt")
+                    continue
+            if query.datetime:
+                item_time = item.properties["datetime"]
+                if not item_time or not datetime_filter(item_time, query.datetime):
+                    continue
+            results.append(item)
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        db.close()
+    print ("Anzahl der Ergebnisse: " + str(len(results)))
+    return {"type": "FeatureCollection", "features": results}
 
-# @app.post("/search")
-# def search(criteria: SearchRequest):
-#     db = SessionLocal()
-#     query = db.query(Item)
-#     if(criteria.collections): 
-#         query = query.filter(Item.collection_id.in_(criteria.collections))
-
-#     # erhalte ergebnisse
-#     items = query.all()
-
-#     # JSON-kompatible Ausgabe erstellen
-#     results = [
-#         {
-#             "id": item.id,
-#             "type": item.type,
-#             "stac_version": item.stac_version,
-#             "stac_extensions": item.stac_extensions,
-#             "geometry": item.geometry,
-#             "bbox": item.bbox,
-#             "properties": item.properties,
-#             "links": item.links,
-#             "assets": item.assets,
-#             "collection_id": item.collection_id,
-#             "created_at": item.created_at,
-#             "updated_at": item.updated_at
-#         }
-#         for item in items
-#     ]
-
-#     return {"type": "FeatureCollection", "features": results}
+def datetime_filter(item_time, query_time_range):
+    start, end = query_time_range.split("/")
+    start = start if start != ".." else None
+    end = end if end != ".." else None
+    return (not start or item_time >= start) and (not end or item_time <= end)
 
 @app.get("/collections")
 def get_all_collections():
