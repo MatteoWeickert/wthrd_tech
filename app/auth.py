@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from starlette import status
 from db import SessionLocal
 from models import User
@@ -45,15 +46,30 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
+    # Überprüfen, ob der Benutzername bereits existiert
+    existing_user = db.query(User).filter(User.username == create_user_request.username).first()
+
+    if existing_user:  # Falls ein Benutzer mit dem gleichen Benutzernamen existiert
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Username already used.")
+    
     create_user_model = User(
         username = create_user_request.username,
         prename = create_user_request.prename,
         lastname = create_user_request.lastname,
         email = create_user_request.email,
         hashed_password = bcrypt_context.hash(create_user_request.password))
+
+    try:
+        db.add(create_user_model)
+        db.commit()
+
+    except IntegrityError:  # Falls die Datenbank eine Integritätsverletzung feststellt
+        db.rollback()  # Änderungen zurücksetzen
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database integrity error.")
     
-    db.add(create_user_model)
-    db.commit()
+    return {"message": "User created successfully"}
+
+    
 
 # Route zur Erstellung eines Tokens, wenn der Login (Eingegebener Username und Passwort stimmen mit DB überein) erfolgreich war
 @router.post("/token", response_model=Token)
