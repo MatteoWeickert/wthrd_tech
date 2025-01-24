@@ -27,10 +27,10 @@
 
     <!-- Main Content -->
     <div class="container-fluid">
-        <div class="row vh-100 position-relative">
+        <div class="row vh-100 d-flex align-items-stretch">
             <!-- Left Section -->
-            <div class="col-md-6" style="position: absolute; top: 0; bottom: 0;">
-                <div class="px-4" style="padding-top: 20px;"> 
+            <div class="col-md-6 d-flex flex-column">
+                <div class="px-4">
                     <h1>Welcome</h1>
                     <p>At wthrd.tech, we specialise in the field of technology and Earth observation, with the aim of unlocking the full potential of geospatial data. As a startup driven by innovation, we've developed a comprehensive catalog for STAC-compatible machine learning models working with Earth observation data.</p>
                     <p>Our mission is to simplify access to machine learning models, enabling seamless integration and meaningful insights for projects that matter, whether it's monitoring environmental changes or advancing sustainable development. Explore our catalog and join us in shaping the future of Earth observation.</p>
@@ -62,28 +62,30 @@
                     </a>
                 </div>
             </div>
-    
+
             <!-- Right Section -->
-            <div class="col-md-6" style="position: absolute; top: 0; bottom: 0; right: 0;">
-                <div class="px-4" style="padding-top: 20px;"> <!-- Same top padding -->
-                    <h1>Most Recently Added</h1>
+            <div class="col-md-6 d-flex flex-column">
+                <div class="px-4 mt-4">
+                    <h2>Most Recently Added</h2>
                 </div>
+                <!-- Grey element converted to a card -->
                 <div class="card mx-4 mt-2">
                     <div class="card-body" style="min-height: 200px;">
                         <p>This card can display the most recently added data or relevant content.</p>
                     </div>
                 </div>
+                <!-- Properly aligned bottom card -->
                 <a href="catalog.html" class="text-decoration-none">
-                    <div class="card mx-4 mt-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Explore More</h5>
-                            <p class="card-text">Enter the Catalog to visit all available models</p>
-                        </div>
-                    </div>
-                </a>
+                            <div class="card mx-4 mt-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Explore More</h5>
+                                    <p class="card-text">Enter the Catalog to visit all available models</p>
+                                </div>
+                            </div>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-    
 </body>
 </html>
