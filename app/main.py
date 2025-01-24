@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from models import Item, Catalog, Collection, User
 import os, datetime
-from schemas import ItemCreate, CollectionCreate, UserCreate
+from schemas import ItemCreate, CollectionCreate
 import auth
 from auth import get_current_user
 
@@ -53,10 +53,8 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @app.get("/user", status_code=status.HTTP_200_OK)
-async def user(user: UserCreate, db: db_dependency):
-    if user is None:
-        raise HTTPException(status_code=401, detail="Authentifikation fehlgeschlagen")
-    return {"User": user}
+async def user():
+    return get_current_user()
 
 # Example database operation
 @app.get("/items")
