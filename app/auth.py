@@ -103,7 +103,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         username: str = payload.get('sub')
         user_id: int = payload.get('id')
         if username is None or user_id is None:
-            return {'username': 'null', 'id': 'null'}
+            return None
         return {'username': username, 'id': user_id}
     
     except JWTError:

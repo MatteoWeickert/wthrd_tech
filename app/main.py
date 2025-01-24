@@ -53,8 +53,11 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @app.get("/user", status_code=status.HTTP_200_OK)
-async def user():
-    return get_current_user()
+async def user(current_user: dict = Depends(get_current_user)):
+    if current_user is None:
+        return {'username': 'null', 'id': 'null'}
+    
+    return current_user
 
 # Example database operation
 @app.get("/items")
