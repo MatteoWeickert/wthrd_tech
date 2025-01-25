@@ -214,6 +214,10 @@ function displaySearchResults(results){
         div.addEventListener('click', () => {
             //Hier einbauen, was passieren soll, wenn auf ein Item geklickt wird
             console.log('Selected Item:' + JSON.stringify(item));
+            window.location.href = '/catalog.html'
+            setTimeout(function(){
+                window.location.href = `#model-itemparameter-${item.id}`
+            }, 50)
         })
         resultsContainer.appendChild(div);
     })
@@ -238,7 +242,6 @@ document.getElementById('search-input').addEventListener('input', (e) => {
         document.getElementById('search-results').style.display = 'none';
     }
 });
-
 
 // Schließt beim klicken des Anmelde/Register Buttons das Fenster ohne zu refreshen
 function closeLoginTab() {
