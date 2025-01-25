@@ -62,6 +62,7 @@ function getSearchedBbox(){
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 async function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
+    lastSearchedBbox = null;
     switch(data){
         case('/addmodel.html'):
             const loggedIn = await isLoggedIn();
