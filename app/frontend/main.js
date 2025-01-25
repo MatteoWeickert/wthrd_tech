@@ -220,7 +220,7 @@ function filterItemsForSearch(searchTerm) {
 function displaySearchResults(results){
 
     console.log("Results in DisplaySearchResults: " + JSON.stringify(results));
-    let resultsContainer = document.getElementById('search-results');
+    let resultsContainer = document.getElementById('modell-container');
     resultsContainer.innerHTML = '';
     
     if (!Array.isArray(results)) {
@@ -229,17 +229,113 @@ function displaySearchResults(results){
         return;
     }
     results.forEach(item => {
-        const div = document.createElement('div');
-        div.textContent = item.id;
-        div.addEventListener('click', () => {
-            //Hier einbauen, was passieren soll, wenn auf ein Item geklickt wird
-            console.log('Selected Item:' + JSON.stringify(item));
-            window.location.href = '/catalog.html'
-            setTimeout(function(){
-                window.location.href = `#model-itemparameter-${item.id}`
-            }, 50)
-        })
-        resultsContainer.appendChild(div);
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('p-3', 'modell-item');
+
+        const title = document.createElement('span');
+        title.innerHTML = `${item.properties['mlm:name']}`;
+        title.style.color = `${item.color|| ''}`;
+
+        const parameters = document.createElement('div');
+        parameters.classList.add('modell-itemparameter');
+        parameters.id = `modell-itemparameter-${item.id}`;
+        parameters.innerHTML = `
+            ${fillInParameters(item, selectedFilters)}
+            <button type="button" class="btn-expand" data-bs-toggle="collapse" data-bs-target="#collapse-${item.id}" aria-expanded="false" aria-controls="collapse-${item.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
+                <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
+            </svg>
+            </button>
+        `;
+        const information = document.createElement('div');
+        information.id = 'modell-itemcollapse'
+        information.innerHTML = `
+            <div class="collapse" id="collapse-${item.id}">
+                <div class="card card-body">
+                    <div class="card-body-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
+                            <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
+                        </svg>
+                        <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
+                    </div>
+                    <hr>
+                    <span style="font-size:15px;">Beschreibung:</span>
+                    <span style="font-size:12px;">${item.properties.description}</span>
+                    <hr>
+                    <div class="card-body-download">
+                        <span style="font-size:15px;">Einbinden:</span><br> <span style="font-size:12px;">${item.assets.model['href']}</span>
+                            <button type="button" class="btn-clipboard" onclick="copyToClipboard('${item.assets.model['href']}', '${item.properties['mlm:name']}')" id="clipboard-${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+                                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
+                                </svg>
+                            </button>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6 col-lg-8">
+                                <div style="font-size:12px;"class="card-body-parameters">
+                                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
+                                    <span>Empfohlener Zeitraum: ${item.properties.start_datetime || 'Unbekannt'} bis ${item.properties.end_datetime || 'Unbekannt'} </span><br>
+                                    <span>Erwartete Eingabe: ${item.properties['mlm:input'][0].name || 'Unbekannt'} </span><br>
+                                    <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].type || 'Unbekannt'}</span><br>
+                                    <span>Accelerator: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
+                                    <span>Architektur: ${item.properties['mlm:architecture'] || 'Unbekannt'}</span><br>
+                                    <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} in der Version: ${item.properties['mlm:framework_version'] || 'Unbekannt'} </span><br>
+                                    <span>Empfohlene Batchgröße: ${item.properties['mlm:batch_size_suggestion'] || 'Unbekannt'}
+                                    <hr>
+                                    <span>Weitere Information: ${item.properties['mlm:accelerator_summary'] || 'Keine weiteren Informationen hinterlegt.'} </span><br>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                    <div style="width: 100%;height:100%;" id="map-${item.id}"></div>
+                            </div>
+                        </div>
+                        <hr>
+                        <span style="font-size:10px;">Vortrainiert: ${isPretrained(item.properties['mlm:pretrained'] || undefined, item.properties['mlm:pretrained_source'] || undefined)} </span>
+                        <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
+                    </div>
+            </div>
+        `;
+
+        itemDiv.appendChild(title);
+        itemDiv.appendChild(parameters);
+        itemDiv.appendChild(information);
+        resultsContainer.appendChild(itemDiv);
+
+        createMapOnModell(item);
+
+        const button = parameters.querySelector('.btn-expand');
+        button.addEventListener('click', () => {
+            const svg = button.querySelector('svg');
+            if (button.getAttribute('aria-expanded') === 'true') {
+                svg.outerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
+                        <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
+                    </svg>
+                `;
+            } else {
+                svg.outerHTML = `
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
+                        <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
+                    </svg>
+                `;
+            }
+        });
+
+        
+        // const div = document.createElement('div');
+        // div.textContent = item.id;
+        // div.addEventListener('click', () => {
+        //     //Hier einbauen, was passieren soll, wenn auf ein Item geklickt wird
+        //     console.log('Selected Item:' + JSON.stringify(item));
+        //     window.location.href = '/catalog.html'
+        //     setTimeout(function(){
+        //         window.location.href = `#model-itemparameter-${item.id}`
+        //     }, 50)
+        // })
+        // resultsContainer.appendChild(div);
+
     })
 
     resultsContainer.style.display = results.length > 0 ? 'block' : 'none';
@@ -1426,6 +1522,7 @@ function displayItems(items, filters){
                     </svg>
                     </button>
                 `;
+
                 const information = document.createElement('div');
                 information.id = 'modell-itemcollapse'
                 information.innerHTML = `
@@ -1436,6 +1533,18 @@ function displayItems(items, filters){
                                     <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
                                 </svg>
                                 <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
+                            </div>
+                            <hr>
+                            <div>
+                            <span style="font-size:15px;">Download:</span>
+                            <br>
+                            <span style="font-size:12px;">Für den Download des Items als JSON auf den Button klicken.</span>
+                            <button type="button" class="btn-download" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-download" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                </svg>
+                            </button>
                             </div>
                             <hr>
                             <span style="font-size:15px;">Beschreibung:</span>
@@ -1503,6 +1612,24 @@ function displayItems(items, filters){
         });
     });      
 }
+
+function downloadItemAsJSON(itemId) {
+    const item = allItems.find(i => i.id === itemId);
+    if (!item) {
+        console.error('Item not found:', itemId);
+        return;
+    }
+    const fileName = `${item.properties?.['mlm:name'] || item.id}.json`;
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(item, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", fileName);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+
 
 // Funktion um Modellparameter Schnellansicht je nach Auswahl der Filterparameter anpassen
 function fillInParameters(item, data){
