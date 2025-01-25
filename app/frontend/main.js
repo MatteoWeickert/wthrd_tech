@@ -4,6 +4,13 @@ let usedFilters= null;
 
 let startDatum = null;
 let endDatum = null;
+let allItems = [];
+
+window.addEventListener('load', async ()=>{
+    allItems = await returnAllItems()
+    console.log("Alle Items: ", JSON.stringify(allItems))
+
+});
 
 // Singleton-Fkt speichert die angegebenen Daten (range)
 function getDateRange() {
@@ -146,6 +153,92 @@ async function startWebsite(){
     }
 }
 startWebsite();
+
+// Funktion zum Filtern von Items (Suchleiste)
+
+function filterItemsForSearch(searchTerm) { 
+    if (!Array.isArray(allItems) || allItems.length === 0) 
+        {
+            console.error("allItems is not loaded or is empty"); 
+            return []; 
+        } 
+
+    console.log("FilterItems called with:", searchTerm); 
+    console.log("AllItems:", allItems); 
+    
+    if (!Array.isArray(allItems)) { console.error("allItems is not an array"); return []; } 
+    
+    const searchTermLower = searchTerm.toLowerCase();
+
+    let filtered = allItems.filter(item => 
+        (item?.['id'] || '').toLowerCase().includes(searchTermLower) ||
+        //(item?.['type'] || '').toLowerCase().includes(searchTermLower()) || 
+        (item?.['stac_version'] || '').toLowerCase().includes(searchTermLower) || 
+        (Array.isArray(item?.['stac_extensions']) && item['stac_extensions'].some(ext => ext.toLowerCase().includes(searchTermLower))) ||
+        (Array.isArray(item?.['bbox']) && item['bbox'].some(coord => coord.toString().includes(searchTermLower))) ||        
+        (item?.properties?.['start_datetime'] || '').toLowerCase().includes(searchTermLower) ||
+        (item?.properties?.['end_datetime'] || '').toLowerCase().includes(searchTermLower) ||                
+        (item?.properties?.['description'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.properties?.['mlm:framework'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.properties?.['file:size'] || '').toString().toLowerCase().includes(searchTermLower) || 
+        (item?.properties?.['mlm:accelerator'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.properties?.['mlm:name'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.properties?.['mlm_architecture'] || '').toLowerCase().includes(searchTermLower) || 
+        (Array.isArray(item?.properties?.['mlm:tasks']) && item.properties['mlm:tasks'].some(task => task.toLowerCase().includes(searchTermLower))) ||        
+        (Array.isArray(item?.properties?.['mlm:input']) && item.properties['mlm:input'].some(input => (input.name || '').toLowerCase().includes(searchTermLower))) ||        
+        //(item?.['links'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.['collection_id'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.['created_at'] ? new Date(item['created_at']).toISOString() : '').toLowerCase().includes(searchTermLower) ||
+        (item?.['updated_at'] ? new Date(item['updated_at']).toISOString() : '').toLowerCase().includes(searchTermLower)
+        ); 
+        
+        console.log("Filtered Items" + filtered); 
+        
+        return filtered; 
+    }
+
+function displaySearchResults(results){
+
+    console.log("Results in DisplaySearchResults: " + JSON.stringify(results));
+    let resultsContainer = document.getElementById('search-results');
+    resultsContainer.innerHTML = '';
+    
+    if (!Array.isArray(results)) {
+            console.log(typeof results)
+        console.error('Results is not an array:', results);
+        return;
+    }
+    results.forEach(item => {
+        const div = document.createElement('div');
+        div.textContent = item.id;
+        div.addEventListener('click', () => {
+            //Hier einbauen, was passieren soll, wenn auf ein Item geklickt wird
+            console.log('Selected Item:' + JSON.stringify(item));
+        })
+        resultsContainer.appendChild(div);
+    })
+
+    resultsContainer.style.display = results.length > 0 ? 'block' : 'none';
+
+}
+
+// Add event listener to search input
+document.getElementById('search-input').addEventListener('input', (e) => {
+    const searchTerm = e.target.value;
+    console.log("Search term:", searchTerm);
+    if (searchTerm.length > 2) {
+        console.log("Calling filterItems with:", searchTerm);
+        console.log("Type of allItems:", typeof allItems);
+        console.log("Is allItems an array?", Array.isArray(allItems));
+        console.log("allItems:", allItems);
+        let filteredItems = filterItemsForSearch(searchTerm);
+        console.log("Filtered items:", filteredItems);
+        displaySearchResults(filteredItems);
+    } else {
+        document.getElementById('search-results').style.display = 'none';
+    }
+});
+
 
 // Schließt beim klicken des Anmelde/Register Buttons das Fenster ohne zu refreshen
 function closeLoginTab() {
@@ -377,6 +470,26 @@ async function registerUser(){
     catch(error){
         console.log(error)
         showAlert(4, "Fehler", "aus registerUser")
+    }
+}
+
+// Hilfsfunktion, die alle Items zurückgibt, kann auch gelöscht werden, wenn es schon eine andere Methode die dasselbe macht
+async function returnAllItems() {
+    try {
+        const response = await fetch('http://localhost:8000/items');
+        if (!response.ok) {
+            showAlert(4, "Fehler beim verbinden zum STAC.", "Überprüfe die Netzwerkverbindung.")
+        }
+        const data = await response.json();
+
+        if (Array.isArray(data) && data.length > 0) {
+            return data;
+        } else {
+            showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
+        }
+    } catch (error) {
+        console.log(error)
+        showAlert(4, "Fehler beim Abrufen der Items oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.")
     }
 }
 
