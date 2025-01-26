@@ -8,22 +8,37 @@ url1 = "http://localhost:8000"
 url2 = "https://ai-extensions-stac.terradue.com/"
 
 try:
-    catalog = Client.open(url2)
+    catalog = Client.open(url1)
     print("Verbindung zu STAC-API erfolgreich!")
 except Exception as e:
     print(f"Fehler beim Verbinden mit der STAC-API: {e}")
 
-# Alle Items abrufen, indem wir durch die Collections im Katalog iterieren
-all_items = []
+# Hole die Collection mit der ID "MLM_Collection"
+col1 = catalog.get_child("MLM_Collection")
 
-# Iteriere durch alle Collections im Katalog
+# Ausgabe der Collection ID
+print(f"Collection ID: {col1.id}")
+
+# Hole alle Items in der Collection
+# items = col1.get_all_items()
+
+# for item in items:
+#   print(f"Item ID: {item.id}")
+
+# Collection abrufen
+collection = catalog.get_child("MLM_Collection", "MLM_Collection_2")
+
+items = []
+# Durch alle Items in allen Collections iterieren
 for collection in catalog.get_children():
     print(f"Collection ID: {collection.id}")
-    
-    # Alle Items der Collection abrufen (nur für Collections, nicht für einzelne Items)
     for item in collection.get_all_items():
-        all_items.append(item)
+        print(item.id)
+        if item.id == "solar_satlas_sentinel2":
+            items.append(item)
 
-# Anzahl der Items ausgeben
-print(f"Anzahl der Items im Katalog: {len(all_items)}")
+# Ausgabe der Items
+for item in items:
+    print(json.dumps(item.to_dict(), indent=4))
+
 

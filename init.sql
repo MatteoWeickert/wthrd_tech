@@ -33,7 +33,7 @@ CREATE TABLE items (
     properties JSONB NOT NULL,                       -- Ein JSONB-Objekt, das zusätzliche Metadaten enthält
     links JSONB[] NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     assets JSONB NOT NULL,                          -- Eine Karte von Asset-Objekten (im JSON-Format) (required: href)
-    collection_ID VARCHAR(50) REFERENCES collections(id),                               -- Die ID der Collection, auf die dieses Item verweist
+    collection_id VARCHAR(50) REFERENCES collections(id),                               -- Die ID der Collection, auf die dieses Item verweist
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Items
     updated_at TIMESTAMPTZ DEFAULT NOW(),             -- Letztes Update des Items
     color VARCHAR(50) 
@@ -93,7 +93,7 @@ VALUES
 -- Example data for items
 INSERT INTO items (
     id, type, stac_version, stac_extensions, geometry, bbox, properties, 
-    links, assets, collection_ID, created_at, updated_at, color
+    links, assets, collection_id, created_at, updated_at, color
 )
 VALUES (
     'solar_satlas_sentinel2', 
