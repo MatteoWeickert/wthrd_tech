@@ -1,6 +1,6 @@
 services:
   fastapi:
-    build: ./app  # Path to your FastAPI app
+    build: ./app/backend  # Path to your FastAPI app
     container_name: fastapi-server
     ports:
       - "8000:8000"  # Expose FastAPI on port 8000
@@ -9,7 +9,7 @@ services:
     environment:
       DATABASE_URL: "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@db/$POSTGRES_DB"  # PostgreSQL connection string
     volumes:
-      - ./app:/app  # Mount the FastAPI app directory into the container
+      - ./app/backend:/app  # Mount the FastAPI app directory into the container
 
   db:
     image: postgis/postgis:15-3.3  # Use PostGIS image

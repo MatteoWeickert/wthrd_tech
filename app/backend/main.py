@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, status, Depends
+import logging
 from fastapi.security import OAuth2PasswordBearer
 from typing import Optional, List, Annotated
 from pydantic import BaseModel
@@ -6,20 +7,19 @@ from sqlalchemy import create_engine, and_, or_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from models import Item, Catalog, Collection, User
-import os, datetime
+import os
+import datetime as dt
 from schemas import ItemCreate, CollectionCreate
 import auth
 from auth import get_current_user
-
 from sqlalchemy.sql.expression import cast
 from sqlalchemy.types import String
-
-
 from fastapi.middleware.cors import CORSMiddleware
-
 from fastapi.responses import JSONResponse
-# from crud import get_items, get_catalogs, get_collections, get_properties
-# from schemas import ItemCreate, ItemResponse
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Get database connection info from environment variables
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@postgres/metadata_database")
@@ -204,8 +204,8 @@ def get_catalog():
             {"rel": "root", "type": "application/json", "href": "http://localhost:8000/"},
             {"rel": "conformance", "type": "application/json", "href": "http://localhost:8000/conformance"},
             {"rel": "data", "type": "application/json", "href": "http://localhost:8000/collections"},
-            {"rel": "search", "type": "application/json",  "method": "POST", "href": "http://localhost:8000/search"},
-            {"rel": "search", "type": "application/json",  "method": "GET", "href": "http://localhost:8000/search"}
+            {"rel": "search", "type": "application/geo+json",  "method": "POST", "href": "http://localhost:8000/search"},
+            {"rel": "search", "type": "application/geo+json",  "method": "GET", "href": "http://localhost:8000/search"}
         ]
         for collection in collections:
             links.append({
@@ -247,114 +247,225 @@ def get_collection_item(collection_id: str, item_id: str):
     db = SessionLocal()
     try:
         item = db.query(Item).filter(Item.id == item_id, Item.collection_id == collection_id).first()
-        if item is None:
-            return {"error": "Item not found"}
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
         return item
     finally:
         db.close()
 
 
 # get "search"-Route is required
+
 @app.get("/search")
 def search(
-    collections: Optional[List[str]] = Query(None),
-    bbox: Optional[List[float]] = Query(None),
-    datetime_range: Optional[str] = Query(None),
-    limit: Optional[int] = Query(10),
+    collections: Optional[str] = Query(
+        None,
+        description="Filter items by collections. Provide a comma-separated string of collection IDs (e.g., 'collection1,collection2')."
+    ),
+    bbox: Optional[str] = Query(
+        None,
+        description="Filter items by bounding box. Provide a bounding box as a comma-separated string in the format 'west,south,east,north'. Values are in degrees, with longitude between -180 and 180, and latitude between -90 and 90."
+    ),
+    datetime: Optional[str] = Query(
+        None,
+        description="Filter items by datetime. Provide a single ISO 8601 datetime string (e.g., '2022-01-01T00:00:00') or a range in the format 'start_datetime/end_datetime' (e.g., '2022-01-01T00:00:00/2022-01-31T23:59:59')."
+    ),
+    limit: Optional[int] = Query(
+        10,
+        description="Limit the number of items returned. Default is 10. Specify an integer value for the desired number of results."
+    ),
+    offset: Optional[int] = Query(
+        0,
+        description="Offset for pagination. Specify an integer to skip a certain number of results. Default is 0, which means starting from the first result."
+    ),
 ):
+    datetime_param = datetime  # Umbenennen des datetime-Parameters innerhalb der Funktion
     db = SessionLocal()
     try:
-        query = db.query(Item).all()
+        query = db.query(Item)
 
-        # Filter nach Collections
+        # Filter by collections
         if collections:
-            query = query.filter(Item.collection_id.in_(collections))
-        
-        # Filter nach Bounding Box
-        if bbox:
-            if len(bbox) != 4:
-                raise HTTPException(
-                    status_code=400, detail="Bounding box must have exactly 4 values: [west, south, east, north]"
-                )
-            west, south, east, north = bbox
-            query = query.filter(
-                and_(
-                    Item.bbox[1] >= west,
-                    Item.bbox[2] >= south,
-                    Item.bbox[3] <= east,
-                    Item.bbox[4] <= north
-                )
-            )
+            collection_list = collections.split(",")
+            query = query.filter(Item.collection_id.in_(collection_list))
 
-        # Filter nach Zeitspanne
-        if datetime_range:
+        # Filter by bounding box
+        # Filter by bounding box
+        if bbox:
             try:
-                if "/" in datetime_range:  # Geschlossene Zeitspanne
-                    start_time, end_time = datetime_range.split("/")
-                    start_time = datetime.datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
-                    end_time = datetime.datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%S")
-                else:  # Einzelzeitpunkt
-                    start_time = datetime.datetime.strptime(datetime_range, "%Y-%m-%dT%H:%M:%S")
-                    end_time = start_time
+                logger.debug(f"Bounding box: {bbox}")
+                # Parsen und Validieren der BBOX
+                bbox_values = [float(value) for value in bbox.split(",")]
+                logger.debug(f"Parsed bounding box values: {bbox_values}")
                 
-                # Debugging-Hilfen
-                print(f"Startzeit: {start_time}, Endzeit: {end_time}")
+                if len(bbox_values) != 4:
+                    logger.warning(f"Invalid bbox length: {len(bbox_values)}")
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Bounding box must have exactly 4 values: west,south,east,north"
+                    )
                 
-                # Filter hinzufügen
+                west, south, east, north = bbox_values
+
+                # Wertebereiche prüfen
+                if not (-180 <= west <= 180 and -90 <= south <= 90 and -180 <= east <= 180 and -90 <= north <= 90):
+                    logger.warning(f"Invalid bbox values: {bbox_values}")
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Bounding box values must be within valid ranges: longitude (-180 to 180), latitude (-90 to 90)"
+                    )
+
+                # Filter anwenden
+                logger.debug("Applying bbox filter")
                 query = query.filter(
                     and_(
-                        cast(Item.properties["datetime"], String) >= start_time.isoformat(),
-                        cast(Item.properties["datetime"], String) <= end_time.isoformat()
+                        Item.bbox[1] <= east,
+                        Item.bbox[3] >= west,
+                        Item.bbox[2] <= north,
+                        Item.bbox[4] >= south
                     )
                 )
-            except ValueError as e:
+
+            except ValueError as ve:
+                logger.error(f"ValueError while processing bbox: {ve}")
                 raise HTTPException(
-                    status_code=400, detail=f"Invalid datetime format. Use 'YYYY-MM-DDTHH:MM:SS' format. Error: {e}"
+                    status_code=400,
+                    detail="Bounding box values must be numeric and in the format: west,south,east,north"
+                )
+            
+            except HTTPException as he:
+                logger.error(f"HTTPException encountered: {he.detail}")
+                raise he  # Weiterreichen der HTTPException
+            
+            except Exception as e:
+                logger.error(f"Unexpected error while processing bbox: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Unexpected server error: {str(e)}"
                 )
 
-        # Begrenze die Anzahl der Ergebnisse
-        query = query.limit(limit)
+        # Filter by datetime
+        if datetime_param:
+            try:
+                logger.debug(f"Received datetime parameter: {datetime_param}")
 
-        # Ergebnisse abrufen
+                # Überprüfen, ob ein Zeitraum oder ein einzelner Zeitpunkt übergeben wurde
+                if "/" in datetime_param:
+                    logger.debug("Datetime parameter is a range")
+                    start_time, end_time = datetime_param.split("/")
+                    
+                    # Entferne das 'Z' am Ende des Datumsstrings, wenn es vorhanden ist
+                    start_time = start_time.replace("Z", "")
+                    end_time = end_time.replace("Z", "")
+                    
+                    # Konvertiere Zeitstrings in datetime-Objekte (falls vorhanden)
+                    start_time = dt.datetime.fromisoformat(start_time) if start_time else None
+                    end_time = dt.datetime.fromisoformat(end_time) if end_time else None
+                    
+                    logger.debug(f"Parsed datetime range: start_time={start_time}, end_time={end_time}")
+                else:
+                    logger.debug("Datetime parameter is a single timestamp")
+                    # Entferne das 'Z' am Ende des Datumsstrings, wenn es vorhanden ist
+                    datetime_param = datetime_param.replace("Z", "")
+                    
+                    start_time = dt.datetime.fromisoformat(datetime_param)
+                    end_time = start_time
+                    
+                    logger.debug(f"Parsed single datetime: start_time={start_time}, end_time={end_time}")
+
+                # Filter für start_time und end_time anwenden
+                if start_time and end_time:
+                    logger.debug(f"Applying datetime range filter: start_time={start_time}, end_time={end_time}")
+                    query = query.filter(
+                        and_(
+                            cast(Item.properties["datetime"], String) >= start_time.isoformat(),
+                            cast(Item.properties["datetime"], String) <= end_time.isoformat()
+                        )
+                    )
+                elif start_time:
+                    logger.debug(f"Applying filter for start_time only: {start_time}")
+                    query = query.filter(cast(Item.properties["datetime"], String) >= start_time.isoformat())
+                elif end_time:
+                    logger.debug(f"Applying filter for end_time only: {end_time}")
+                    query = query.filter(cast(Item.properties["datetime"], String) <= end_time.isoformat())
+
+            # Fehlerhafte Eingaben behandeln
+            except ValueError as e:
+                logger.error(f"ValueError while processing datetime: {e}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid datetime format. Use 'YYYY-MM-DDTHH:MM:SS'. Error: {e}"
+                )
+            except Exception as e:
+                # Allgemeiner Fehler, aber mit spezifischer Fehlermeldung für datetime
+                logger.error(f"Unexpected error while processing datetime: {e}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Unexpected error while processing datetime. Please check the datetime format and try again. Error: {str(e)}"
+                )
+
+
+
+        # Pagination
+        query = query.offset(offset).limit(limit)
+
+        # Get items
         items = query.all()
         if not items:
             return {"type": "FeatureCollection", "features": [], "links": []}
 
-        # Ergebnisse in GeoJSON-FeatureCollection umwandeln
+        # Build features
         features = [
             {
                 "type": "Feature",
+                "stac_version": "1.0.0",
+                "stac_extensions": item.stac_extensions or [],
                 "id": item.id,
-                "stac_extensions": item.stac_extensions,
-                "stac_version": item.stac_version,
                 "geometry": item.geometry,
-                "properties": item.properties,
                 "bbox": item.bbox,
-                "collection_id": item.collection_id,
-                "links": item.links,
+                "properties": item.properties,
+                "collection": item.collection_id,
                 "assets": item.assets,
-                "created_at": item.created_at,
-                "updated_at": item.updated_at,
+                "links": item.links or []
             }
             for item in items
         ]
 
+        # Pagination links
+        next_offset = offset + limit
+        has_more_results = len(items) == limit
+        query_params = f"&collections={collections}" if collections else ""
+        query_params += f"&bbox={bbox}" if bbox else ""
+        query_params += f"&datetime={datetime_param}" if datetime_param else ""
+        query_params += f"&limit={limit}" if limit else ""
+        query_params += f"&offset={offset}" if offset else ""
+
+        links = [
+            {"rel": "root", "type": "application/json", "href": "http://localhost:8000/"},
+            {"rel": "self", "type": "application/geo+json", "href": f"http://localhost:8000/search?{query_params}"},
+        ]
+        if has_more_results:
+            links.append({
+                "rel": "next",
+                "type": "application/geo+json",
+                "href": f"http://localhost:8000/search?limit={limit}&offset={next_offset}{query_params}"
+            })
+        logger.info(f"Number of results: {len(features)}")
         return {
             "type": "FeatureCollection",
             "features": features,
-            "links": [
-                {"rel": "root", "type": "application/json", "href": "http://localhost:8000/"},
-                {"rel": "self", "type": "application/json", "href": "http://localhost:8000/search"}
-            ]
+            "links": links
         }
 
     except Exception as e:
-        print(f"Server-Fehler: {e}")
+        print(f"Server error: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Internal Server Error: {e}"
+            status_code=500,
+            detail=f"Internal Server Error: {e}"
         )
     finally:
         db.close()
+
 
 class SearchQuery(BaseModel):
     bbox: Optional[List[float]] = None
@@ -362,6 +473,7 @@ class SearchQuery(BaseModel):
     collections: Optional[List[str]] = None
     ids: Optional[List[str]] = None
     limit: Optional[int] = 10
+    query: Optional[str] = None
 
 @app.post("/search")
 async def search_items(query: SearchQuery):
@@ -419,7 +531,7 @@ def get_all_collections():
             items = db.query(Item).filter(Item.collection_id == collection.id).all()
             for item in items:
                 collection.links.append(
-                    {"rel": "child", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}/items/{item.id}"}
+                    {"rel": "item", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}/items/{item.id}"}
                 )
         return {"collections": collections}
     except Exception as e:
@@ -443,7 +555,7 @@ def get_collections(collection_id: str):
         items = db.query(Item).filter(Item.collection_id == collection.id).all()
         for item in items:
             collection.links.append(
-                {"rel": "child", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}/items/{item.id}"}
+                {"rel": "item", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}/items/{item.id}"}
             )
         return collection
     except Exception as e:
@@ -457,7 +569,11 @@ def get_collection_items(collection_id: str):
     db = SessionLocal()
     try:
         items = db.query(Item).filter(Item.collection_id == collection_id).all()
-        return items
+        return {"type": "FeatureCollection", "features": items, "links": [
+            {"rel": "self", "type": "application/json", "href": f"http://localhost:8000/collections/{collection_id}/items"},
+            {"rel": "root", "type": "application/json", "href": "http://localhost:8000/"},
+            {"rel": "parent", "type": "application/json", "href": f"http://localhost:8000/collections/{collection_id}"}]
+            }
     finally:
         db.close()
 
