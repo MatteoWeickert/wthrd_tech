@@ -104,7 +104,7 @@
     transform: translate(-50%, -50%);
   }
 
-    /* SEARCH DROPDOWN */
+    /* SEARCH */
     .dropdown-content {
       display: none;
       position: absolute;
@@ -143,7 +143,7 @@
     background-clip: padding-box;
     border: 1px solid rgba(0,0,0,.15);
     border-radius: 0.25rem;
-}
+  }
 
     /* TOPBAR LOGIN MODAL */
   .nav-tabs {

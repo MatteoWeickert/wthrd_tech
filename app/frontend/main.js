@@ -10,7 +10,6 @@ let allItems = [];
 
 window.addEventListener('load', async ()=>{
     allItems = await returnAllItems()
-    console.log("Alle Items: ", JSON.stringify(allItems))
 
 });
 
@@ -155,6 +154,7 @@ async function startWebsite(){
             }, 50) 
         break;
         case('/catalog.html'):
+            hideNoResultsMessage()
             fetchItems();
             setTimeout(function(){
                 isLoggedIn()
@@ -219,7 +219,7 @@ function filterItemsForSearch(searchTerm) {
 
 function displaySearchResults(results){
 
-    console.log("Results in DisplaySearchResults: " + JSON.stringify(results));
+    console.log("Results in DisplaySearchResults: ", results);
     let resultsContainer = document.getElementById('modell-container');
     resultsContainer.innerHTML = '';
     
@@ -257,6 +257,18 @@ function displaySearchResults(results){
                             <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
                         </svg>
                         <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
+                    </div>
+                    <hr>
+                    <div>
+                    <span style="font-size:15px;">Download:</span>
+                    <br>
+                    <span style="font-size:12px;">Für den Download des Items als JSON auf den Button klicken.</span>
+                        <button type="button" class="btn-download" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#0000FF" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z"/>
+                            </svg>
+                        </button>
                     </div>
                     <hr>
                     <span style="font-size:15px;">Beschreibung:</span>
@@ -346,18 +358,42 @@ function displaySearchResults(results){
 document.getElementById('search-input').addEventListener('input', (e) => {
     const searchTerm = e.target.value;
     console.log("Search term:", searchTerm);
-    if (searchTerm.length > 2) {
+    console.log(searchTerm.length)
+    console.log(allItems)
+    if (searchTerm.length <= 2){
+        displaySearchResults(allItems);
+        hideNoResultsMessage();
+    }
+    else{
         console.log("Calling filterItems with:", searchTerm);
         console.log("Type of allItems:", typeof allItems);
         console.log("Is allItems an array?", Array.isArray(allItems));
         console.log("allItems:", allItems);
         let filteredItems = filterItemsForSearch(searchTerm);
         console.log("Filtered items:", filteredItems);
-        displaySearchResults(filteredItems);
-    } else {
-        document.getElementById('search-results').style.display = 'none';
+        if(filteredItems.length === 0){
+            displayNoResultsMessage(searchTerm);
+            displaySearchResults(filteredItems);
+        }
+        else{
+            displaySearchResults(filteredItems);
+            hideNoResultsMessage();
+        }
     }
 });
+
+function displayNoResultsMessage(searchTerm) {
+    const messageContainer = document.getElementById('no-results-message');
+    messageContainer.textContent = `Keine Ergebnisse für Suchbegriff "${searchTerm}" gefunden.`;
+    messageContainer.style.display = 'block';
+}
+
+function hideNoResultsMessage() {
+    const messageContainer = document.getElementById('no-results-message');
+    if (messageContainer) {
+        messageContainer.style.display = 'none';
+    }
+}
 
 // Schließt beim klicken des Anmelde/Register Buttons das Fenster ohne zu refreshen
 function closeLoginTab() {
@@ -1644,7 +1680,7 @@ function displayItems(items, filters){
                             <span style="font-size:15px;">Download:</span>
                             <br>
                             <span style="font-size:12px;">Für den Download des Items als JSON auf den Button klicken.</span>
-                            <button type="button" class="btn-download" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
+                            <button type="button" class="btn-download custom-download-btn" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-download" viewBox="0 0 16 16">
                                     <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                                     <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
