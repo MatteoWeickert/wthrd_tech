@@ -468,7 +468,7 @@ def search(
 
 
 class SearchQuery(BaseModel):
-    bbox: Optional[List[float]] = None
+    bbox: Optional[List[float]] = [-180,-90,180,90]
     datetime: Optional[str] = None
     collections: Optional[List[str]] = None
     ids: Optional[List[str]] = None
@@ -480,6 +480,25 @@ async def search_items(query: SearchQuery):
     results = []
     db = SessionLocal()
     try:
+        # Validate bbox if provided
+        if query.bbox:
+            if len(query.bbox) != 4:
+                raise HTTPException(status_code=400, detail="bbox must contain exactly 4 values")
+            
+            west, south, east, north = query.bbox
+            
+            # Check if west is less than east and south is less than north
+            if west >= east:
+                raise HTTPException(status_code=400, detail="Western longitude must be less than eastern longitude")
+            if south >= north:
+                raise HTTPException(status_code=400, detail="Southern latitude must be less than northern latitude")
+            
+            # Check if values are within valid range
+            if not (-180 <= west <= 180 and -180 <= east <= 180):
+                raise HTTPException(status_code=400, detail="Longitude values must be between -180 and 180")
+            if not (-90 <= south <= 90 and -90 <= north <= 90):
+                raise HTTPException(status_code=400, detail="Latitude values must be between -90 and 90")
+
         items_all = db.query(Item).all()
         for item in items_all:
             if query.collections and item.collection_id not in query.collections:
@@ -494,18 +513,21 @@ async def search_items(query: SearchQuery):
                     item_bbox[1] <= query.bbox[3] and  # south <= north
                     item_bbox[3] >= query.bbox[1]      # north >= south
                 ):
-                    print ("Item mit der ID " + item.id + " wurde nicht hinzugefügt")
+                    print(f"Item mit der ID {item.id} wurde nicht hinzugefügt")
                     continue
             if query.datetime:
                 item_time = item.properties["datetime"]
                 if not item_time or not datetime_filter(item_time, query.datetime):
                     continue
             results.append(item)
+    except HTTPException as he:
+        raise he
     except Exception as e:
         return {"error": str(e)}
     finally:
         db.close()
-    print ("Anzahl der Ergebnisse: " + str(len(results)))
+    
+    print(f"Anzahl der Ergebnisse: {len(results)}")
     return {"type": "FeatureCollection", "features": results}
 
 def datetime_filter(item_time, query_time_range):
