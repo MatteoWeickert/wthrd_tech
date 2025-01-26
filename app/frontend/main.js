@@ -112,7 +112,7 @@ async function startWebsite(){
                     });
                 });
                 const drawnItems = getDrawnItems();
-                createInputForm(getExpectedInputs());
+                createInputForm(getExpectedItemInputs());
                 const map = L.map('map').setView([0, 0], 2);
 
                 map.on('draw:created', function (event) {
@@ -372,8 +372,8 @@ function closeLoginTab() {
     }
 }
 
-// Funktion zum Verwalten der gewollten Userinputs
-function getExpectedInputs(){
+// Funktion zum Verwalten der gewollten Item-Userinputs
+function getExpectedItemInputs(){
     return [    'name',
                 'tasks',
                 'description', 
@@ -391,6 +391,16 @@ function getExpectedInputs(){
                 'hyperparameter', 
                 'collectionid', 
                 'link']
+}
+
+// Funktion zum Verwalten der gewollten Collection-Userinputs
+function getExpectedCollectionInputs(){
+    return [    'id',
+                'title',
+                'description',
+                'license',
+                'extent'
+            ]
 }
 
 // Funktion um Informationen zu den gewollten Userinputs zu verwalten
@@ -730,6 +740,87 @@ async function addItems() {
     }
 }
 
+// Adden von Collections aus Eingabemaske
+async function addCollections() {
+    const input = getUserInputs();
+    const token = sessionStorage.getItem("token");
+    try {
+        const response = await fetch('http://localhost:8000/addItem/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                "Authorization": `Bearer ${token}`
+            },
+            
+            body: JSON.stringify({
+                id: input.id,
+                type: 'Feature',
+                stac_version: "1.0.0",
+                stac_extensions: ["https://stac-extensions.github.io/file/v2.1.0/schema.json","https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json"],
+                geometry: getGeometry(),
+                bbox: getBounds(),
+                properties: {
+                    title: input.title,
+                    description: input.description,
+                    datetime: "2024-12-04T16:20:00",
+                    "mlm:name": input.name,
+                    "mlm:architecture": input.architecture,
+                    "mlm:tasks": input.tasks.split(',').map(value => value.trim()),
+                    "mlm:framework": input.framework,
+                    "mlm:framework_version": input.frameworkversion,
+                    "mlm:pretrained": getPretrained(),
+                    "mlm:pretrained_source": input.pretrainedsource,
+                    "mlm:batch_size_suggestion": input.batchsizesuggestion,
+                    "mlm:accelerator":input.accelerator,
+                    "mlm:accelerator_summary":input.acceleratorsummary,
+                    end_datetime: getDateRange()[1].end,
+                    start_datetime: getDateRange()[0].start,
+                    "mlm:input": [
+                        {
+                            name: input.inputname,
+                            type: input.inputtypes.split(',').map(value => value.trim())
+                        }
+                    ],
+                    "mlm:output":[ {
+                        type: "class",
+                        num_classes: 1000
+                    }],
+                    "mlm:hyperparameters": input.hyperparameter
+                },
+                links: [
+                    { href: "https://example.com/item", type: "application/json", rel: "self" },
+                    { href: "http://localhost:8000/collections", type: "application/json", rel: "parent" },
+                    { href: "http://localhost:8000/", type: "application/json", rel: "root" },
+                    { href: `http://localhost:8000/collections/${input.collectionid}`, type: "application/json", rel: "collection" }
+                ],
+                assets: {
+                    model: {
+                        href: input.link
+                    },
+                    thumbnail: { href: "https://example.com/thumbnail.png" },
+                    data: { href: "https://example.com/data" }
+                },
+                collection_id: input.collectionid,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                color: getSelectedColor()
+            })
+        });
+        const data = await response.json();
+
+        // Verarbeiten der Nachricht aus der API-Antwort
+        if (data.message === "Item added successfully") {
+
+            showAlert(1, "Neues Modell erfolgreich hinzugefügt.", "");
+        } else {
+            showAlert(4, "Fehler beim hinzufügen. Prüfe erneut, ob alle Daten korrekt eingetragen wurden.", "");
+        }    
+    } catch (error) {
+        console.log("Error aus addItems", error);
+        showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
+    }
+}
+
 // Funktion um die Geometry auszugeben
 function getGeometry() {
     const userInputs = getUserInputs()
@@ -889,17 +980,31 @@ function updateSelectedTasks() {
 
 // Funktion um alle User Eingaben abzugreifen und in ein Array zu bündeln
 function getUserInputs() {
-    const expected = getExpectedInputs();
-    const input = {};
-    for (const p of expected) { 
-        input[p] = document.getElementById('input-' + p).value; 
+    const currentPath = window.location.pathname;
+    let expected;
+
+    if (currentPath === '/addmodel.html') {
+        expected = getExpectedItemInputs();
+    } else if (currentPath === '/addcollection') {
+        expected = getExpectedCollectionInputs();
+    } else {
+        console.error('Unbekannter Pfad:', currentPath);
+        return null;
     }
-    return input
+
+    const input = {};
+    for (const p of expected) {
+        const element = document.getElementById('input-' + p);
+        if (element) {
+            input[p] = element.value;
+        }
+    }
+    return input;
 }
 
 //Funktion um den Inhalt des Input forms vor dem Abschicken zu analysieren
 function analyzeInput(){
-    const parameters = getExpectedInputs();
+    const parameters = getExpectedItemInputs();
     const data = getUserInputs(); 
     const missing = [];
     parameters.forEach(parameter =>{
