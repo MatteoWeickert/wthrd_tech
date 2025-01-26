@@ -1,9 +1,17 @@
 let sharedDrawnItems = null;
 let bboxString = null;
+let selectedFilters = {};
 let usedFilters= null;
+let lastSearchedBbox= null;
 
 let startDatum = null;
 let endDatum = null;
+let allItems = [];
+
+window.addEventListener('load', async ()=>{
+    allItems = await returnAllItems()
+
+});
 
 // Singleton-Fkt speichert die angegebenen Daten (range)
 function getDateRange() {
@@ -33,9 +41,27 @@ function setBounds(drawn) {
     return bboxString;
 }
 
+// Singleton-Fkt um letzt-gesuchte Bbox zu verwalten
+function setSearchedBbox(bbox) {
+    if (!lastSearchedBbox) {
+        lastSearchedBbox = bbox;
+    }
+    return lastSearchedBbox;
+}
+
+// Funktion um die letzt gesuchte Bbox zu verwalten
+function getSearchedBbox(){
+    if(lastSearchedBbox){
+        return lastSearchedBbox;
+    } else {
+        return null;
+    }
+}
+
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 async function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
+    lastSearchedBbox = null;
     switch(data){
         case('/addmodel.html'):
             const loggedIn = await isLoggedIn();
@@ -85,7 +111,7 @@ async function startWebsite(){
                     });
                 });
                 const drawnItems = getDrawnItems();
-                createInputForm(getExpectedInputs());
+                createInputForm(getExpectedItemInputs());
                 const map = L.map('map').setView([0, 0], 2);
 
                 map.on('draw:created', function (event) {
@@ -128,6 +154,7 @@ async function startWebsite(){
             }, 50) 
         break;
         case('/catalog.html'):
+            hideNoResultsMessage()
             fetchItems();
             setTimeout(function(){
                 isLoggedIn()
@@ -147,6 +174,227 @@ async function startWebsite(){
 }
 startWebsite();
 
+// Funktion zum Filtern von Items (Suchleiste)
+
+function filterItemsForSearch(searchTerm) { 
+    if (!Array.isArray(allItems) || allItems.length === 0) 
+        {
+            console.error("allItems is not loaded or is empty"); 
+            return []; 
+        } 
+
+    console.log("FilterItems called with:", searchTerm); 
+    console.log("AllItems:", allItems); 
+    
+    if (!Array.isArray(allItems)) { console.error("allItems is not an array"); return []; } 
+    
+    const searchTermLower = searchTerm.toLowerCase();
+
+    let filtered = allItems.filter(item => 
+        (item?.['id'] || '').toLowerCase().includes(searchTermLower) ||
+        //(item?.['type'] || '').toLowerCase().includes(searchTermLower()) || 
+        (item?.['stac_version'] || '').toLowerCase().includes(searchTermLower) || 
+        (Array.isArray(item?.['stac_extensions']) && item['stac_extensions'].some(ext => ext.toLowerCase().includes(searchTermLower))) ||
+        (Array.isArray(item?.['bbox']) && item['bbox'].some(coord => coord.toString().includes(searchTermLower))) ||        
+        (item?.properties?.['start_datetime'] || '').toLowerCase().includes(searchTermLower) ||
+        (item?.properties?.['end_datetime'] || '').toLowerCase().includes(searchTermLower) ||                
+        (item?.properties?.['description'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.properties?.['mlm:framework'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.properties?.['file:size'] || '').toString().toLowerCase().includes(searchTermLower) || 
+        (item?.properties?.['mlm:accelerator'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.properties?.['mlm:name'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.properties?.['mlm_architecture'] || '').toLowerCase().includes(searchTermLower) || 
+        (Array.isArray(item?.properties?.['mlm:tasks']) && item.properties['mlm:tasks'].some(task => task.toLowerCase().includes(searchTermLower))) ||        
+        (Array.isArray(item?.properties?.['mlm:input']) && item.properties['mlm:input'].some(input => (input.name || '').toLowerCase().includes(searchTermLower))) ||        
+        //(item?.['links'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.['collection_id'] || '').toLowerCase().includes(searchTermLower) || 
+        (item?.['created_at'] ? new Date(item['created_at']).toISOString() : '').toLowerCase().includes(searchTermLower) ||
+        (item?.['updated_at'] ? new Date(item['updated_at']).toISOString() : '').toLowerCase().includes(searchTermLower)
+        ); 
+        
+        console.log("Filtered Items" + filtered); 
+        
+        return filtered; 
+    }
+
+function displaySearchResults(results){
+
+    console.log("Results in DisplaySearchResults: ", results);
+    let resultsContainer = document.getElementById('modell-container');
+    resultsContainer.innerHTML = '';
+    
+    if (!Array.isArray(results)) {
+            console.log(typeof results)
+        console.error('Results is not an array:', results);
+        return;
+    }
+    results.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('p-3', 'modell-item');
+
+        const title = document.createElement('span');
+        title.innerHTML = `${item.properties['mlm:name']}`;
+        title.style.color = `${item.color|| ''}`;
+
+        const parameters = document.createElement('div');
+        parameters.classList.add('modell-itemparameter');
+        parameters.id = `modell-itemparameter-${item.id}`;
+        parameters.innerHTML = `
+            ${fillInParameters(item, selectedFilters)}
+            <button type="button" class="btn-expand" data-bs-toggle="collapse" data-bs-target="#collapse-${item.id}" aria-expanded="false" aria-controls="collapse-${item.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
+                <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
+            </svg>
+            </button>
+        `;
+        const information = document.createElement('div');
+        information.id = 'modell-itemcollapse'
+        information.innerHTML = `
+            <div class="collapse" id="collapse-${item.id}">
+                <div class="card card-body">
+                    <div class="card-body-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
+                            <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
+                        </svg>
+                        <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
+                    </div>
+                    <hr>
+                    <div>
+                    <span style="font-size:15px;">Download:</span>
+                    <br>
+                    <span style="font-size:12px;">Für den Download des Items als JSON auf den Button klicken.</span>
+                        <button type="button" class="btn-download" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#0000FF" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <hr>
+                    <span style="font-size:15px;">Beschreibung:</span>
+                    <span style="font-size:12px;">${item.properties.description}</span>
+                    <hr>
+                    <div class="card-body-download">
+                        <span style="font-size:15px;">Einbinden:</span><br> <span style="font-size:12px;">${item.assets.model['href']}</span>
+                            <button type="button" class="btn-clipboard" onclick="copyToClipboard('${item.assets.model['href']}', '${item.properties['mlm:name']}')" id="clipboard-${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+                                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
+                                </svg>
+                            </button>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6 col-lg-8">
+                                <div style="font-size:12px;"class="card-body-parameters">
+                                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
+                                    <span>Empfohlener Zeitraum: ${item.properties.start_datetime || 'Unbekannt'} bis ${item.properties.end_datetime || 'Unbekannt'} </span><br>
+                                    <span>Erwartete Eingabe: ${item.properties['mlm:input'][0].name || 'Unbekannt'} </span><br>
+                                    <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].type || 'Unbekannt'}</span><br>
+                                    <span>Accelerator: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
+                                    <span>Architektur: ${item.properties['mlm:architecture'] || 'Unbekannt'}</span><br>
+                                    <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} in der Version: ${item.properties['mlm:framework_version'] || 'Unbekannt'} </span><br>
+                                    <span>Empfohlene Batchgröße: ${item.properties['mlm:batch_size_suggestion'] || 'Unbekannt'}
+                                    <hr>
+                                    <span>Weitere Information: ${item.properties['mlm:accelerator_summary'] || 'Keine weiteren Informationen hinterlegt.'} </span><br>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                    <div style="width: 100%;height:100%;" id="map-${item.id}"></div>
+                            </div>
+                        </div>
+                        <hr>
+                        <span style="font-size:10px;">Vortrainiert: ${isPretrained(item.properties['mlm:pretrained'] || undefined, item.properties['mlm:pretrained_source'] || undefined)} </span>
+                        <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
+                    </div>
+            </div>
+        `;
+
+        itemDiv.appendChild(title);
+        itemDiv.appendChild(parameters);
+        itemDiv.appendChild(information);
+        resultsContainer.appendChild(itemDiv);
+
+        createMapOnModell(item);
+
+        const button = parameters.querySelector('.btn-expand');
+        button.addEventListener('click', () => {
+            const svg = button.querySelector('svg');
+            if (button.getAttribute('aria-expanded') === 'true') {
+                svg.outerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
+                        <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
+                    </svg>
+                `;
+            } else {
+                svg.outerHTML = `
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
+                        <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
+                    </svg>
+                `;
+            }
+        });
+
+        
+        // const div = document.createElement('div');
+        // div.textContent = item.id;
+        // div.addEventListener('click', () => {
+        //     //Hier einbauen, was passieren soll, wenn auf ein Item geklickt wird
+        //     console.log('Selected Item:' + JSON.stringify(item));
+        //     window.location.href = '/catalog.html'
+        //     setTimeout(function(){
+        //         window.location.href = `#model-itemparameter-${item.id}`
+        //     }, 50)
+        // })
+        // resultsContainer.appendChild(div);
+
+    })
+
+    resultsContainer.style.display = results.length > 0 ? 'block' : 'none';
+
+}
+
+// Add event listener to search input
+document.getElementById('search-input').addEventListener('input', (e) => {
+    const searchTerm = e.target.value;
+    console.log("Search term:", searchTerm);
+    console.log(searchTerm.length)
+    console.log(allItems)
+    if (searchTerm.length <= 2){
+        displaySearchResults(allItems);
+        hideNoResultsMessage();
+    }
+    else{
+        console.log("Calling filterItems with:", searchTerm);
+        console.log("Type of allItems:", typeof allItems);
+        console.log("Is allItems an array?", Array.isArray(allItems));
+        console.log("allItems:", allItems);
+        let filteredItems = filterItemsForSearch(searchTerm);
+        console.log("Filtered items:", filteredItems);
+        if(filteredItems.length === 0){
+            displayNoResultsMessage(searchTerm);
+            displaySearchResults(filteredItems);
+        }
+        else{
+            displaySearchResults(filteredItems);
+            hideNoResultsMessage();
+        }
+    }
+});
+
+function displayNoResultsMessage(searchTerm) {
+    const messageContainer = document.getElementById('no-results-message');
+    messageContainer.textContent = `Keine Ergebnisse für Suchbegriff "${searchTerm}" gefunden.`;
+    messageContainer.style.display = 'block';
+}
+
+function hideNoResultsMessage() {
+    const messageContainer = document.getElementById('no-results-message');
+    if (messageContainer) {
+        messageContainer.style.display = 'none';
+    }
+}
+
 // Schließt beim klicken des Anmelde/Register Buttons das Fenster ohne zu refreshen
 function closeLoginTab() {
     const modalElement = document.getElementById('authModal');
@@ -160,8 +408,8 @@ function closeLoginTab() {
     }
 }
 
-// Funktion zum Verwalten der gewollten Userinputs
-function getExpectedInputs(){
+// Funktion zum Verwalten der gewollten Item-Userinputs
+function getExpectedItemInputs(){
     return [    'name',
                 'tasks',
                 'description', 
@@ -179,6 +427,16 @@ function getExpectedInputs(){
                 'hyperparameter', 
                 'collectionid', 
                 'link']
+}
+
+// Funktion zum Verwalten der gewollten Collection-Userinputs
+function getExpectedCollectionInputs(){
+    return [    'id',
+                'title',
+                'description',
+                'license',
+                'extent'
+            ]
 }
 
 // Funktion um Informationen zu den gewollten Userinputs zu verwalten
@@ -270,6 +528,7 @@ async function loginUser(){
                 showAlert(3, "Erfolgreich angemeldet. Willkommen zurück ", username)
                 sessionStorage.setItem('token', data.access_token)
                 successfulLoggedIn(username)
+                startWebsite();
         } else{
             showAlert(4, "Ungültige Anmeldedaten. Probiere es erneut.", "")
         }
@@ -344,6 +603,21 @@ function createStandardView(){
 </nav>
 
 `
+main.innerHTML = ''
+main.innerHTML = `
+        <div id="main-contentdesc">
+        <div id="main-contenttitle" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700; margin: 20px;">
+            Modell hinzufügen
+        </div>
+        <div id="main-contenttext" style="font-size:16px; text-align:center; font-weight:300; margin: 20px;">
+            Melde dich zunächst mit einem bestehenden Account an, oder registriere einen Neuen, um ein eigenes Modell hinzuzufügen und alle Vorteile des wthrd.tech-Katalogs zu nutzen.
+        </div>
+            <div style="margin-top: 50px;text-align:center;">
+                <button class="button-input" style="font-size: 14px;" data-bs-toggle="modal" data-bs-target="#authModal">Jetzt anmelden</button>
+            </div>
+            <div style="text-align:center;">
+                <a class="text-muted button-input" style="font-size: 11px; font-weight: 200;" href="addcollection.html" data-bs-toggle="modal" data-bs-target="#authModal">Oder neu registrieren.</a>
+            </div>`
 }
 
 // Funktion um Registrierungsdaten an den Server zu senden
@@ -380,6 +654,26 @@ async function registerUser(){
     }
 }
 
+// Hilfsfunktion, die alle Items zurückgibt, kann auch gelöscht werden, wenn es schon eine andere Methode die dasselbe macht
+async function returnAllItems() {
+    try {
+        const response = await fetch('http://localhost:8000/items');
+        if (!response.ok) {
+            showAlert(4, "Fehler beim verbinden zum STAC.", "Überprüfe die Netzwerkverbindung.")
+        }
+        const data = await response.json();
+
+        if (Array.isArray(data) && data.length > 0) {
+            return data;
+        } else {
+            showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
+        }
+    } catch (error) {
+        console.log(error)
+        showAlert(4, "Fehler beim Abrufen der Items oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.")
+    }
+}
+
 // Fetchen aller Modelle
 async function fetchItems() {
     try {
@@ -404,11 +698,13 @@ async function fetchItems() {
 // Adden des Items aus Eingabemaske
 async function addItems() {
     const input = getUserInputs();
+    const token = sessionStorage.getItem("token");
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                "Authorization": `Bearer ${token}`
             },
             
             body: JSON.stringify({
@@ -465,9 +761,96 @@ async function addItems() {
                 color: getSelectedColor()
             })
         });
-
         const data = await response.json();
-        console.log("to add:", data);
+
+        // Verarbeiten der Nachricht aus der API-Antwort
+        if (data.message === "Item added successfully") {
+
+            showAlert(1, "Neues Modell erfolgreich hinzugefügt.", "");
+        } else {
+            showAlert(4, "Fehler beim hinzufügen. Prüfe erneut, ob alle Daten korrekt eingetragen wurden.", "");
+        }    
+    } catch (error) {
+        console.log("Error aus addItems", error);
+        showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
+    }
+}
+
+// Adden von Collections aus Eingabemaske
+async function addCollections() {
+    const input = getUserInputs();
+    const token = sessionStorage.getItem("token");
+    try {
+        const response = await fetch('http://localhost:8000/addItem/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                "Authorization": `Bearer ${token}`
+            },
+            
+            body: JSON.stringify({
+                id: input.id,
+                type: 'Feature',
+                stac_version: "1.0.0",
+                stac_extensions: ["https://stac-extensions.github.io/file/v2.1.0/schema.json","https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json"],
+                geometry: getGeometry(),
+                bbox: getBounds(),
+                properties: {
+                    title: input.title,
+                    description: input.description,
+                    datetime: "2024-12-04T16:20:00",
+                    "mlm:name": input.name,
+                    "mlm:architecture": input.architecture,
+                    "mlm:tasks": input.tasks.split(',').map(value => value.trim()),
+                    "mlm:framework": input.framework,
+                    "mlm:framework_version": input.frameworkversion,
+                    "mlm:pretrained": getPretrained(),
+                    "mlm:pretrained_source": input.pretrainedsource,
+                    "mlm:batch_size_suggestion": input.batchsizesuggestion,
+                    "mlm:accelerator":input.accelerator,
+                    "mlm:accelerator_summary":input.acceleratorsummary,
+                    end_datetime: getDateRange()[1].end,
+                    start_datetime: getDateRange()[0].start,
+                    "mlm:input": [
+                        {
+                            name: input.inputname,
+                            type: input.inputtypes.split(',').map(value => value.trim())
+                        }
+                    ],
+                    "mlm:output":[ {
+                        type: "class",
+                        num_classes: 1000
+                    }],
+                    "mlm:hyperparameters": input.hyperparameter
+                },
+                links: [
+                    { href: "https://example.com/item", type: "application/json", rel: "self" },
+                    { href: "http://localhost:8000/collections", type: "application/json", rel: "parent" },
+                    { href: "http://localhost:8000/", type: "application/json", rel: "root" },
+                    { href: `http://localhost:8000/collections/${input.collectionid}`, type: "application/json", rel: "collection" }
+                ],
+                assets: {
+                    model: {
+                        href: input.link
+                    },
+                    thumbnail: { href: "https://example.com/thumbnail.png" },
+                    data: { href: "https://example.com/data" }
+                },
+                collection_id: input.collectionid,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                color: getSelectedColor()
+            })
+        });
+        const data = await response.json();
+
+        // Verarbeiten der Nachricht aus der API-Antwort
+        if (data.message === "Item added successfully") {
+
+            showAlert(1, "Neues Modell erfolgreich hinzugefügt.", "");
+        } else {
+            showAlert(4, "Fehler beim hinzufügen. Prüfe erneut, ob alle Daten korrekt eingetragen wurden.", "");
+        }    
     } catch (error) {
         console.log("Error aus addItems", error);
         showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
@@ -485,7 +868,6 @@ function getGeometry() {
 function getBounds() {
     if(bboxString){
         const bounds = bboxString;
-        console.log(bounds)
         return bounds.split(',').map(value => parseFloat(value.trim()));
     }else{
         return null;
@@ -578,7 +960,7 @@ function createInputForm(data) {
     container.innerHTML += `
         <div id="main-buttonarea">
             <button class="button-input" onclick="analyzeInput()"id="main-button-analyse">Analysieren</button>
-            <button class="button-input" onclick="sendInput()"id="main-button-send">Abschicken</button>
+            <button class="button-input" onclick="sendInput();window.location.href='#topbar'"id="main-button-send">Abschicken</button>
         </div>
     `
     createDynamicInputs();
@@ -634,17 +1016,31 @@ function updateSelectedTasks() {
 
 // Funktion um alle User Eingaben abzugreifen und in ein Array zu bündeln
 function getUserInputs() {
-    const expected = getExpectedInputs();
-    const input = {};
-    for (const p of expected) { 
-        input[p] = document.getElementById('input-' + p).value; 
+    const currentPath = window.location.pathname;
+    let expected;
+
+    if (currentPath === '/addmodel.html') {
+        expected = getExpectedItemInputs();
+    } else if (currentPath === '/addcollection') {
+        expected = getExpectedCollectionInputs();
+    } else {
+        console.error('Unbekannter Pfad:', currentPath);
+        return null;
     }
-    return input
+
+    const input = {};
+    for (const p of expected) {
+        const element = document.getElementById('input-' + p);
+        if (element) {
+            input[p] = element.value;
+        }
+    }
+    return input;
 }
 
 //Funktion um den Inhalt des Input forms vor dem Abschicken zu analysieren
 function analyzeInput(){
-    const parameters = getExpectedInputs();
+    const parameters = getExpectedItemInputs();
     const data = getUserInputs(); 
     const missing = [];
     parameters.forEach(parameter =>{
@@ -694,7 +1090,7 @@ function getSelectedColor() {
 }
 
 // Funktion zum dynamischen Erstellen des Inhaltsverzeichnisses mit Scrollfunktion
-function createInputTOC(data) {
+async function createInputTOC(data) {
     const parameters = data;
     const sidebar = document.getElementById("sidebar");
     const sidebarList = sidebar.querySelector(".nav.flex-column");
@@ -726,22 +1122,6 @@ function createInputTOC(data) {
         <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
     </li>
     `;
-    
-    // Footer hinzufügen
-    sidebarList.innerHTML += ` 
-        <div id="sidebar-footer" class="mt-auto">
-            <hr>
-            <li class="nav-item">
-                <a id="sidebar-footerlink-login" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
-                    Login
-                </a>
-            </li>
-            <li class="nav-item">
-                <a id="sidebar-footerlink-settings" class="nav-link" href="#">
-                    Settings
-                </a>
-            </li>
-        </div>`;
 }
 
 // Funktion zum anpassen vom Inhaltsverzeichnis des Inputsforms je nach Eingabe 
@@ -844,26 +1224,10 @@ function changeInputTOC(data, pois){
         </li>
     `;
     }
-
-    // Footer hinzufügen
-    sidebarList.innerHTML += ` 
-        <div id="sidebar-footer" class="mt-auto">
-            <hr>
-            <li class="nav-item">
-                <a id="sidebar-footerlink-login" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
-                    Login
-                </a>
-            </li>
-            <li class="nav-item">
-                <a id="sidebar-footerlink-settings" class="nav-link" href="#">
-                    Settings
-                </a>
-            </li>
-        </div>`;
 }
 
 // Funktion zum anzeigen aller verfügbaren unique Filtervalues in der Sidebar
-function printAllFilters(items) {
+function printAllFilters(items){
     const filters = extractUniqueFilterValues(items);
     let filterContent = '';
     const sidebar = document.getElementById("sidebar");
@@ -877,15 +1241,23 @@ function printAllFilters(items) {
         <hr>
     `;
 
-    const toggleButton = `
-        <button style="text-decoration:none;" class="d-md-none position-absolute top-0 end-0 m-2 btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle Sidebar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-right" viewBox="0 0 16 16">
-                <path d="M6 12.796V3.204L11.481 8zm.659.753 5.48-4.796a1 1 0 0 0 0-1.506L6.66 2.451C6.011 1.885 5 2.345 5 3.204v9.592a1 1 0 0 0 1.659.753"/>
-                </svg>
-        </button>
-    `;
+    const toggleButton = ``;
 
-    let selectedFilters = [];
+    // Bbox zum Zeichnen
+    const bboxCollapseId = "collapse-bbox";
+    filterContent += `
+        <span id="sidebar-groupheader" class="sidebar-heading d-flex mt-1 align-items-center">
+            <button style="text-decoration:none;" class="btn btn-link toggle-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#${bboxCollapseId}" aria-expanded="false" aria-controls="${bboxCollapseId}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-right" viewBox="0 0 16 16">
+                    <path d="M6 12.796V3.204L11.481 8zm.659.753 5.48-4.796a1 1 0 0 0 0-1.506L6.66 2.451C6.011 1.885 5 2.345 5 3.204v9.592a1 1 0 0 0 1.659.753"/>
+                    </svg>
+                <span id="sidebar-groupheader">Bounding Box</span>
+            </button>
+        </span>
+        <div class="collapse" id="${bboxCollapseId}">
+            <div id="sidebar-map" style="height: 300px; margin-top: 10px;"></div>
+        </div>
+    `;
 
     Object.keys(filters).forEach(group => {
         let options = '';
@@ -902,10 +1274,10 @@ function printAllFilters(items) {
         });
     
         filterContent += `
-            <span id="sidebar-groupheader" class="sidebar-heading d-flex mt-3 align-items-center">
+            <span style="margin-top: -10px;"id="sidebar-groupheader" class="sidebar-heading d-flex mt-1 align-items-center">
                 <button style="text-decoration:none;" class="btn btn-link toggle-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
-                        <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-right" viewBox="0 0 16 16">
+                    <path d="M6 12.796V3.204L11.481 8zm.659.753 5.48-4.796a1 1 0 0 0 0-1.506L6.66 2.451C6.011 1.885 5 2.345 5 3.204v9.592a1 1 0 0 0 1.659.753"/>
                     </svg>
                     <span id="sidebar-groupheader">${group}</span>
                 </button>
@@ -917,7 +1289,25 @@ function printAllFilters(items) {
             </div>
         `;
     });
-    
+
+    // Datepicker
+    const datepickerCollapseId = "collapse-datepicker";
+    filterContent += `
+        <span id="sidebar-groupheader" class="sidebar-heading d-flex mt-1 align-items-center">
+            <button style="text-decoration:none;" class="btn btn-link toggle-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#${datepickerCollapseId}" aria-expanded="false" aria-controls="${datepickerCollapseId}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-right" viewBox="0 0 16 16">
+                    <path d="M6 12.796V3.204L11.481 8zm.659.753 5.48-4.796a1 1 0 0 0 0-1.506L6.66 2.451C6.011 1.885 5 2.345 5 3.204v9.592a1 1 0 0 0 1.659.753"/>
+                    </svg>
+                <span id="sidebar-groupheader">Zeitraum</span>
+            </button>
+        </span>
+        <div class="collapse" id="${datepickerCollapseId}">
+            <div style="margin-top: 5px;">
+                <input style="background-color:transparent; text-align:center; font-weight: 300; border: 1px solid"type="text" name="daterange" id="daterange" class="form-control" />
+            </div>
+        </div>
+    `;
+
     const footer = `
         <div id="sidebar-footer" class="mt-auto">
             <hr>
@@ -925,56 +1315,142 @@ function printAllFilters(items) {
             <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
         </div>
     `;
-    
+
     sidebar.innerHTML += header + toggleButton + filterContent + footer;
-    
-    const checkboxes = sidebar.querySelectorAll('.form-check-input');
+
+    // Observer für bessere Performance
+    const mapContainer = document.getElementById("sidebar-map");
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                const map = L.map(mapContainer).setView([51.1657, 10.4515], 2);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: 'OpenStreetMap'
+                }).addTo(map);
+
+                let drawnRectangle = null;
+                const drawControl = new L.Control.Draw({
+                    draw: {
+                        polygon: false,
+                        polyline: false,
+                        circle: false,
+                        marker: false,
+                        circlemarker: false,
+                        rectangle: true
+                    }
+                });
+                map.addControl(drawControl);
+
+                map.on(L.Draw.Event.CREATED, (e) => {
+                    if (drawnRectangle) {
+                        map.removeLayer(drawnRectangle);
+                    }
+                    drawnRectangle = e.layer;
+                    map.addLayer(drawnRectangle);
+                
+                    const bounds = drawnRectangle.getBounds();
+                    selectedFilters['bbox'] = [
+                        bounds.getWest(),
+                        bounds.getSouth(),
+                        bounds.getEast(),
+                        bounds.getNorth()
+                    ];
+                    setSearchedBbox([
+                        bounds.getWest(),
+                        bounds.getSouth(),
+                        bounds.getEast(),
+                        bounds.getNorth()
+                    ]);
+                    displayItems(items, selectedFilters);
+                });;
+
+                observer.unobserve(mapContainer);
+            }
+        });
+    }, {
+        rootMargin: '100px',
+        threshold: 0.01
+    });
+
+    observer.observe(mapContainer);
+
+    const checkboxes = document.querySelectorAll('.form-check-input');
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
             const group = checkbox.dataset.group;
-            const value = checkbox.value;
-    
+            if (!selectedFilters[group]) {
+                selectedFilters[group] = [];
+            }
             if (checkbox.checked) {
-                if (!selectedFilters[group]) {
-                    selectedFilters[group] = [];
-                }
-                if (!selectedFilters[group].includes(value)) {
-                    selectedFilters[group].push(value);
-                }
+                selectedFilters[group].push(checkbox.value);
             } else {
-                if (selectedFilters[group]) {
-                    selectedFilters[group] = selectedFilters[group].filter(item => item !== value);
-                    if (selectedFilters[group].length === 0) {
-                        delete selectedFilters[group];
-                    }
-                }
+                selectedFilters[group] = selectedFilters[group].filter(value => value !== checkbox.value);
+            }
+            if (selectedFilters[group].length === 0) {
+                delete selectedFilters[group];
             }
             displayItems(items, selectedFilters);
         });
     });
-
-    const toggleButtons = sidebar.querySelectorAll('.toggle-collapse-btn');
-    toggleButtons.forEach(button => {
-        button.addEventListener('click', (event) => {
-            const svg = button.querySelector('svg');
-            const isExpanded = button.getAttribute('aria-expanded') === 'true';
-            if (isExpanded) {
-                svg.innerHTML = `
-                <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
-                `;
-            } else {
-                svg.innerHTML = `
-                    <path d="M6 12.796V3.204L11.481 8zm.659.753 5.48-4.796a1 1 0 0 0 0-1.506L6.66 2.451C6.011 1.885 5 2.345 5 3.204v9.592a1 1 0 0 0 1.659.753"/>
-                `;
-            }
+    
+    $(function() {
+        $('input[name="daterange"]').daterangepicker({
+            "locale": {
+                "format": "MM/DD/YYYY",
+                "separator": " - ",
+                "applyLabel": "Anwenden",
+                "cancelLabel": "Abbrechen",
+                "fromLabel": "Von",
+                "toLabel": "bis",
+                "customRangeLabel": "Custom",
+                "weekLabel": "W",
+                "daysOfWeek": [
+                    "So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"
+                ],
+                "monthNames": [
+                    "Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"
+                ],
+                "firstDay": 1
+            },
+            opens: 'left',
+            startDate: '01/01/2000',
+            drops: "up",
+            autoApply: true
+        }, function(start, end, label) {
+            selectedFilters['daterange'] = [start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD')];
+            displayItems(items, selectedFilters);
         });
     });
 }
-    
+
+// Funktion um die Überprüfung der Bbox überlappung auszulagern
+function checkBBoxOverlap(itemBBox, filterBBox){
+    const [itemWest, itemSouth, itemEast, itemNorth] = itemBBox;
+    const [filterWest, filterSouth, filterEast, filterNorth] = filterBBox;
+
+    return !(itemEast < filterWest || itemWest > filterEast || itemNorth < filterSouth || itemSouth > filterNorth);
+}
+
+// Funktion um zu überprüfen ob die Dateranges mindestens ein Tag gemeinsam haben
+function checkDateOverlap(itemStart, itemEnd, filterStart, filterEnd){
+    const itemStartDate = new Date(itemStart);
+    const itemEndDate = new Date(itemEnd);
+    const filterStartDate = new Date(filterStart);
+    const filterEndDate = new Date(filterEnd);
+
+    return (
+        (itemStartDate <= filterEndDate && itemStartDate >= filterStartDate) ||
+        (itemEndDate >= filterStartDate && itemEndDate <= filterEndDate) ||
+        (itemStartDate <= filterStartDate && itemEndDate >= filterEndDate)
+    );
+}
+ 
 // Items anhand der angekreuzten Filterparameter filtern
-function filterItems(items, filters) {
+function filterItems(items, filters){
     showAlert(0);
     let selectedItems = [];
+    console.log("filters:", filters);
+
 
     if (!filters || Object.keys(filters).length === 0) {
         return items;
@@ -1041,6 +1517,23 @@ function filterItems(items, filters) {
                 }
             }
 
+            // Bounding Box filtern
+            if (filters.bbox && filters.bbox.length === 4) {
+                const itemBBox = item.bbox;
+                if (!checkBBoxOverlap(itemBBox, filters.bbox)) {
+                    matchingValues = false;
+                }
+            }
+
+            // Überprüfen ob mindestens ein Tag des Modells in der Filterrange liegt
+            if (filters.daterange && filters.daterange.length === 2) {
+                const [filterStart, filterEnd] = filters.daterange;
+                if (!checkDateOverlap(properties.start_datetime, properties.end_datetime, filterStart, filterEnd)) {
+                    matchingValues = false;
+                }
+            }
+            
+
             if (matchingValues) {
                 selectedItems.push(item);
             }
@@ -1086,18 +1579,14 @@ function getPretrained(){
     }
 }
 
-// Funktion zum erstellen der individuellen Kartenansicht für jedes Modell
+// Funktion zum Erstellen der individuellen Kartenansicht für jedes Modell
 function createMapOnModell(data) {
     const item = data;
-    //console.log("test " + item.id);
-
     const mapContainer = document.getElementById(`map-${item.id}`);
-
-    // Observer für langsames laden
+    // Observer für langsames Laden
     const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
-                //console.log("Lade Karte " + item.id);
                 const map = L.map(`map-${item.id}`, {
                     center: [0, 0], 
                     zoom: 3, 
@@ -1109,19 +1598,32 @@ function createMapOnModell(data) {
                 }).addTo(map);
 
                 const bbox = item.bbox || [];
+                const searchedBbox = getSearchedBbox();
 
-                if (bbox.length === 0) {
+                if (bbox.length === 0 && !searchedBbox) {
                     document.getElementById(`map-${item.id}`).innerHTML = "Keine Kartenansicht verfügbar.";
-                }
+                } else {
+                    if (bbox.length === 4) {
+                        const bounds = [
+                            [bbox[1], bbox[0]],
+                            [bbox[3], bbox[2]]
+                        ];
+                        L.rectangle(bounds, { color: "#ff7800", weight: 1 }).addTo(map);
+                        map.fitBounds(bounds, { padding: [40, 40] });
+                    }
 
-                if (bbox.length === 4) {
-                    const bounds = [
-                        [bbox[1], bbox[0]],
-                        [bbox[3], bbox[2]]
-                    ];
-                    L.rectangle(bounds, { color: "#ff7800", weight: 1 }).addTo(map);
-
-                    map.fitBounds(bounds, { padding: [40, 40] });
+                    if (searchedBbox) {
+                        const searchedBounds = [
+                            [searchedBbox[1], searchedBbox[0]],
+                            [searchedBbox[3], searchedBbox[2]]
+                        ];
+                        L.rectangle(searchedBounds, { color: "#0000ff", weight: 1, fillOpacity: 0.1 }).addTo(map);
+                        
+                        // Wenn keine item.bbox vorhanden ist, zentrieren wir auf die gesuchte bbox
+                        if (bbox.length === 0) {
+                            map.fitBounds(searchedBounds, { padding: [40, 40] });
+                        }
+                    }
                 }
 
                 observer.unobserve(mapContainer);
@@ -1136,7 +1638,7 @@ function createMapOnModell(data) {
 }
 
 // Funktion zum Anzeigen aller Modelle
-function displayItems(items, filters) {
+function displayItems(items, filters){
     const container = document.getElementById('modell-container');
     container.innerHTML = '';
     const selectedFilters = filters;
@@ -1161,6 +1663,7 @@ function displayItems(items, filters) {
                     </svg>
                     </button>
                 `;
+
                 const information = document.createElement('div');
                 information.id = 'modell-itemcollapse'
                 information.innerHTML = `
@@ -1171,6 +1674,18 @@ function displayItems(items, filters) {
                                     <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
                                 </svg>
                                 <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
+                            </div>
+                            <hr>
+                            <div>
+                            <span style="font-size:15px;">Download:</span>
+                            <br>
+                            <span style="font-size:12px;">Für den Download des Items als JSON auf den Button klicken.</span>
+                            <button type="button" class="btn-download custom-download-btn" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-download" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                </svg>
+                            </button>
                             </div>
                             <hr>
                             <span style="font-size:15px;">Beschreibung:</span>
@@ -1239,8 +1754,26 @@ function displayItems(items, filters) {
     });      
 }
 
+function downloadItemAsJSON(itemId) {
+    const item = allItems.find(i => i.id === itemId);
+    if (!item) {
+        console.error('Item not found:', itemId);
+        return;
+    }
+    const fileName = `${item.properties?.['mlm:name'] || item.id}.json`;
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(item, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", fileName);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+
+
 // Funktion um Modellparameter Schnellansicht je nach Auswahl der Filterparameter anpassen
-function fillInParameters(item, data) {
+function fillInParameters(item, data){
     const parameterMapping = [
         { mlmKey: 'mlm:tasks', filterKey: 'tasks' },
         { mlmKey: 'mlm:accelerator', filterKey: 'accelerators' },
@@ -1285,7 +1818,6 @@ function fillInParameters(item, data) {
         `;
     }
 }
-
 
 // Funktion um alle Filter zu clearen
 function clearFilters(){
@@ -1405,10 +1937,19 @@ function successfulLoggedIn(user){
     const sidebarlogin = document.getElementById('sidebar-footerlink-login')
     const topbarlogin = document.getElementById('login-button')
     sidebarlogin.innerHTML = ' '
-    sidebarlogin.innerHTML = `<span>Bereits angemeldet: <strong>${name}</strong></span>`
+    sidebarlogin.innerHTML = `<span>Bereits angemeldet: <strong style="text-transform: uppercase;">${name}</strong></span>`
     topbarlogin.innerHTML = ' '
-    topbarlogin.innerHTML = `<button style="margin-top: 5px;"class="d-none d-md-block border-0 bg-transparent" type="button"><span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-check-circle" viewBox="0 0 16 16">
-  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-  <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
-</svg></span><br><span style="font-weight: bold; font-size:10px; color: #1C3D86; ">${name}</span></button>`
+    topbarlogin.innerHTML = `
+            <button style="margin-top: 5px;" class="d-none d-md-block border-0 bg-transparent" type="button">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-person-fill-check" viewBox="0 0 16 16">
+            <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548 1.17-1.951a.5.5 0 1 1 .858.514M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+            <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
+            </svg>
+            <span style="font-weight: bold; font-size:10px; color: #1C3D86;">${name}</span>
+        </span>
+        </button>
+
+
+    `
 }

@@ -121,6 +121,16 @@
                             </svg>
                         </button>
 
+                        <!-- Sidebar Footer-->
+                        <div id="sidebar-footer" class="mt-auto">
+                            <hr>
+                                <a id="sidebar-footerlink-login" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
+                                    Login
+                                </a>
+                                <a id="sidebar-footerlink-settings" class="nav-link" href="#">
+                                    Settings
+                                </a>
+                        </div>
                 </nav>
 
                 <!-- Topbar für Mainsite -->
@@ -154,14 +164,15 @@
                     </div>
                     <div id="topbar-menuoptions" class="ms-auto d-flex justify-content-end px-3 py-2">
                         <!-- Topbar: Suchelement -->
-                        <a id="topbar-search" class="d-none d-lg-block text-decoration-none px-3 py-2">
+                        <div id="topbar-search" class="d-none d-lg-block text-decoration-none px-3 py-2 position-relative">
                             <div id="topbar-searchicon">
-                                <svg style="margin-right: 10px;"xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-search" viewBox="0 0 16 16">
+                                <svg style="margin-right: 10px;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-search" viewBox="0 0 16 16">
                                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                                 </svg>
-                                <input type="text" placeholder="Suchbegriff.."></input>
+                                <input id="search-input" type="text" placeholder="...">
                             </div>
-                        </a>
+                            <div id="search-results" class="dropdown-content"></div>
+                        </div>
                         <!-- Topbar: Loginelement -->
                         <span id="topbar-login" class="text-dark text-decoration-none fw-bold px-3 py-2 d-flex ms-auto">
                             <!-- Login/Register Button -->
@@ -202,14 +213,34 @@
                                 <div id="main-contenttitle" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700; margin: 20px;">
                                     Collection hinzufügen
                                 </div>
+                                <div id="main-smallheader" style="font-size: 16px; font-weight: 600; margin:20px;">
+                                    Willkommen auf der Seite "Collection hinzufügen" – Erstellen Sie eine neue Collection für den STAC-Katalog!    
+                                </div>
                                 <div id="main-contenttext" style="font-size:16px; font-weight:300; margin: 20px;">
-                                    Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.   
-
-Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.   
-
-Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.   
-
-Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer
+                                    Die Seite „Collection hinzufügen“ ermöglicht es Ihnen, neue Collections in Ihrem STAC-Katalog zu erstellen. <br>
+                                    Collections dienen als Container, um thematisch zusammengehörige Items zu gruppieren und zu organisieren. Sie helfen dabei, eine klare Struktur in Ihrem Katalog zu schaffen und Ihre Daten effizient zu verwalten.
+                                    Sie erleichtern es Nutzern, die gewünschten Daten schnell zu finden und zu analysieren. Sie sind ein zentraler Bestandteil eines gut verwalteten STAC-Katalogs.
+                                    Füllen Sie die Felder im unten stehenden Formular mit den notwendigen Informationen für die neue Collection aus. Zu den wichtigsten Angaben gehören beispielsweise: <br>
+                                    <ul>
+                                        <li>
+                                            ID: Eine eindeutige Identifikation für die Collection
+                                        </li>
+                                        <li>
+                                            Lizenz: Geben Sie an, unter welcher Lizenz die Daten in dieser Collection stehen.
+                                        </li>
+                                    </ul>
+                                    
+                                    Die vollständige Ansicht der erforderlichen Einträge ist weiter unten sichtbar. <br>
+                                </div>
+                                <div id="main-smallheader" style="font-size: 16px; font-weight: 600; margin:20px;">
+                                    Was ist zu beachten?
+                                </div>
+                                <div id="main-contenttext" style="font-size:16px; font-weight:300; margin: 20px;">
+                                    Überprüfen Sie die Angaben, bevor Sie die Collection absenden. Besonders die Collection-ID muss einzigartig sein, da sie eine Schlüsselrolle in Ihrem STAC-Katalog spielt. <br>
+                                    Die Lizenz sollte klar angeben, wie die Daten in der Collection genutzt werden dürfen. Dies ist besonders wichtig, wenn Sie öffentlich zugängliche Daten bereitstellen. <br>
+                                    Detaillierte und gut strukturierte Metadaten (z. B. Beschreibung, Schlagworte) verbessern die Auffindbarkeit und Nutzung der Collection. <br>
+                                    Sobald alle Eingaben gemacht wurden, klicken Sie auf den "Analysieren"-Button. Es werden alle Felder geprüft und bei fehlenden Angaben eine Fehlermeldung geworfen. <br>
+                                    Wenn alle Fehler beseitigt wurden, klicken Sie auf den „Abschicken“-Button, um die neue Collection hinzuzufügen. Nach der Erstellung wird sie im Katalog verfügbar sein und kann für Items verwendet werden.
                                 </div>
                                 <div style="text-align:center;">
                                     <button class="button-input" style="font-size: 14px;" onclick="window.location.href='#inputexp-name'">Eine neue Collection hinzufügen</button>
@@ -221,9 +252,6 @@ Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming 
                                             <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
                                           </svg>
                                         Stattdessen ein neues Modell anlegen</a>
-                                </div>
-                                <div id="main-contenttext" style="font-size:16px; font-weight:300; margin: 20px;">
-                                    Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
                                 </div>
                                 <hr>
                             </div>
