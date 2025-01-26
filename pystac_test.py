@@ -16,9 +16,6 @@ except Exception as e:
 # Hole die Collection mit der ID "MLM_Collection"
 col1 = catalog.get_child("MLM_Collection")
 
-# Ausgabe der Collection ID
-print(f"Collection ID: {col1.id}")
-
 # Hole alle Items in der Collection
 # items = col1.get_all_items()
 
@@ -38,7 +35,7 @@ for collection in catalog.get_children():
             items.append(item)
 
 # Ausgabe der Items
-for item in items:
-    print(json.dumps(item.to_dict(), indent=4))
+# for item in items:
+#     print(json.dumps(item.to_dict(), indent=4))
 
 
