@@ -1132,6 +1132,14 @@ async function createInputTOC(data) {
             `;
         break;
         case('/addcollection.html'):
+            sidebarList.innerHTML += `
+                <li class="nav-item">
+                    <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-map">Bounding Box</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                </li>
+            `
         break;
     }
 }
