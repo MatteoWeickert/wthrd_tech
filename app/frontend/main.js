@@ -8,11 +8,6 @@ let startDatum = null;
 let endDatum = null;
 let allItems = [];
 
-window.addEventListener('load', async ()=>{
-    allItems = await returnAllItems()
-
-});
-
 // Singleton-Fkt speichert die angegebenen Daten (range)
 function getDateRange() {
     if (startDatum && endDatum) {
@@ -111,7 +106,7 @@ async function startWebsite(){
                     });
                 });
                 const drawnItems = getDrawnItems();
-                createInputForm(getExpectedItemInputs());
+                createInputForm(getExpectedItemInputs(), getExpectedItemInputsInfo());
                 const map = L.map('map').setView([0, 0], 2);
 
                 map.on('draw:created', function (event) {
@@ -149,13 +144,111 @@ async function startWebsite(){
             }
             break;
         case('/addcollection.html'):
-            setTimeout(function(){
-                isLoggedIn()
-            }, 50) 
+        const loggedInCo = await isLoggedIn();
+        if (loggedInCo) {
+            $(function() {
+                $('input[name="daterange"]').daterangepicker({
+                    "locale": {
+                        "format": "MM/DD/YYYY",
+                        "separator": " - ",
+                        "applyLabel": "Anwenden",
+                        "cancelLabel": "Abbrechen",
+                        "fromLabel": "Von",
+                        "toLabel": "bis",
+                        "customRangeLabel": "Custom",
+                        "weekLabel": "W",
+                        "daysOfWeek": [
+                            "So",
+                            "Mo",
+                            "Di",
+                            "Mi",
+                            "Do",
+                            "Fr",
+                            "Sa"
+                        ],
+                        "monthNames": [
+                            "Januar",
+                            "Februar",
+                            "März",
+                            "April",
+                            "Mai",
+                            "Juni",
+                            "Juli",
+                            "August",
+                            "September",
+                            "Oktober",
+                            "November",
+                            "Dezember"
+                        ],
+                        "firstDay": 1
+                    },
+                    opens: 'left',
+                    autoApply:true
+                }, function(start, end, label) {
+                    console.log("Neue Range: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
+                    startDatum = start;
+                    endDatum = end;
+                });
+            });
+            const drawnItems = getDrawnItems();
+            createInputForm(getExpectedCollectionInputs(), getExpectedCollectionInputsInfo())
+            const map = L.map('map').setView([0, 0], 2);
+
+            map.on('draw:created', function (event) {
+                const layer = event.layer;
+                drawnItems.addLayer(layer);
+                const bounds = layer.getBounds();
+                console.log(bounds);
+                setBounds(bounds.toBBoxString())
+                getBounds()
+            });
+
+            L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+        
+                map.addLayer(drawnItems);
+        
+                const drawControl = new L.Control.Draw({
+                draw: {
+                    polyline: false,
+                    polygon: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false,
+                    rectangle: true
+                },
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                }
+                });
+                map.addControl(drawControl);
+        } else {
+            createStandardView();
+        }
         break;
         case('/catalog.html'):
-            hideNoResultsMessage()
             fetchItems();
+
+            // Suchleisten-Listener
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                const searchTerm = e.target.value;
+                if (searchTerm.length <= 2){
+                    displayItems(allItems);
+                }
+                else{
+                    let filteredItems = filterItemsForSearch(searchTerm);
+                    console.log(filteredItems)
+                    if(filteredItems.length === 0){
+                        showAlert(4,"Kein Item mit dem Suchterm ", `${searchTerm} gefunden.`);
+                        displayItems(filteredItems);
+                    }
+                    else{
+                        displayItems(filteredItems);        }
+                }
+            });
+
             setTimeout(function(){
                 isLoggedIn()
             }, 50) 
@@ -183,7 +276,6 @@ async function startWebsite(){
 startWebsite();
 
 // Funktion zum Filtern von Items (Suchleiste)
-
 function filterItemsForSearch(searchTerm) { 
     if (!Array.isArray(allItems) || allItems.length === 0) 
         {
@@ -223,188 +315,10 @@ function filterItemsForSearch(searchTerm) {
         console.log("Filtered Items" + filtered); 
         
         return filtered; 
-    }
-
-function displaySearchResults(results){
-
-    console.log("Results in DisplaySearchResults: ", results);
-    let resultsContainer = document.getElementById('modell-container');
-    resultsContainer.innerHTML = '';
-    
-    if (!Array.isArray(results)) {
-            console.log(typeof results)
-        console.error('Results is not an array:', results);
-        return;
-    }
-    results.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.classList.add('p-3', 'modell-item');
-
-        const title = document.createElement('span');
-        title.innerHTML = `${item.properties['mlm:name']}`;
-        title.style.color = `${item.color|| ''}`;
-
-        const parameters = document.createElement('div');
-        parameters.classList.add('modell-itemparameter');
-        parameters.id = `modell-itemparameter-${item.id}`;
-        parameters.innerHTML = `
-            ${fillInParameters(item, selectedFilters)}
-            <button type="button" class="btn-expand" data-bs-toggle="collapse" data-bs-target="#collapse-${item.id}" aria-expanded="false" aria-controls="collapse-${item.id}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
-                <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
-            </svg>
-            </button>
-        `;
-        const information = document.createElement('div');
-        information.id = 'modell-itemcollapse'
-        information.innerHTML = `
-            <div class="collapse" id="collapse-${item.id}">
-                <div class="card card-body">
-                    <div class="card-body-title">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
-                            <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
-                        </svg>
-                        <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
-                    </div>
-                    <hr>
-                    <div>
-                    <span style="font-size:15px;">Download:</span>
-                    <br>
-                    <span style="font-size:12px;">Für den Download des Items als JSON auf den Button klicken.</span>
-                        <button type="button" class="btn-download" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#0000FF" viewBox="0 0 16 16">
-                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                <path d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <hr>
-                    <span style="font-size:15px;">Beschreibung:</span>
-                    <span style="font-size:12px;">${item.properties.description}</span>
-                    <hr>
-                    <div class="card-body-download">
-                        <span style="font-size:15px;">Einbinden:</span><br> <span style="font-size:12px;">${item.assets.model['href']}</span>
-                            <button type="button" class="btn-clipboard" onclick="copyToClipboard('${item.assets.model['href']}', '${item.properties['mlm:name']}')" id="clipboard-${item.id}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-clipboard" viewBox="0 0 16 16">
-                                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
-                                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
-                                </svg>
-                            </button>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-md-6 col-lg-8">
-                                <div style="font-size:12px;"class="card-body-parameters">
-                                    <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
-                                    <span>Empfohlener Zeitraum: ${item.properties.start_datetime || 'Unbekannt'} bis ${item.properties.end_datetime || 'Unbekannt'} </span><br>
-                                    <span>Erwartete Eingabe: ${item.properties['mlm:input'][0].name || 'Unbekannt'} </span><br>
-                                    <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].type || 'Unbekannt'}</span><br>
-                                    <span>Accelerator: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
-                                    <span>Architektur: ${item.properties['mlm:architecture'] || 'Unbekannt'}</span><br>
-                                    <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} in der Version: ${item.properties['mlm:framework_version'] || 'Unbekannt'} </span><br>
-                                    <span>Empfohlene Batchgröße: ${item.properties['mlm:batch_size_suggestion'] || 'Unbekannt'}
-                                    <hr>
-                                    <span>Weitere Information: ${item.properties['mlm:accelerator_summary'] || 'Keine weiteren Informationen hinterlegt.'} </span><br>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                    <div style="width: 100%;height:100%;" id="map-${item.id}"></div>
-                            </div>
-                        </div>
-                        <hr>
-                        <span style="font-size:10px;">Vortrainiert: ${isPretrained(item.properties['mlm:pretrained'] || undefined, item.properties['mlm:pretrained_source'] || undefined)} </span>
-                        <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
-                    </div>
-            </div>
-        `;
-
-        itemDiv.appendChild(title);
-        itemDiv.appendChild(parameters);
-        itemDiv.appendChild(information);
-        resultsContainer.appendChild(itemDiv);
-
-        createMapOnModell(item);
-
-        const button = parameters.querySelector('.btn-expand');
-        button.addEventListener('click', () => {
-            const svg = button.querySelector('svg');
-            if (button.getAttribute('aria-expanded') === 'true') {
-                svg.outerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
-                        <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
-                    </svg>
-                `;
-            } else {
-                svg.outerHTML = `
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
-                        <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
-                    </svg>
-                `;
-            }
-        });
-
-        
-        // const div = document.createElement('div');
-        // div.textContent = item.id;
-        // div.addEventListener('click', () => {
-        //     //Hier einbauen, was passieren soll, wenn auf ein Item geklickt wird
-        //     console.log('Selected Item:' + JSON.stringify(item));
-        //     window.location.href = '/catalog.html'
-        //     setTimeout(function(){
-        //         window.location.href = `#model-itemparameter-${item.id}`
-        //     }, 50)
-        // })
-        // resultsContainer.appendChild(div);
-
-    })
-
-    resultsContainer.style.display = results.length > 0 ? 'block' : 'none';
-
-}
-
-// Add event listener to search input
-document.getElementById('search-input').addEventListener('input', (e) => {
-    const searchTerm = e.target.value;
-    console.log("Search term:", searchTerm);
-    console.log(searchTerm.length)
-    console.log(allItems)
-    if (searchTerm.length <= 2){
-        displaySearchResults(allItems);
-        hideNoResultsMessage();
-    }
-    else{
-        console.log("Calling filterItems with:", searchTerm);
-        console.log("Type of allItems:", typeof allItems);
-        console.log("Is allItems an array?", Array.isArray(allItems));
-        console.log("allItems:", allItems);
-        let filteredItems = filterItemsForSearch(searchTerm);
-        console.log("Filtered items:", filteredItems);
-        if(filteredItems.length === 0){
-            displayNoResultsMessage(searchTerm);
-            displaySearchResults(filteredItems);
-        }
-        else{
-            displaySearchResults(filteredItems);
-            hideNoResultsMessage();
-        }
-    }
-});
-
-function displayNoResultsMessage(searchTerm) {
-    const messageContainer = document.getElementById('no-results-message');
-    messageContainer.textContent = `Keine Ergebnisse für Suchbegriff "${searchTerm}" gefunden.`;
-    messageContainer.style.display = 'block';
-}
-
-function hideNoResultsMessage() {
-    const messageContainer = document.getElementById('no-results-message');
-    if (messageContainer) {
-        messageContainer.style.display = 'none';
-    }
 }
 
 // Schließt beim klicken des Anmelde/Register Buttons das Fenster ohne zu refreshen
-function closeLoginTab() {
+function closeLoginTab(){
     const modalElement = document.getElementById('authModal');
     if (modalElement) {
         const modal = bootstrap.Modal.getInstance(modalElement);
@@ -442,13 +356,12 @@ function getExpectedCollectionInputs(){
     return [    'id',
                 'title',
                 'description',
-                'license',
-                'extent'
+                'license'
             ]
 }
 
 // Funktion um Informationen zu den gewollten Userinputs zu verwalten
-function getExpectedInputsInfo(){
+function getExpectedItemInputsInfo(){
     return[ 'Wähle einen aussagekräftigen Namen. Dieser wird später im Modellkatalog angezeigt.', 
             `Wähle aus den <a href=howto.html>verfügbaren Aufgaben</a> die zutreffenden für dein Modell.`, 
             'Füge eine umfassende Beschreibung deines Modells ein. Beschreibe dabei vor allem den Nutzen deines Modells.', 
@@ -466,6 +379,16 @@ function getExpectedInputsInfo(){
             'Füge <a href=howto.html>weitere Informationen</a> zum Modell ein.', 
             'Wähle aus den verfügbaren Collections eine oder <a href=addcollection.html>füge eine neue hinzu.</a>', 
             'Füge den Modellink ein.'
+    ]
+}
+
+// Funktion um Informationen zu den gewollten Userinputs zu verwalten
+function getExpectedCollectionInputsInfo(){
+    return [    'id',
+                'title',
+                'description',
+                'license',
+                'extent'
     ]
 }
 
@@ -586,46 +509,88 @@ async function isLoggedIn() {
 
 // Funktion um Standardansicht ohne Anmeldung zu generieren.
 function createStandardView(){
+    const file = window.location.pathname.trim().toLowerCase();
     const sidebar = document.getElementById('sidebar')
     const main = document.getElementById('main-contentdesc')
 
-    sidebar.innerHTML = ''
-    sidebar.innerHTML = `
-<nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
-    <div class="position-sticky d-flex flex-column h-100">
-        <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="height: 75%;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="82" height="82" fill="#1C3D86" class="bi bi-person-fill-x mb-3" viewBox="0 0 16 16">
-                <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
-                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m-.646-4.854.646.647.646-.647a.5.5 0 0 1 .708.708l-.647.646.647.646a.5.5 0 0 1-.708.708l-.646-.647-.646.647a.5.5 0 0 1-.708-.708l.647-.646-.647-.646a.5.5 0 0 1 .708-.708"/>
-            </svg>
-            <div class="text-center" style="font-weight: 300; color:#1C3D86; text-transform: uppercase; font-size: 10px; ">
-                <span>Melde dich an, um eigene Modelle hinzuzufügen!</span>
-            </div>
-        </div>
-        <div id="sidebar-footer" class="mt-auto" style="height: 25%;">
-            <hr>
-            <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
-            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
-        </div>
-    </div>  
-</nav>
-
-`
-main.innerHTML = ''
-main.innerHTML = `
-        <div id="main-contentdesc">
-        <div id="main-contenttitle" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700; margin: 20px;">
-            Modell hinzufügen
-        </div>
-        <div id="main-contenttext" style="font-size:16px; text-align:center; font-weight:300; margin: 20px;">
-            Melde dich zunächst mit einem bestehenden Account an, oder registriere einen Neuen, um ein eigenes Modell hinzuzufügen und alle Vorteile des wthrd.tech-Katalogs zu nutzen.
-        </div>
-            <div style="margin-top: 50px;text-align:center;">
-                <button class="button-input" style="font-size: 14px;" data-bs-toggle="modal" data-bs-target="#authModal">Jetzt anmelden</button>
-            </div>
-            <div style="text-align:center;">
-                <a class="text-muted button-input" style="font-size: 11px; font-weight: 200;" href="addcollection.html" data-bs-toggle="modal" data-bs-target="#authModal">Oder neu registrieren.</a>
-            </div>`
+    switch(file){
+        case('/addmodel.html'):
+            sidebar.innerHTML = ''
+            sidebar.innerHTML = `
+                <nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
+                    <div class="position-sticky d-flex flex-column h-100">
+                        <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="height: 75%;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="82" height="82" fill="#1C3D86" class="bi bi-person-fill-x mb-3" viewBox="0 0 16 16">
+                                <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
+                                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m-.646-4.854.646.647.646-.647a.5.5 0 0 1 .708.708l-.647.646.647.646a.5.5 0 0 1-.708.708l-.646-.647-.646.647a.5.5 0 0 1-.708-.708l.647-.646-.647-.646a.5.5 0 0 1 .708-.708"/>
+                            </svg>
+                            <div class="text-center" style="font-weight: 300; color:#1C3D86; text-transform: uppercase; font-size: 10px; ">
+                                <span>Melde dich an, um eigene Modelle hinzuzufügen!</span>
+                            </div>
+                        </div>
+                        <div id="sidebar-footer" class="mt-auto" style="height: 25%;">
+                            <hr>
+                            <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
+                            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
+                        </div>
+                    </div>  
+                </nav>
+        `
+        main.innerHTML = ''
+        main.innerHTML = `
+                <div id="main-contentdesc">
+                <div id="main-contenttitle" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700; margin: 20px;">
+                    Modell hinzufügen
+                </div>
+                <div id="main-contenttext" style="font-size:16px; text-align:center; font-weight:300; margin: 20px;">
+                    Melde dich zunächst mit einem bestehenden Account an, oder registriere einen Neuen, um ein eigenes Modell hinzuzufügen und alle Vorteile des wthrd.tech-Katalogs zu nutzen.
+                </div>
+                    <div style="margin-top: 50px;text-align:center;">
+                        <button class="button-input" style="font-size: 14px;" data-bs-toggle="modal" data-bs-target="#authModal">Jetzt anmelden</button>
+                    </div>
+                    <div style="text-align:center;">
+                        <a class="text-muted button-input" style="font-size: 11px; font-weight: 200;" href="addcollection.html" data-bs-toggle="modal" data-bs-target="#authModal">Oder neu registrieren.</a>
+                    </div>`
+    break;
+    case('/addcollection.html'):
+            sidebar.innerHTML = ''
+            sidebar.innerHTML = `
+                <nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
+                    <div class="position-sticky d-flex flex-column h-100">
+                        <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="height: 75%;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="82" height="82" fill="#1C3D86" class="bi bi-person-fill-x mb-3" viewBox="0 0 16 16">
+                                <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
+                                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m-.646-4.854.646.647.646-.647a.5.5 0 0 1 .708.708l-.647.646.647.646a.5.5 0 0 1-.708.708l-.646-.647-.646.647a.5.5 0 0 1-.708-.708l.647-.646-.647-.646a.5.5 0 0 1 .708-.708"/>
+                            </svg>
+                            <div class="text-center" style="font-weight: 300; color:#1C3D86; text-transform: uppercase; font-size: 10px; ">
+                                <span>Melde dich an, um eigene Collections hinzuzufügen!</span>
+                            </div>
+                        </div>
+                        <div id="sidebar-footer" class="mt-auto" style="height: 25%;">
+                            <hr>
+                            <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
+                            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
+                        </div>
+                    </div>  
+                </nav>
+        `
+        main.innerHTML = ''
+        main.innerHTML = `
+                <div id="main-contentdesc">
+                <div id="main-contenttitle" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700; margin: 20px;">
+                    Collection hinzufügen
+                </div>
+                <div id="main-contenttext" style="font-size:16px; text-align:center; font-weight:300; margin: 20px;">
+                    Melde dich zunächst mit einem bestehenden Account an, oder registriere einen Neuen, um eine eigene Collection hinzuzufügen und alle Vorteile des wthrd.tech-Katalogs zu nutzen.
+                </div>
+                    <div style="margin-top: 50px;text-align:center;">
+                        <button class="button-input" style="font-size: 14px;" data-bs-toggle="modal" data-bs-target="#authModal">Jetzt anmelden</button>
+                    </div>
+                    <div style="text-align:center;">
+                        <a class="text-muted button-input" style="font-size: 11px; font-weight: 200;" data-bs-toggle="modal" data-bs-target="#authModal">Oder neu registrieren.</a>
+                    </div>`
+    break;
+    }
 }
 
 // Funktion um Registrierungsdaten an den Server zu senden
@@ -651,7 +616,7 @@ async function registerUser(){
             body: JSON.stringify(body)
         });
         if(response.ok){
-            showAlert(3, "Erfolgreich registriert.")
+            showAlert(3, "Erfolgreich registriert. Melde dich nun an und aktualisiere die Website!", "")
         } else{
             showAlert(4, "Fehler bei der Registrierung. Nutze ggf. einen anderen Nutzername oder E-Mail.", "")
         }
@@ -659,26 +624,6 @@ async function registerUser(){
     catch(error){
         console.log(error)
         showAlert(4, "Fehler", "aus registerUser")
-    }
-}
-
-// Hilfsfunktion, die alle Items zurückgibt, kann auch gelöscht werden, wenn es schon eine andere Methode die dasselbe macht
-async function returnAllItems() {
-    try {
-        const response = await fetch('http://localhost:8000/items');
-        if (!response.ok) {
-            showAlert(4, "Fehler beim verbinden zum STAC.", "Überprüfe die Netzwerkverbindung.")
-        }
-        const data = await response.json();
-
-        if (Array.isArray(data) && data.length > 0) {
-            return data;
-        } else {
-            showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
-        }
-    } catch (error) {
-        console.log(error)
-        showAlert(4, "Fehler beim Abrufen der Items oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.")
     }
 }
 
@@ -692,7 +637,8 @@ async function fetchItems() {
         const data = await response.json();
 
         if (Array.isArray(data) && data.length > 0) {
-            displayItems(data, undefined, 'asc');
+            allItems = data;
+            displayItems(data, undefined);
             printAllFilters(data);
         } else {
             showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
@@ -706,6 +652,7 @@ async function fetchItems() {
 // Adden des Items aus Eingabemaske
 async function addItems() {
     const input = getUserInputs();
+    console.log(input)
     const token = sessionStorage.getItem("token");
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
@@ -785,11 +732,11 @@ async function addItems() {
 }
 
 // Adden von Collections aus Eingabemaske
-async function addCollections() {
+async function addCollections(){
     const input = getUserInputs();
     const token = sessionStorage.getItem("token");
     try {
-        const response = await fetch('http://localhost:8000/addItem/', {
+        const response = await fetch('http://localhost:8000/addCollection/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -797,72 +744,67 @@ async function addCollections() {
             },
             
             body: JSON.stringify({
-                id: input.id,
-                type: 'Feature',
-                stac_version: "1.0.0",
-                stac_extensions: ["https://stac-extensions.github.io/file/v2.1.0/schema.json","https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json"],
-                geometry: getGeometry(),
-                bbox: getBounds(),
-                properties: {
-                    title: input.title,
-                    description: input.description,
-                    datetime: "2024-12-04T16:20:00",
-                    "mlm:name": input.name,
-                    "mlm:architecture": input.architecture,
-                    "mlm:tasks": input.tasks.split(',').map(value => value.trim()),
-                    "mlm:framework": input.framework,
-                    "mlm:framework_version": input.frameworkversion,
-                    "mlm:pretrained": getPretrained(),
-                    "mlm:pretrained_source": input.pretrainedsource,
-                    "mlm:batch_size_suggestion": input.batchsizesuggestion,
-                    "mlm:accelerator":input.accelerator,
-                    "mlm:accelerator_summary":input.acceleratorsummary,
-                    end_datetime: getDateRange()[1].end,
-                    start_datetime: getDateRange()[0].start,
-                    "mlm:input": [
-                        {
-                            name: input.inputname,
-                            type: input.inputtypes.split(',').map(value => value.trim())
-                        }
-                    ],
-                    "mlm:output":[ {
-                        type: "class",
-                        num_classes: 1000
-                    }],
-                    "mlm:hyperparameters": input.hyperparameter
+                "stac_version": "1.0.0",
+                "type": "Collection",
+                "title": input.title,
+                "license": input.license,
+                "catalog_id": "Catalog for MLM",
+                "updated_at": "2025-01-27T10:50:20.469758+00:00",
+                "id": input.id,
+                "stac_extensions": [],
+                "description": input.description,
+                "extent": {
+                  "spatial": {
+                    "bbox": [
+                      getBounds()
+                    ]
+                  },
+                  "temporal": {
+                    "interval": [
+                      [
+                        getDateRange()[1].end,
+                        getDateRange()[0].start
+                      ]
+                    ]
+                  }
                 },
-                links: [
-                    { href: "https://example.com/item", type: "application/json", rel: "self" },
-                    { href: "http://localhost:8000/collections", type: "application/json", rel: "parent" },
-                    { href: "http://localhost:8000/", type: "application/json", rel: "root" },
-                    { href: `http://localhost:8000/collections/${input.collectionid}`, type: "application/json", rel: "collection" }
-                ],
-                assets: {
-                    model: {
-                        href: input.link
-                    },
-                    thumbnail: { href: "https://example.com/thumbnail.png" },
-                    data: { href: "https://example.com/data" }
-                },
-                collection_id: input.collectionid,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                color: getSelectedColor()
-            })
+                "created_at": new Date().toISOString(),
+                "links": [
+                  {
+                    "rel": "self",
+                    "type": "application/json",
+                    "href": `http://localhost:8000/collections/${input.id}`
+                  },
+                  {
+                    "rel": "items",
+                    "type": "application/json",
+                    "href": `http://localhost:8000/collections/${input.id}/items`
+                  },
+                  {
+                    "rel": "parent",
+                    "type": "application/json",
+                    "href": "http://localhost:8000/"
+                  },
+                  {
+                    "rel": "root",
+                    "type": "application/json",
+                    "href": "http://localhost:8000/"
+                  }
+                ]
+              })
         });
         const data = await response.json();
 
-        // Verarbeiten der Nachricht aus der API-Antwort
-        if (data.message === "Item added successfully") {
-
-            showAlert(1, "Neues Modell erfolgreich hinzugefügt.", "");
+        if (data.message === "Collection added successfully") {
+            showAlert(1, "Neues Collection erfolgreich hinzugefügt.", "");
         } else {
             showAlert(4, "Fehler beim hinzufügen. Prüfe erneut, ob alle Daten korrekt eingetragen wurden.", "");
         }    
     } catch (error) {
-        console.log("Error aus addItems", error);
-        showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
+        console.log("Error aus addCollection", error);
+        showAlert(4, "Collection konnte nicht hinzugefügt werden.", "");
     }
+
 }
 
 // Funktion um die Geometry auszugeben
@@ -883,10 +825,11 @@ function getBounds() {
 }
 
 // Erstellt dynmaisch die gefragten Inputs für ein vollständiges Modell
-function createInputForm(data) {
+function createInputForm(data, inputinfo) {
+    const file = window.location.pathname.trim().toLowerCase();
     const parameters = data;
     const container = document.getElementById('main-inputcontainer');
-    const info = getExpectedInputsInfo();
+    const info = inputinfo
     createInputTOC(data);
     container.innerHTML = '';
     var count = 0
@@ -915,63 +858,101 @@ function createInputForm(data) {
     });
     count += 1;
 
-    // Bounding Box-Option
-    tableBody.innerHTML += `
-        <tr id="main-inputgroup">
-            <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box<br><span class="main-inputinfo">Markiere auf der Karte den Bereich, auf den das Modell anwendbar ist.</span></td>
-            <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                <div id="map" style="width:120%;height:100%;"></div>
-            </td>
-            <td id="" class="main-inputalert"></td>
-        </tr>
-    `;
-    count += 1;
+    switch(file){
+        case('/addmodel.html'): 
+            // Bounding Box-Option
+                tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box<br><span class="main-inputinfo">Markiere auf der Karte den Bereich, auf den das Modell anwendbar ist.</span></td>
+                    <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
+                        <div id="map" style="width:120%;height:100%;"></div>
+                    </td>
+                    <td id="" class="main-inputalert"></td>
+                </tr>
+            `;
+            count += 1;
 
-    // Farbcode-Option hinzufügen
-    tableBody.innerHTML += `
-        <tr id="main-inputgroup">
-            <td id="inputexp-color" class="main-inputexp">${count}) Farbgebung<br><span class="main-inputinfo">Wähle eine individuelle Farbe, in welcher später das Modell angezeigt wird.</span></td>
-            <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                <input style="border: solid 2px black; border-radius: 3px;" id="main-inputelem-color" style="height: 30px;" class="w-50" type="color" />
-            </td>
-            <td id="" class="main-inputalert"></td>
-        </tr>
-    `;
+            // Farbcode-Option hinzufügen
+            tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-color" class="main-inputexp">${count}) Farbgebung<br><span class="main-inputinfo">Wähle eine individuelle Farbe, in welcher später das Modell angezeigt wird.</span></td>
+                    <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
+                        <input style="border: solid 2px black; border-radius: 3px;" id="main-inputelem-color" style="height: 30px;" class="w-50" type="color" />
+                    </td>
+                    <td id="" class="main-inputalert"></td>
+                </tr>
+            `;
 
-    count += 1;
+            count += 1;
 
-    // Zeitraumauswahö
-    tableBody.innerHTML += `
-        <tr id="main-inputgroup">
-            <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum das Modell trainiert ist.</span></td>
-            <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
-                <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
-            </td>
-            <td id="" class="main-inputalert"></td>
-        </tr>
-    `;
+            // Zeitraumauswahö
+            tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum das Modell trainiert ist.</span></td>
+                    <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                        <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
+                    </td>
+                    <td id="" class="main-inputalert"></td>
+                </tr>
+            `;
 
-    count += 1;
+            count += 1;
 
-    // Vortrainiert-Auswahl
-    tableBody.innerHTML += `
-        <tr id="main-inputgroup">
-            <td id="inputexp-pretrained" class="main-inputexp">${count}) Vortrainiert<br><span class="main-inputinfo">Gebe an, ob dein Modell vortrainiert wurde.</span></td>
-            <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
-                <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
-            </td>
-            <td id="" class="main-inputalert"></td>
-        </tr>
-    `;
+            // Vortrainiert-Auswahl
+            tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-pretrained" class="main-inputexp">${count}) Vortrainiert<br><span class="main-inputinfo">Gebe an, ob dein Modell vortrainiert wurde.</span></td>
+                    <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                        <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
+                    </td>
+                    <td id="" class="main-inputalert"></td>
+                </tr>
+            `;
 
-    // Buttons zum absenden un analysieren
-    container.innerHTML += `
-        <div id="main-buttonarea">
-            <button class="button-input" onclick="analyzeInput()"id="main-button-analyse">Analysieren</button>
-            <button class="button-input" onclick="sendInput();window.location.href='#topbar'"id="main-button-send">Abschicken</button>
-        </div>
-    `
-    createDynamicInputs();
+            // Buttons zum absenden un analysieren
+            container.innerHTML += `
+                <div id="main-buttonarea">
+                    <button class="button-input" onclick="analyzeInput(getExpectedItemInputs())"id="main-button-analyse">Analysieren</button>
+                    <button class="button-input" onclick="sendInput(getExpectedItemInputs());window.location.href='#topbar'"id="main-button-send">Abschicken</button>
+                </div>
+            `
+            createDynamicInputs();
+        break;
+        case('/addcollection.html'):
+            // Bounding Box-Option
+            tableBody.innerHTML += `
+            <tr id="main-inputgroup">
+                <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box<br><span class="main-inputinfo">Markiere auf der Karte den Bereich, für den die Collection gedacht ist.</span></td>
+                <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
+                    <div id="map" style="width:120%;height:100%;"></div>
+                </td>
+                <td id="" class="main-inputalert"></td>
+            </tr>
+            `;
+            count += 1;
+
+            // Zeitraumauswahl
+            tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum die Collection Modelle halten soll.</span></td>
+                    <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                        <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
+                    </td>
+                    <td id="" class="main-inputalert"></td>
+                </tr>
+            `;
+
+            count += 1;
+
+            // Buttons zum absenden un analysieren
+            container.innerHTML += `
+            <div id="main-buttonarea">
+                <button class="button-input" onclick="analyzeInput(getExpectedCollectionInputs())"id="main-button-analyse">Analysieren</button>
+                <button class="button-input" onclick="sendInput(getExpectedCollectionInputs());window.location.href='#topbar'"id="main-button-send">Abschicken</button>
+            </div>
+            `
+        break;
+    }
 }
 
 // Funktion um Tasks mit Dropdownmenü anzureichern
@@ -1024,16 +1005,18 @@ function updateSelectedTasks() {
 
 // Funktion um alle User Eingaben abzugreifen und in ein Array zu bündeln
 function getUserInputs() {
-    const currentPath = window.location.pathname;
+    const file = window.location.pathname.trim().toLowerCase();
     let expected;
 
-    if (currentPath === '/addmodel.html') {
-        expected = getExpectedItemInputs();
-    } else if (currentPath === '/addcollection') {
-        expected = getExpectedCollectionInputs();
-    } else {
-        console.error('Unbekannter Pfad:', currentPath);
-        return null;
+    switch(file){
+        case('/addmodel.html'):
+            expected = getExpectedItemInputs();
+        break;
+        case('/addcollection.html'):
+            expected = getExpectedCollectionInputs();
+        break;
+        default:
+            console.log('Aus getUserInputs(): Keine Userinputs auf dieser Seite gefunden')
     }
 
     const input = {};
@@ -1047,8 +1030,9 @@ function getUserInputs() {
 }
 
 //Funktion um den Inhalt des Input forms vor dem Abschicken zu analysieren
-function analyzeInput(){
-    const parameters = getExpectedItemInputs();
+function analyzeInput(expected){
+    const file = window.location.pathname.trim().toLowerCase();
+    const parameters = expected;
     const data = getUserInputs(); 
     const missing = [];
     parameters.forEach(parameter =>{
@@ -1058,33 +1042,46 @@ function analyzeInput(){
             return;
         }
     });
-    const bounding = getBounds();
-    const hex = document.getElementById("main-inputelem-color").value;
-    const date = getDateRange();
-    if (bounding === undefined || bounding === null || bounding === "") {
-        console.log(bounding)
-        missing.push('Bounding')
-    }
-    if (hex === undefined || hex === null || hex === "" || hex === '#000000') {
-        missing.push('Color')
-    }
-    if (date === undefined || date === null || date === "") {
-        missing.push('Date')
+    switch(file){
+        case('/addmodel.html'):
+            const bounding = getBounds();
+            const hex = document.getElementById("main-inputelem-color").value;
+            const date = getDateRange();
+            if (bounding === undefined || bounding === null || bounding === "") {
+                console.log(bounding)
+                missing.push('Bounding')
+            }
+            if (hex === undefined || hex === null || hex === "" || hex === '#000000') {
+                missing.push('Color')
+            }
+            if (date === undefined || date === null || date === "") {
+                missing.push('Date')
+            }
+        break;
+        case('/addcollection.html'):
+        break;
     }
     changeInputTOC(parameters, missing);
     return missing;
 }
 
 // Funktion um den Inputform abzusenden, falls korrekt gefüllt
-function sendInput() {
-    const missing = analyzeInput();
+function sendInput(expected){
+    const file = window.location.pathname.trim().toLowerCase();
+
+    const missing = analyzeInput(expected);
 
     if (missing.length > 0) {
         showAlert(4, "Bitte füllen Sie alle Eingabefelder korrekt aus.", "");
     } else {
-        const userInputs = getUserInputs();
-        console.log("SendInputs => addItems")
-        addItems(); 
+        switch(file){
+            case('/addmodel.html'):
+                addItems(); 
+            break;
+            case('/addcollection.html'):
+                addCollections();
+            break;
+        }
     }
 }
 
@@ -1099,6 +1096,7 @@ function getSelectedColor() {
 
 // Funktion zum dynamischen Erstellen des Inhaltsverzeichnisses mit Scrollfunktion
 async function createInputTOC(data) {
+    const file = window.location.pathname.trim().toLowerCase();
     const parameters = data;
     const sidebar = document.getElementById("sidebar");
     const sidebarList = sidebar.querySelector(".nav.flex-column");
@@ -1119,21 +1117,28 @@ async function createInputTOC(data) {
     });
     
     // Feststehende Elemente hinzufügen
-    sidebarList.innerHTML += `
-    <li class="nav-item">
-        <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-map">Bounding Box</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
-    </li>
-    `;
+    switch(file){
+        case('/addmodel.html'):
+            sidebarList.innerHTML += `
+            <li class="nav-item">
+                <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-map">Bounding Box</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+            </li>
+            `;
+        break;
+        case('/addcollection.html'):
+        break;
+    }
 }
 
 // Funktion zum anpassen vom Inhaltsverzeichnis des Inputsforms je nach Eingabe 
 function changeInputTOC(data, pois){
+    const file = window.location.pathname.trim().toLowerCase();
     const parameters = data;
     const changeList = pois;
 
@@ -1170,67 +1175,73 @@ function changeInputTOC(data, pois){
         }
     });
 
-    if (changeList.includes('Bounding')){
-            sidebarList.innerHTML += `
-                        <li class="nav-item d-flex align-items-center">
-                            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
-                            </svg>
-                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
-                        </li>
-            `;
-        }
-    else{
-        sidebarList.innerHTML += `
-        <li class="nav-item d-flex align-items-center">
-            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-            </svg>
-             <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
-        </li>
-`;
-    }
-
-    if (changeList.includes('Color')){
-            sidebarList.innerHTML += `
-                        <li class="nav-item d-flex align-items-center">
-                            <svg style="margin-top: -10px;"xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
-                            </svg>
-                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
-                        </li>
-            `;
-        }
-    else{
-        sidebarList.innerHTML += `
-        <li class="nav-item d-flex align-items-center">
-            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-            </svg>
-            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
-        </li>
-`;
-    }
-
-    if (changeList.includes('Date')){
-        sidebarList.innerHTML += `
-                    <li class="nav-item d-flex align-items-center">
-                        <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
-                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
-                        </svg>
-                        <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
-                    </li>
+    switch(file){
+        case('/addmodel.html'):
+            if (changeList.includes('Bounding')){
+                    sidebarList.innerHTML += `
+                                <li class="nav-item d-flex align-items-center">
+                                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                                    </svg>
+                                    <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
+                                </li>
+                    `;
+                }
+            else{
+                sidebarList.innerHTML += `
+                <li class="nav-item d-flex align-items-center">
+                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                    <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
+                </li>
         `;
-    }
-    else{
-        sidebarList.innerHTML += `
-        <li class="nav-item d-flex align-items-center">
-            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-            </svg>
-            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
-        </li>
-    `;
+            }
+
+            if (changeList.includes('Color')){
+                    sidebarList.innerHTML += `
+                                <li class="nav-item d-flex align-items-center">
+                                    <svg style="margin-top: -10px;"xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                                    </svg>
+                                    <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+                                </li>
+                    `;
+                }
+            else{
+                sidebarList.innerHTML += `
+                <li class="nav-item d-flex align-items-center">
+                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                    <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+                </li>
+        `;
+            }
+
+            if (changeList.includes('Date')){
+                sidebarList.innerHTML += `
+                            <li class="nav-item d-flex align-items-center">
+                                <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                                </svg>
+                                <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                            </li>
+                `;
+            }
+            else{
+                sidebarList.innerHTML += `
+                <li class="nav-item d-flex align-items-center">
+                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                    <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                </li>
+            `;
+            }
+        break;
+        case('/addcollection.html'):
+        break;
     }
 }
 
@@ -1684,16 +1695,16 @@ function displayItems(items, filters){
                                 <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
                             </div>
                             <hr>
-                            <div>
-                            <span style="font-size:15px;">Download:</span>
-                            <br>
-                            <span style="font-size:12px;">Für den Download des Items als JSON auf den Button klicken.</span>
-                            <button type="button" class="btn-download custom-download-btn" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-download" viewBox="0 0 16 16">
-                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                                </svg>
-                            </button>
+                            <div class="card-body-download">
+                                <span style="font-size:15px;">Download:</span>
+                                <br>
+                                <span style="font-size:12px;">Für den Download des Items als JSON auf den Button klicken.</span>
+                                <button type="button" class="btn-clipboard" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-download" viewBox="0 0 16 16">
+                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                    </svg>
+                                </button>
                             </div>
                             <hr>
                             <span style="font-size:15px;">Beschreibung:</span>
@@ -1762,6 +1773,7 @@ function displayItems(items, filters){
     });      
 }
 
+// Funktion um Modell download zu starten 
 function downloadItemAsJSON(itemId) {
     const item = allItems.find(i => i.id === itemId);
     if (!item) {

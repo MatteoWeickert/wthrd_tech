@@ -20,28 +20,6 @@
         <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
-        
-        <style>
-            pre {
-                background-color: #f4f4f4;
-                border: 1px solid #ddd;
-                border-left: 3px solid #f36d33;
-                color: #666;
-                page-break-inside: avoid;
-                font-family: monospace;
-                font-size: 15px;
-                line-height: 1.6;
-                margin-bottom: 1.6em;
-                max-width: 100%;
-                overflow: auto;
-                padding: 1em 1.5em;
-                display: block;
-                word-wrap: break-word;
-            }
-            .python {
-                color: #333;
-            }
-        </style>
     </head>
 
     <!-- IDs for JS and CSS:
@@ -120,6 +98,40 @@
                 <nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
                     <div class="position-sticky">
                         <ul class="nav flex-column">
+                            <h6 id="sidebar-groupheader" class="sidebar-heading d-flex align-items-center mt-4 mb-1 text-muted">
+                                <span>Inhaltsverzeichnis</span>
+                            </h6><hr>
+                            <h6 id="sidebar-groupheader" href="#beforefirstscroll" class="sidebar-heading d-flex align-items-center mt-1 mb-3 text-muted">
+                                <span href="#beforefirstscroll">How-To-PyStac</span>
+                            </h6>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#firstscroll">Einführung</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#secondscroll">Grundlegender Code</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#thirdscroll">Schritt-für-Schritt-Erklärung</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#fourthscroll">Zusammenfassung</a>
+                                </li>
+                            <hr>
+                            <h6 id="sidebar-groupheader" href="#katfirstscroll" class="sidebar-heading d-flex align-items-center mt-1 ml-4 mb-3 text-muted">
+                                <span href="#katfirstscroll">How-To-Katalog</span>
+                            </h6>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#katsecondscroll">Modelle hinzufügen</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#katthirdscroll">Collections hinzufügen</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#katfourthscroll">Verfügbare Aufgaben</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#">Einführung</a>
+                                </li>
 
                             <!-- Sidebar: Footer -->
                             <div id="sidebar-footer" class="mt-auto">
@@ -177,16 +189,6 @@
                         <img id="topbar-logo"  href="#" src="wthrdicon.svg" style="right:52%;"height="40px" width="40px">
                     </div>
                     <div id="topbar-menuoptions" class="ms-auto d-flex justify-content-end px-3 py-2">
-                        <!-- Topbar: Suchelement -->
-                        <!-- <div id="topbar-search" class="d-none d-lg-block text-decoration-none px-3 py-2 position-relative">
-                            <div id="topbar-searchicon">
-                                <svg style="margin-right: 10px;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-search" viewBox="0 0 16 16">
-                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
-                                </svg>
-                                <input id="search-input" type="text" placeholder="...">
-                            </div>
-                            <div id="search-results" class="dropdown-content"></div>
-                        </div> -->
                         <!-- Topbar: Loginelement -->
                         <span id="topbar-login" class="text-dark text-decoration-none fw-bold px-3 py-2 d-flex ms-auto">
                             <!-- Login/Register Button -->
@@ -221,15 +223,15 @@
                             
                             <div class="container mt-5" style="color: #1C3D86">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h1 style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700;">How-To</h1>
+                                    <h1 id="beforefirstscroll" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700;">How-To-PyStac</h1>
                                     <img src="icon_howto.png" alt="Icon" style="width: 100px; height: 100px;">
                                 </div>
                                 <section>
-                                    <h2 style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Einführung</h2>
+                                    <h2 id="firstscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Einführung</h2>
                                     <p>STAC (SpatioTemporal Asset Catalog) bietet eine standardisierte Möglichkeit, Geodaten zu katalogisieren und darauf zuzugreifen. Mit der Python-Bibliothek <strong>PySTAC</strong> kann diese Struktur leicht durchsucht und verarbeitet werden. Hier erklären wir Schritt für Schritt, wie man mit PySTAC arbeitet.</p>
                                 </section>
                                 <section>
-                                    <h2 style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Grundlegender Code</h2>
+                                    <h2 id="secondscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Grundlegender Code</h2>
                                     <p>Unten finden Sie ein Beispielskript, das zeigt, wie Sie eine Verbindung zu einem STAC-Katalog herstellen, auf Collections und Items zugreifen und spezifische Daten abfragen können:</p>
                                     <pre><code>
     import json
@@ -274,7 +276,7 @@
                                     </code></pre>
                                 </section>
                                 <section>
-                                    <h2 style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Schritt-für-Schritt-Erklärung</h2>
+                                    <h2 id="thirdscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Schritt-für-Schritt-Erklärung</h2>
                         
                                     <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">1. Verbindung zu einem STAC-Katalog herstellen</h3>
                                     <p>Mit <code>Client.open()</code> stellen Sie eine Verbindung zu einer STAC-API her. Sie können unterschiedliche URLs verwenden, um auf verschiedene Kataloge zuzugreifen:</p>
@@ -317,8 +319,24 @@
                                     </code></pre>
                                 </section>
                                 <section>
-                                    <h2 style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Zusammenfassung</h2>
+                                    <h2 id="fourthscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Zusammenfassung</h2>
                                     <p>Mit PySTAC können Sie einfach auf STAC-Kataloge zugreifen, Collections und Items abrufen sowie spezifische Daten finden. Probieren Sie den Code aus, passen Sie ihn an Ihre Bedürfnisse an, und entdecken Sie die Möglichkeiten von STAC!</p>
+                                </section>
+                                <div style="margin-top: 70px;" class="d-flex justify-content-between align-items-center">
+                                    <h1 id="katfirstscroll" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700;">How-To-Katalog</h1>
+                                    <img src="icon_howto.png" alt="Icon" style="width: 100px; height: 100px;">
+                                </div>
+                                <section>
+                                    <h2 id="katsecondscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Modell hinzufügen</h2>
+                                    <p>Text1</p>
+                                </section>
+                                <section>
+                                    <h2 id="katthirdscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Collection hinzufügen</h2>
+                                    <p>Text2</p>
+                                </section>
+                                <section>
+                                    <h2 id="katfourthscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Verfügbare Aufgaben</h2>
+                                    <p>Text3</p>
                                 </section>
                             </div>
                         </div>
