@@ -35,7 +35,7 @@ for collection in catalog.get_children():
             items.append(item)
 
 # Ausgabe der Items
-# for item in items:
-#     print(json.dumps(item.to_dict(), indent=4))
+for item in items:
+    print(item.assets)
 
 

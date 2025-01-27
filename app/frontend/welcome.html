@@ -24,6 +24,32 @@
             <img src="wthrdicon.svg" alt="Logo" height="40">
         </div>
     </div>
+    <!-- Welcome-Overlay -->
+    <div class="modal show" id="overlayWelcome" tabindex="-1" aria-labelledby="overlayWelcome" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:60%">  
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <img src="wthrdlogo.svg" alt="Welcome Image" style="width: 40%; height: auto;">
+                    <h5 class="mt-3">Welcome to wthrd.tech</h5>
+                    <p>At wthrd.tech, we specialise in the field of technology and Earth observation, with the aim of unlocking the full potential of geospatial data.As a startup driven by innovation, we've developed a comprehensive catalog for STAC-compatible machine learning models working with Earth observation data.  
+                        <br>Our mission is to simplify access to machine learning models, enabling seamless integration and meaningful insights for projects that matter, whether it's monitoring environmental changes or advancing sustainable development.
+                        <br>Explore our catalog and join us in shaping the future of Earth observation.</p>
+                    <button type="button" class="btn btn-danger" id="disableOverlay">Let's start</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--script to disable overlay after one showing-->
+    <script> 
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = new bootstrap.Modal(document.getElementById('overlayWelcome'));
+            if (sessionStorage.getItem('overlayWelcome') !== 'true') modal.show();
+            document.getElementById('disableOverlay').onclick = () => {
+            modal.hide();
+            sessionStorage.setItem('overlayWelcome', 'true');
+            };
+        });
+    </script>
 
     <!-- Main Content -->
     <div class="container-fluid">

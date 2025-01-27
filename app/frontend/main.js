@@ -164,11 +164,19 @@ async function startWebsite(){
             setTimeout(function(){
                 isLoggedIn()
             }, 50)
-        break;
+        break;  
         case('/welcome.html'):
             setTimeout(function(){
                 isLoggedIn()
             }, 50)
+        break;
+        case('/howto.html'):
+            setTimeout(function(){
+                isLoggedIn()
+            }, 50)
+        break;
+        default:
+            window.location.href = '/welcome.html?showModal=true';
         break;
     }
 }
@@ -1768,8 +1776,6 @@ function downloadItemAsJSON(itemId) {
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
 }
-
-
 
 // Funktion um Modellparameter Schnellansicht je nach Auswahl der Filterparameter anpassen
 function fillInParameters(item, data){
