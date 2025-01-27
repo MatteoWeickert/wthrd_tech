@@ -20,28 +20,6 @@
         <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
-        
-        <style>
-            pre {
-                background-color: #f4f4f4;
-                border: 1px solid #ddd;
-                border-left: 3px solid #f36d33;
-                color: #666;
-                page-break-inside: avoid;
-                font-family: monospace;
-                font-size: 15px;
-                line-height: 1.6;
-                margin-bottom: 1.6em;
-                max-width: 100%;
-                overflow: auto;
-                padding: 1em 1.5em;
-                display: block;
-                word-wrap: break-word;
-            }
-            .python {
-                color: #333;
-            }
-        </style>
     </head>
 
     <!-- IDs for JS and CSS:
@@ -120,17 +98,48 @@
                 <nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
                     <div class="position-sticky">
                         <ul class="nav flex-column">
+                            <h6 id="sidebar-groupheader" class="sidebar-heading d-flex align-items-center mt-4 mb-1 text-muted">
+                                <span>Inhaltsverzeichnis</span>
+                            </h6><hr>
+                            <h6 id="sidebar-groupheader" href="#beforefirstscroll" class="sidebar-heading d-flex align-items-center mt-1 mb-3 text-muted">
+                                <span href="#beforefirstscroll">How-To-PyStac</span>
+                            </h6>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#firstscroll">Einführung</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#secondscroll">Grundlegender Code</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#thirdscroll">Schritt-für-Schritt-Erklärung</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#fourthscroll">Zusammenfassung</a>
+                                </li>
+                            <hr>
+                            <h6 id="sidebar-groupheader" href="#katfirstscroll" class="sidebar-heading d-flex align-items-center mt-1 ml-4 mb-3 text-muted">
+                                <span href="#katfirstscroll">How-To-Katalog</span>
+                            </h6>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#katsecondscroll">Modelle hinzufügen</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#katthirdscroll">Collections hinzufügen</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#katfourthscroll">Verfügbare Aufgaben</a>
+                                </li>
 
                             <!-- Sidebar: Footer -->
                             <div id="sidebar-footer" class="mt-auto">
                                 <hr>
                                 <li class="nav-item">
-                                    <a id="sidebar-footerlink" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
+                                    <a id="sidebar-footerlink-login" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
                                         Login
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a id="sidebar-footerlink" class="nav-link" href="#">
+                                    <a id="sidebar-footerlink-settings" class="nav-link" href="#">
                                         Settings
                                     </a>
                                 </li>
@@ -177,16 +186,6 @@
                         <img id="topbar-logo" src="wthrdicon.svg" style="right:52%;"height="40px" width="40px">
                     </a>
                     <div id="topbar-menuoptions" class="ms-auto d-flex justify-content-end px-3 py-2">
-                        <!-- Topbar: Suchelement -->
-                        <!-- <div id="topbar-search" class="d-none d-lg-block text-decoration-none px-3 py-2 position-relative">
-                            <div id="topbar-searchicon">
-                                <svg style="margin-right: 10px;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-search" viewBox="0 0 16 16">
-                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
-                                </svg>
-                                <input id="search-input" type="text" placeholder="...">
-                            </div>
-                            <div id="search-results" class="dropdown-content"></div>
-                        </div> -->
                         <!-- Topbar: Loginelement -->
                         <span id="topbar-login" class="text-dark text-decoration-none fw-bold px-3 py-2 d-flex ms-auto">
                             <!-- Login/Register Button -->
@@ -221,104 +220,269 @@
                             
                             <div class="container mt-5" style="color: #1C3D86">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h1 style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700;">How-To</h1>
+                                    <h1 id="beforefirstscroll" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700;">How-To-PyStac</h1>
                                     <img src="icon_howto.png" alt="Icon" style="width: 100px; height: 100px;">
                                 </div>
                                 <section>
-                                    <h2 style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Einführung</h2>
-                                    <p>STAC (SpatioTemporal Asset Catalog) bietet eine standardisierte Möglichkeit, Geodaten zu katalogisieren und darauf zuzugreifen. Mit der Python-Bibliothek <strong>PySTAC</strong> kann diese Struktur leicht durchsucht und verarbeitet werden. Hier erklären wir Schritt für Schritt, wie man mit PySTAC arbeitet.</p>
+                                    <h2 id="firstscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Einführung</h2>
+                                    <p>Ein STAC (SpatioTemporal Asset Catalog) bietet eine standardisierte Möglichkeit, Geodaten zu katalogisieren und darauf zuzugreifen. Mit der Python-Bibliothek <strong>PySTAC</strong> kann diese Struktur leicht durchsucht und verarbeitet werden. Hier erklären wir Schritt für Schritt, wie man mit PySTAC arbeitet.</p>
                                 </section>
                                 <section>
-                                    <h2 style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Grundlegender Code</h2>
-                                    <p>Unten finden Sie ein Beispielskript, das zeigt, wie Sie eine Verbindung zu einem STAC-Katalog herstellen, auf Collections und Items zugreifen und spezifische Daten abfragen können:</p>
-                                    <pre><code>
-    import json
-    import pystac
-    import requests
-    import pystac_client
-    from pystac_client import Client
-    
-    url1 = "http://localhost:8000"
-    url2 = "https://ai-extensions-stac.terradue.com/"
-    
-    try:
-        catalog = Client.open(url1)
-        print("Verbindung zu STAC-API erfolgreich!")
-    except Exception as e:
-        print(f"Fehler beim Verbinden mit der STAC-API: {e}")
-    
-    # Hole die Collection mit der ID "MLM_Collection"
-    col1 = catalog.get_child("MLM_Collection")
-    
-    # Hole alle Items in der Collection
-    # items = col1.get_all_items()
-    
-    # for item in items:
-    #   print(f"Item ID: {item.id}")
-    
-    # Collection abrufen
-    collection = catalog.get_child("MLM_Collection", "MLM_Collection_2")
-    
-    items = []
-    # Durch alle Items in allen Collections iterieren
-    for collection in catalog.get_children():
-        print(f"Collection ID: {collection.id}")
-        for item in collection.get_all_items():
-            print(item.id)
-            if item.id == "solar_satlas_sentinel2":
-                items.append(item)
-    
-    # Ausgabe der Items
-    for item in items:
-        print(item.assets)
-                                    </code></pre>
+                                    <h2 id="secondscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Grundlegender Code</h2>
+                                    <p>Dies ist ein Beispielskript, welches zeigt, wie man eine Verbindung zu einem STAC-Katalog herstellen, auf Collections und Items zugreifen und spezifische Daten abfragen kann:</p>
+                                    <pre><code># Description: Python-Beispielcode für die Nutzung des STAC für Machine Learning Modells (MLM)
+
+import json
+import requests
+from pystac import Catalog
+
+####################################################################################################
+# STAC-Server-URL definieren
+####################################################################################################
+url = "http://localhost:8000"
+
+####################################################################################################
+# Katalog laden
+####################################################################################################
+
+try:
+    catalog = Catalog.from_file(url)
+    print("Katalog erfolgreich geladen")
+except Exception as e:
+    print(f"Fehler beim Laden des Katalogs: {e}")
+
+####################################################################################################
+# STAC-API-Features: `conformance` überprüfen
+####################################################################################################
+
+# try:
+#     response = requests.get(f"{url}/conformance")
+#     if response.status_code == 200:
+#         conformance_info = response.json()
+#         print("API Conformance Informationen:")
+#         print(json.dumps(conformance_info, indent=4))
+#     else:
+#         print(f"Fehler beim Abrufen der Conformance-Daten: {response.status_code}")
+# except Exception as e:
+#     print(f"Fehler beim Abrufen der Conformance-Informationen: {e}")
+
+####################################################################################################
+# Collections abrufen und Informationen extrahieren
+####################################################################################################
+
+# try:
+#     collections = catalog.get_collections()
+#     print("Sammlungen im Katalog:")
+#     for collection in collections:
+#         collection.describe()
+# except Exception as e:
+#     print(f"Fehler beim Abrufen der Collections: {e}")
+
+####################################################################################################
+# Ein bestimmtes Collection-Element abrufen
+####################################################################################################
+
+# collection_id = "MLM_Collection" # Beispiel für eine Collection-ID
+# try:
+#     collection = catalog.get_child(collection_id)
+#     print(f"Collection mit ID {collection_id} gefunden.")
+#     collection.describe()
+# except Exception as e:
+#     print(f"Fehler beim Abrufen der Collection {collection_id}: {e}")
+
+####################################################################################################
+# Items aus einer Collection abrufen und Informationen extrahieren
+####################################################################################################
+
+# collection_id = "MLM_Collection"  # Beispiel für eine Collection-ID
+# try:
+#     collection = catalog.get_child(collection_id)
+#     items = collection.get_all_items()
+#     for item in items:
+#         assets = {key: asset.to_dict() for key, asset in item.assets.items()}
+#         item_summary = {
+#             "ID": item.id,
+#             "Bounding Box": item.bbox,
+#             "Datetime": item.datetime.isoformat() if item.datetime else None,
+#             "Properties": item.properties,
+#             "Assets": assets,
+#         }
+#         print(json.dumps(item_summary, indent=4) )
+# except Exception as e:
+#     print(f"Fehler beim Abrufen der Items: {e}")
+
+####################################################################################################
+# Suche nach Items basierend auf unterschiedlichen Parametern
+####################################################################################################
+
+# bbox = [-180, -90, 180, 90]  # Beispiel einer Bounding Box
+# datetime = "2020-01-01T00:00:00/2025-01-15T23:59:59" # Beispiel für einen Zeitbereich
+# collections = ["MLM_Collection"]  # Beispiel für eine Collection-ID
+# ids = ["solar_satlas_sentinel2"]  # Beispiel für eine Item-ID
+# limit = 10  # Anzahl der zurückgegebenen Items
+
+# search_query = {
+#     "bbox": bbox,
+#     "collections": collections,
+#     "datetime": datetime,
+#     "ids": ids,
+#     "limit": limit
+# }
+# try:
+#     response = requests.post(f"{url}/search", json=search_query)
+#     if response.status_code == 200:
+#         items = response.json().get('features', [])
+#         print(json.dumps(items, indent=4))
+#         print(f"Gefundene Items: {len(items)}")
+#     else:
+#         print(f"Fehler bei der Suche: {response.status_code} - {response.text}")
+# except Exception as e:
+#     print(f"Fehler bei der Suche nach Items: {e}")
+
+####################################################################################################
+# Assets eines Items abrufen
+####################################################################################################
+
+# item_id = "solar_satlas_sentinel2"  # Beispiel für eine Item-ID
+# items = catalog.get_all_items()
+# for item in items:
+#     if item.id == item_id:
+#         print(f"Assets für Item {item_id}:")
+#         for key, asset in item.assets.items():
+#             print(f"Asset: {key}")
+#             print(json.dumps(asset.to_dict(), indent=4))</code></pre>
                                 </section>
                                 <section>
-                                    <h2 style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Schritt-für-Schritt-Erklärung</h2>
+                                    <h2 id="thirdscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Schritt-für-Schritt-Erklärung</h2>
                         
-                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">1. Verbindung zu einem STAC-Katalog herstellen</h3>
-                                    <p>Mit <code>Client.open()</code> stellen Sie eine Verbindung zu einer STAC-API her. Sie können unterschiedliche URLs verwenden, um auf verschiedene Kataloge zuzugreifen:</p>
-                                    <pre><code>
-    url1 = "http://localhost:8000" 
-    url2 = "https://ai-extensions-stac.terradue.com/"
-    catalog = Client.open(url1)
-                                    </code></pre>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Verbindung zu einem STAC-Katalog herstellen</h3>
+                                    <p>Die Route zum STAC wird über die url festgelegt. Mit <code>Catalog.from_file(url)</code> wird die Verbindung zur STAC-API hergestellt.</p>
+                                    <pre><code>url = "http://localhost:8000"
+try:
+    catalog = Catalog.from_file(url)
+    print("Katalog erfolgreich geladen")
+except Exception as e:
+    print(f"Fehler beim Laden des Katalogs: {e}")</code></pre>
                         
-                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">2. Eine spezifische Collection abrufen</h3>
-                                    <p>Sie können eine Collection anhand ihrer ID abrufen. Hier holen wir eine Collection mit der ID <code>"MLM_Collection"</code>:</p>
-                                    <pre><code>
-    col1 = catalog.get_child("MLM_Collection")
-                                    </code></pre>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Konformität des STAC abrufen</h3>
+                                    <p>Die Konformitätsklassen, mit denen der STAC übereinstimmt, lassen sich über die <code>/conformance</code>-Route abfragen:</p>
+                                    <pre><code>try:
+    response = requests.get(f"{url}/conformance")
+    if response.status_code == 200:
+        conformance_info = response.json()
+        print("API Conformance Informationen:")
+        print(json.dumps(conformance_info, indent=4))
+    else:
+        print(f"Fehler beim Abrufen der Conformance-Daten: {response.status_code}")
+except Exception as e:
+    print(f"Fehler beim Abrufen der Conformance-Informationen: {e}")</code></pre>
+                                    <!-- <p>Response:</p>
+                                    <pre><code>API Conformance Informationen:
+{
+    "conformsTo": [
+        "http://api.stacspec.org/v1.0.0/core",
+        "http://api.stacspec.org/v1.0.0/collections",
+        "http://api.stacspec.org/v1.0.0/item-search",
+        "http://api.stacspec.org/v1.0.0/features",
+        "https://stac-extensions.github.io/mlm/v1.3.0/schema.json"
+    ]
+}</code></pre> -->
+
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Collections und ihre Items abrufen</h3>
+                                    <p>Mit <code>collection.describe()</code> lassen sich die Item-IDs der Collections abrufen. Hier werden alle Collections des Katalogs mit ihren Items abgefragt:</p>
+                                    <pre><code>try:
+    collections = catalog.get_collections()
+    print("Sammlungen im Katalog:")
+    for collection in collections:
+        collection.describe()
+except Exception as e:
+    print(f"Fehler beim Abrufen der Collections: {e}")</code></pre>
+
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Eine spezifische Collection abrufen</h3>
+                                    <p>Collections lassen sich anhand ihrer ID abrufen. Hier holen wir eine Collection mit der ID <code>"MLM_Collection"</code>:</p>
+                                    <pre><code>collection_id = "MLM_Collection"
+try:
+    collection = catalog.get_child(collection_id)
+    print(f"Collection mit ID {collection_id} gefunden.")
+    collection.describe()
+except Exception as e:
+    print(f"Fehler beim Abrufen der Collection {collection_id}: {e}")</code></pre>
                         
-                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">3. Items aus der Collection abrufen</h3>
-                                    <p>Nach dem Abrufen einer Collection können Sie alle enthaltenen Items durchsuchen:</p>
-                                    <pre><code>
-    items = col1.get_all_items()
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Items aus der Collection abrufen</h3>
+                                    <p>Nach dem Abrufen einer Collection können Sie alle enthaltenen Items durchsuchen. Hier werden bereits die wichtigsten Attribute Selektiert und in die Konsole ausgegeben:</p>
+                                    <pre><code>collection_id = "MLM_Collection"
+try:
+    collection = catalog.get_child(collection_id)
+    items = collection.get_all_items()
     for item in items:
-        print(f"Item ID: {item.id}")
-                                        </code></pre>
+        assets = {key: asset.to_dict() for key, asset in item.assets.items()}
+        item_summary = {
+            "ID": item.id,
+            "Bounding Box": item.bbox,
+            "Datetime": item.datetime.isoformat() if item.datetime else None,
+            "Properties": item.properties,
+            "Assets": assets,
+        }
+        print(json.dumps(item_summary, indent=4) )
+except Exception as e:
+    print(f"Fehler beim Abrufen der Items: {e}")</code></pre>
                         
-                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">4. Iteration durch Collections und Abfrage eines spezifischen Items</h3>
-                                    <p>Durch Iteration durch alle Collections und Items können Sie nach spezifischen Daten suchen:</p>
-                                    <pre><code>
-    items = []
-    for collection in catalog.get_children():
-        print(f"Collection ID: {collection.id}")
-        for item in collection.get_all_items():
-            print(item.id)
-            if item.id == "solar_satlas_sentinel2":
-                items.append(item)</code></pre>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Suche nach bestimmten Items</h3>
+                                    <p>Als erstes definiert man die Suchparameter. Dabei stehen eine Boundingbox, Collection-Namen, ein bestimmtes Zeitintervall und Item-IDs als Parameter zur Verfügung. Außerdem lässt sich die Suche auf eine bestimmte Anzahl an Ergebnissen limitieren:</p>
+                                    <pre><code>bbox = [-180, -90, 180, 90]
+datetime = "2020-01-01T00:00:00/2025-01-15T23:59:59"
+collections = ["MLM_Collection"]
+ids = ["solar_satlas_sentinel2"]
+limit = 10</code></pre>
+                                    <p>Die Suchanfrage wird dann an den STAC-Server gesendet und die Ergebnisse werden in der Konsole ausgegeben:</p>
+                                    <pre><code>search_query = {
+    "bbox": bbox,
+    "collections": collections,
+    "datetime": datetime,
+    "ids": ids,
+    "limit": limit
+}
+try:
+    response = requests.post(f"{url}/search", json=search_query)
+    if response.status_code == 200:
+        items = response.json().get('features', [])
+        print(json.dumps(items, indent=4))
+        print(f"Gefundene Items: {len(items)}")
+    else:
+        print(f"Fehler bei der Suche: {response.status_code} - {response.text}")
+except Exception as e:
+    print(f"Fehler bei der Suche nach Items: {e}")</code></pre>
                         
-                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">5. Assets eines Items abrufen</h3>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Assets eines Items abrufen</h3>
                                     <p>Nachdem Sie ein spezifisches Item gefunden haben, können Sie dessen Assets anzeigen:</p>
-                                    <pre><code>
-    for item in items:
-        print(item.assets)
-                                    </code></pre>
+                                    <pre><code>item_id = "solar_satlas_sentinel2"
+items = catalog.get_all_items()
+for item in items:
+    if item.id == item_id:
+        print(f"Assets für Item {item_id}:")
+        for key, asset in item.assets.items():
+            print(f"Asset: {key}")
+            print(json.dumps(asset.to_dict(), indent=4))</code></pre>
                                 </section>
                                 <section>
-                                    <h2 style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Zusammenfassung</h2>
-                                    <p>Mit PySTAC können Sie einfach auf STAC-Kataloge zugreifen, Collections und Items abrufen sowie spezifische Daten finden. Probieren Sie den Code aus, passen Sie ihn an Ihre Bedürfnisse an, und entdecken Sie die Möglichkeiten von STAC!</p>
+                                    <h2 id="fourthscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Zusammenfassung</h2>
+                                    <p>Mit PySTAC wird der Zugriff auf STAC-Kataloge, das Abrufen von Collections und Items sowie das Finden spezifischer Daten vereinfacht. Der Code kann flexibel angepasst werden, um die Möglichkeiten des Katalogs optimal zu nutzen.</p>
+                                </section>
+                                <div style="margin-top: 70px;" class="d-flex justify-content-between align-items-center">
+                                    <h1 id="katfirstscroll" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700;">How-To-Katalog</h1>
+                                    <img src="icon_howto.png" alt="Icon" style="width: 100px; height: 100px;">
+                                </div>
+                                <section>
+                                    <h2 id="katsecondscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Modell hinzufügen</h2>
+                                    <p>Text1</p>
+                                </section>
+                                <section>
+                                    <h2 id="katthirdscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Collection hinzufügen</h2>
+                                    <p>Text2</p>
+                                </section>
+                                <section>
+                                    <h2 id="katfourthscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Verfügbare Aufgaben</h2>
+                                    <p>Text3</p>
                                 </section>
                             </div>
                         </div>

@@ -473,7 +473,6 @@ class SearchQuery(BaseModel):
     collections: Optional[List[str]] = None
     ids: Optional[List[str]] = None
     limit: Optional[int] = 10
-    query: Optional[str] = None
 
 @app.post("/search")
 async def search_items(query: SearchQuery):
