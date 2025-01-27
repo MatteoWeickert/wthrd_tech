@@ -56,7 +56,6 @@ function getSearchedBbox(){
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 async function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
-    lastSearchedBbox = null;
     switch(data){
         case('/addmodel.html'):
             const loggedIn = await isLoggedIn();
@@ -229,8 +228,8 @@ async function startWebsite(){
         }
         break;
         case('/catalog.html'):
+            lastSearchedBbox = null;
             fetchItems();
-
             // Suchleisten-Listener
             document.getElementById('search-input').addEventListener('input', (e) => {
                 const searchTerm = e.target.value;
