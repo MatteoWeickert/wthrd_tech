@@ -1465,6 +1465,8 @@ function displayItems(items, filters){
     container.innerHTML = '';
     const selectedFilters = filters;
     const filteredItems = filterItems(items, filters);
+    let counter = 0;
+    let pageIndex = 1;
 
     filteredItems.forEach(item => {
                 const itemDiv = document.createElement('div');
