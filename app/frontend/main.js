@@ -106,7 +106,7 @@ async function startWebsite(){
                     });
                 });
                 const drawnItems = getDrawnItems();
-                createInputForm(getExpectedItemInputs());
+                createInputForm(getExpectedItemInputs(), getExpectedItemInputsInfo());
                 const map = L.map('map').setView([0, 0], 2);
 
                 map.on('draw:created', function (event) {
@@ -144,12 +144,111 @@ async function startWebsite(){
             }
             break;
         case('/addcollection.html'):
-            setTimeout(function(){
-                isLoggedIn()
-            }, 50) 
+        const loggedInCo = await isLoggedIn();
+        if (loggedInCo) {
+            $(function() {
+                $('input[name="daterange"]').daterangepicker({
+                    "locale": {
+                        "format": "MM/DD/YYYY",
+                        "separator": " - ",
+                        "applyLabel": "Anwenden",
+                        "cancelLabel": "Abbrechen",
+                        "fromLabel": "Von",
+                        "toLabel": "bis",
+                        "customRangeLabel": "Custom",
+                        "weekLabel": "W",
+                        "daysOfWeek": [
+                            "So",
+                            "Mo",
+                            "Di",
+                            "Mi",
+                            "Do",
+                            "Fr",
+                            "Sa"
+                        ],
+                        "monthNames": [
+                            "Januar",
+                            "Februar",
+                            "März",
+                            "April",
+                            "Mai",
+                            "Juni",
+                            "Juli",
+                            "August",
+                            "September",
+                            "Oktober",
+                            "November",
+                            "Dezember"
+                        ],
+                        "firstDay": 1
+                    },
+                    opens: 'left',
+                    autoApply:true
+                }, function(start, end, label) {
+                    console.log("Neue Range: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
+                    startDatum = start;
+                    endDatum = end;
+                });
+            });
+            const drawnItems = getDrawnItems();
+            createInputForm(getExpectedCollectionInputs(), getExpectedCollectionInputsInfo())
+            const map = L.map('map').setView([0, 0], 2);
+
+            map.on('draw:created', function (event) {
+                const layer = event.layer;
+                drawnItems.addLayer(layer);
+                const bounds = layer.getBounds();
+                console.log(bounds);
+                setBounds(bounds.toBBoxString())
+                getBounds()
+            });
+
+            L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+        
+                map.addLayer(drawnItems);
+        
+                const drawControl = new L.Control.Draw({
+                draw: {
+                    polyline: false,
+                    polygon: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false,
+                    rectangle: true
+                },
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                }
+                });
+                map.addControl(drawControl);
+        } else {
+            createStandardView();
+        }
         break;
         case('/catalog.html'):
             fetchItems();
+
+            // Suchleisten-Listener
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                const searchTerm = e.target.value;
+                if (searchTerm.length <= 2){
+                    displayItems(allItems);
+                }
+                else{
+                    let filteredItems = filterItemsForSearch(searchTerm);
+                    console.log(filteredItems)
+                    if(filteredItems.length === 0){
+                        showAlert(4,"Kein Item mit dem Suchterm ", `${searchTerm} gefunden.`);
+                        displayItems(filteredItems);
+                    }
+                    else{
+                        displayItems(filteredItems);        }
+                }
+            });
+
             setTimeout(function(){
                 isLoggedIn()
             }, 50) 
@@ -218,24 +317,6 @@ function filterItemsForSearch(searchTerm) {
         return filtered; 
 }
 
-// Add event listener to search input
-document.getElementById('search-input').addEventListener('input', (e) => {
-    const searchTerm = e.target.value;
-    if (searchTerm.length <= 2){
-        displayItems(allItems);
-    }
-    else{
-        let filteredItems = filterItemsForSearch(searchTerm);
-        console.log(filteredItems)
-        if(filteredItems.length === 0){
-            showAlert(4,"Kein Item mit dem Suchterm ", `${searchTerm} gefunden.`);
-            displayItems(filteredItems);
-        }
-        else{
-            displayItems(filteredItems);        }
-    }
-});
-
 // Schließt beim klicken des Anmelde/Register Buttons das Fenster ohne zu refreshen
 function closeLoginTab(){
     const modalElement = document.getElementById('authModal');
@@ -275,13 +356,12 @@ function getExpectedCollectionInputs(){
     return [    'id',
                 'title',
                 'description',
-                'license',
-                'extent'
+                'license'
             ]
 }
 
 // Funktion um Informationen zu den gewollten Userinputs zu verwalten
-function getExpectedInputsInfo(){
+function getExpectedItemInputsInfo(){
     return[ 'Wähle einen aussagekräftigen Namen. Dieser wird später im Modellkatalog angezeigt.', 
             `Wähle aus den <a href=howto.html>verfügbaren Aufgaben</a> die zutreffenden für dein Modell.`, 
             'Füge eine umfassende Beschreibung deines Modells ein. Beschreibe dabei vor allem den Nutzen deines Modells.', 
@@ -299,6 +379,16 @@ function getExpectedInputsInfo(){
             'Füge <a href=howto.html>weitere Informationen</a> zum Modell ein.', 
             'Wähle aus den verfügbaren Collections eine oder <a href=addcollection.html>füge eine neue hinzu.</a>', 
             'Füge den Modellink ein.'
+    ]
+}
+
+// Funktion um Informationen zu den gewollten Userinputs zu verwalten
+function getExpectedCollectionInputsInfo(){
+    return [    'id',
+                'title',
+                'description',
+                'license',
+                'extent'
     ]
 }
 
@@ -419,46 +509,88 @@ async function isLoggedIn() {
 
 // Funktion um Standardansicht ohne Anmeldung zu generieren.
 function createStandardView(){
+    const file = window.location.pathname.trim().toLowerCase();
     const sidebar = document.getElementById('sidebar')
     const main = document.getElementById('main-contentdesc')
 
-    sidebar.innerHTML = ''
-    sidebar.innerHTML = `
-<nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
-    <div class="position-sticky d-flex flex-column h-100">
-        <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="height: 75%;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="82" height="82" fill="#1C3D86" class="bi bi-person-fill-x mb-3" viewBox="0 0 16 16">
-                <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
-                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m-.646-4.854.646.647.646-.647a.5.5 0 0 1 .708.708l-.647.646.647.646a.5.5 0 0 1-.708.708l-.646-.647-.646.647a.5.5 0 0 1-.708-.708l.647-.646-.647-.646a.5.5 0 0 1 .708-.708"/>
-            </svg>
-            <div class="text-center" style="font-weight: 300; color:#1C3D86; text-transform: uppercase; font-size: 10px; ">
-                <span>Melde dich an, um eigene Modelle hinzuzufügen!</span>
-            </div>
-        </div>
-        <div id="sidebar-footer" class="mt-auto" style="height: 25%;">
-            <hr>
-            <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
-            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
-        </div>
-    </div>  
-</nav>
-
-`
-main.innerHTML = ''
-main.innerHTML = `
-        <div id="main-contentdesc">
-        <div id="main-contenttitle" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700; margin: 20px;">
-            Modell hinzufügen
-        </div>
-        <div id="main-contenttext" style="font-size:16px; text-align:center; font-weight:300; margin: 20px;">
-            Melde dich zunächst mit einem bestehenden Account an, oder registriere einen Neuen, um ein eigenes Modell hinzuzufügen und alle Vorteile des wthrd.tech-Katalogs zu nutzen.
-        </div>
-            <div style="margin-top: 50px;text-align:center;">
-                <button class="button-input" style="font-size: 14px;" data-bs-toggle="modal" data-bs-target="#authModal">Jetzt anmelden</button>
-            </div>
-            <div style="text-align:center;">
-                <a class="text-muted button-input" style="font-size: 11px; font-weight: 200;" href="addcollection.html" data-bs-toggle="modal" data-bs-target="#authModal">Oder neu registrieren.</a>
-            </div>`
+    switch(file){
+        case('/addmodel.html'):
+            sidebar.innerHTML = ''
+            sidebar.innerHTML = `
+                <nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
+                    <div class="position-sticky d-flex flex-column h-100">
+                        <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="height: 75%;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="82" height="82" fill="#1C3D86" class="bi bi-person-fill-x mb-3" viewBox="0 0 16 16">
+                                <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
+                                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m-.646-4.854.646.647.646-.647a.5.5 0 0 1 .708.708l-.647.646.647.646a.5.5 0 0 1-.708.708l-.646-.647-.646.647a.5.5 0 0 1-.708-.708l.647-.646-.647-.646a.5.5 0 0 1 .708-.708"/>
+                            </svg>
+                            <div class="text-center" style="font-weight: 300; color:#1C3D86; text-transform: uppercase; font-size: 10px; ">
+                                <span>Melde dich an, um eigene Modelle hinzuzufügen!</span>
+                            </div>
+                        </div>
+                        <div id="sidebar-footer" class="mt-auto" style="height: 25%;">
+                            <hr>
+                            <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
+                            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
+                        </div>
+                    </div>  
+                </nav>
+        `
+        main.innerHTML = ''
+        main.innerHTML = `
+                <div id="main-contentdesc">
+                <div id="main-contenttitle" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700; margin: 20px;">
+                    Modell hinzufügen
+                </div>
+                <div id="main-contenttext" style="font-size:16px; text-align:center; font-weight:300; margin: 20px;">
+                    Melde dich zunächst mit einem bestehenden Account an, oder registriere einen Neuen, um ein eigenes Modell hinzuzufügen und alle Vorteile des wthrd.tech-Katalogs zu nutzen.
+                </div>
+                    <div style="margin-top: 50px;text-align:center;">
+                        <button class="button-input" style="font-size: 14px;" data-bs-toggle="modal" data-bs-target="#authModal">Jetzt anmelden</button>
+                    </div>
+                    <div style="text-align:center;">
+                        <a class="text-muted button-input" style="font-size: 11px; font-weight: 200;" href="addcollection.html" data-bs-toggle="modal" data-bs-target="#authModal">Oder neu registrieren.</a>
+                    </div>`
+    break;
+    case('/addcollection.html'):
+            sidebar.innerHTML = ''
+            sidebar.innerHTML = `
+                <nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
+                    <div class="position-sticky d-flex flex-column h-100">
+                        <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center" style="height: 75%;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="82" height="82" fill="#1C3D86" class="bi bi-person-fill-x mb-3" viewBox="0 0 16 16">
+                                <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
+                                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m-.646-4.854.646.647.646-.647a.5.5 0 0 1 .708.708l-.647.646.647.646a.5.5 0 0 1-.708.708l-.646-.647-.646.647a.5.5 0 0 1-.708-.708l.647-.646-.647-.646a.5.5 0 0 1 .708-.708"/>
+                            </svg>
+                            <div class="text-center" style="font-weight: 300; color:#1C3D86; text-transform: uppercase; font-size: 10px; ">
+                                <span>Melde dich an, um eigene Collections hinzuzufügen!</span>
+                            </div>
+                        </div>
+                        <div id="sidebar-footer" class="mt-auto" style="height: 25%;">
+                            <hr>
+                            <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
+                            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
+                        </div>
+                    </div>  
+                </nav>
+        `
+        main.innerHTML = ''
+        main.innerHTML = `
+                <div id="main-contentdesc">
+                <div id="main-contenttitle" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700; margin: 20px;">
+                    Collection hinzufügen
+                </div>
+                <div id="main-contenttext" style="font-size:16px; text-align:center; font-weight:300; margin: 20px;">
+                    Melde dich zunächst mit einem bestehenden Account an, oder registriere einen Neuen, um eine eigene Collection hinzuzufügen und alle Vorteile des wthrd.tech-Katalogs zu nutzen.
+                </div>
+                    <div style="margin-top: 50px;text-align:center;">
+                        <button class="button-input" style="font-size: 14px;" data-bs-toggle="modal" data-bs-target="#authModal">Jetzt anmelden</button>
+                    </div>
+                    <div style="text-align:center;">
+                        <a class="text-muted button-input" style="font-size: 11px; font-weight: 200;" data-bs-toggle="modal" data-bs-target="#authModal">Oder neu registrieren.</a>
+                    </div>`
+    break;
+    }
 }
 
 // Funktion um Registrierungsdaten an den Server zu senden
@@ -484,7 +616,7 @@ async function registerUser(){
             body: JSON.stringify(body)
         });
         if(response.ok){
-            showAlert(3, "Erfolgreich registriert.")
+            showAlert(3, "Erfolgreich registriert. Melde dich nun an und aktualisiere die Website!", "")
         } else{
             showAlert(4, "Fehler bei der Registrierung. Nutze ggf. einen anderen Nutzername oder E-Mail.", "")
         }
@@ -520,6 +652,7 @@ async function fetchItems() {
 // Adden des Items aus Eingabemaske
 async function addItems() {
     const input = getUserInputs();
+    console.log(input)
     const token = sessionStorage.getItem("token");
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
@@ -599,11 +732,11 @@ async function addItems() {
 }
 
 // Adden von Collections aus Eingabemaske
-async function addCollections() {
+async function addCollections(){
     const input = getUserInputs();
     const token = sessionStorage.getItem("token");
     try {
-        const response = await fetch('http://localhost:8000/addItem/', {
+        const response = await fetch('http://localhost:8000/addCollection/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -611,72 +744,67 @@ async function addCollections() {
             },
             
             body: JSON.stringify({
-                id: input.id,
-                type: 'Feature',
-                stac_version: "1.0.0",
-                stac_extensions: ["https://stac-extensions.github.io/file/v2.1.0/schema.json","https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json"],
-                geometry: getGeometry(),
-                bbox: getBounds(),
-                properties: {
-                    title: input.title,
-                    description: input.description,
-                    datetime: "2024-12-04T16:20:00",
-                    "mlm:name": input.name,
-                    "mlm:architecture": input.architecture,
-                    "mlm:tasks": input.tasks.split(',').map(value => value.trim()),
-                    "mlm:framework": input.framework,
-                    "mlm:framework_version": input.frameworkversion,
-                    "mlm:pretrained": getPretrained(),
-                    "mlm:pretrained_source": input.pretrainedsource,
-                    "mlm:batch_size_suggestion": input.batchsizesuggestion,
-                    "mlm:accelerator":input.accelerator,
-                    "mlm:accelerator_summary":input.acceleratorsummary,
-                    end_datetime: getDateRange()[1].end,
-                    start_datetime: getDateRange()[0].start,
-                    "mlm:input": [
-                        {
-                            name: input.inputname,
-                            type: input.inputtypes.split(',').map(value => value.trim())
-                        }
-                    ],
-                    "mlm:output":[ {
-                        type: "class",
-                        num_classes: 1000
-                    }],
-                    "mlm:hyperparameters": input.hyperparameter
+                "stac_version": "1.0.0",
+                "type": "Collection",
+                "title": input.title,
+                "license": input.license,
+                "catalog_id": "Catalog for MLM",
+                "updated_at": "2025-01-27T10:50:20.469758+00:00",
+                "id": input.id,
+                "stac_extensions": [],
+                "description": input.description,
+                "extent": {
+                  "spatial": {
+                    "bbox": [
+                      getBounds()
+                    ]
+                  },
+                  "temporal": {
+                    "interval": [
+                      [
+                        getDateRange()[1].end,
+                        getDateRange()[0].start
+                      ]
+                    ]
+                  }
                 },
-                links: [
-                    { href: "https://example.com/item", type: "application/json", rel: "self" },
-                    { href: "http://localhost:8000/collections", type: "application/json", rel: "parent" },
-                    { href: "http://localhost:8000/", type: "application/json", rel: "root" },
-                    { href: `http://localhost:8000/collections/${input.collectionid}`, type: "application/json", rel: "collection" }
-                ],
-                assets: {
-                    model: {
-                        href: input.link
-                    },
-                    thumbnail: { href: "https://example.com/thumbnail.png" },
-                    data: { href: "https://example.com/data" }
-                },
-                collection_id: input.collectionid,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                color: getSelectedColor()
-            })
+                "created_at": new Date().toISOString(),
+                "links": [
+                  {
+                    "rel": "self",
+                    "type": "application/json",
+                    "href": `http://localhost:8000/collections/${input.id}`
+                  },
+                  {
+                    "rel": "items",
+                    "type": "application/json",
+                    "href": `http://localhost:8000/collections/${input.id}/items`
+                  },
+                  {
+                    "rel": "parent",
+                    "type": "application/json",
+                    "href": "http://localhost:8000/"
+                  },
+                  {
+                    "rel": "root",
+                    "type": "application/json",
+                    "href": "http://localhost:8000/"
+                  }
+                ]
+              })
         });
         const data = await response.json();
 
-        // Verarbeiten der Nachricht aus der API-Antwort
-        if (data.message === "Item added successfully") {
-
-            showAlert(1, "Neues Modell erfolgreich hinzugefügt.", "");
+        if (data.message === "Collection added successfully") {
+            showAlert(1, "Neues Collection erfolgreich hinzugefügt.", "");
         } else {
             showAlert(4, "Fehler beim hinzufügen. Prüfe erneut, ob alle Daten korrekt eingetragen wurden.", "");
         }    
     } catch (error) {
-        console.log("Error aus addItems", error);
-        showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
+        console.log("Error aus addCollection", error);
+        showAlert(4, "Collection konnte nicht hinzugefügt werden.", "");
     }
+
 }
 
 // Funktion um die Geometry auszugeben
@@ -697,10 +825,11 @@ function getBounds() {
 }
 
 // Erstellt dynmaisch die gefragten Inputs für ein vollständiges Modell
-function createInputForm(data) {
+function createInputForm(data, inputinfo) {
+    const file = window.location.pathname.trim().toLowerCase();
     const parameters = data;
     const container = document.getElementById('main-inputcontainer');
-    const info = getExpectedInputsInfo();
+    const info = inputinfo
     createInputTOC(data);
     container.innerHTML = '';
     var count = 0
@@ -729,63 +858,101 @@ function createInputForm(data) {
     });
     count += 1;
 
-    // Bounding Box-Option
-    tableBody.innerHTML += `
-        <tr id="main-inputgroup">
-            <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box<br><span class="main-inputinfo">Markiere auf der Karte den Bereich, auf den das Modell anwendbar ist.</span></td>
-            <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                <div id="map" style="width:120%;height:100%;"></div>
-            </td>
-            <td id="" class="main-inputalert"></td>
-        </tr>
-    `;
-    count += 1;
+    switch(file){
+        case('/addmodel.html'): 
+            // Bounding Box-Option
+                tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box<br><span class="main-inputinfo">Markiere auf der Karte den Bereich, auf den das Modell anwendbar ist.</span></td>
+                    <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
+                        <div id="map" style="width:120%;height:100%;"></div>
+                    </td>
+                    <td id="" class="main-inputalert"></td>
+                </tr>
+            `;
+            count += 1;
 
-    // Farbcode-Option hinzufügen
-    tableBody.innerHTML += `
-        <tr id="main-inputgroup">
-            <td id="inputexp-color" class="main-inputexp">${count}) Farbgebung<br><span class="main-inputinfo">Wähle eine individuelle Farbe, in welcher später das Modell angezeigt wird.</span></td>
-            <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                <input style="border: solid 2px black; border-radius: 3px;" id="main-inputelem-color" style="height: 30px;" class="w-50" type="color" />
-            </td>
-            <td id="" class="main-inputalert"></td>
-        </tr>
-    `;
+            // Farbcode-Option hinzufügen
+            tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-color" class="main-inputexp">${count}) Farbgebung<br><span class="main-inputinfo">Wähle eine individuelle Farbe, in welcher später das Modell angezeigt wird.</span></td>
+                    <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
+                        <input style="border: solid 2px black; border-radius: 3px;" id="main-inputelem-color" style="height: 30px;" class="w-50" type="color" />
+                    </td>
+                    <td id="" class="main-inputalert"></td>
+                </tr>
+            `;
 
-    count += 1;
+            count += 1;
 
-    // Zeitraumauswahö
-    tableBody.innerHTML += `
-        <tr id="main-inputgroup">
-            <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum das Modell trainiert ist.</span></td>
-            <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
-                <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
-            </td>
-            <td id="" class="main-inputalert"></td>
-        </tr>
-    `;
+            // Zeitraumauswahö
+            tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum das Modell trainiert ist.</span></td>
+                    <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                        <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
+                    </td>
+                    <td id="" class="main-inputalert"></td>
+                </tr>
+            `;
 
-    count += 1;
+            count += 1;
 
-    // Vortrainiert-Auswahl
-    tableBody.innerHTML += `
-        <tr id="main-inputgroup">
-            <td id="inputexp-pretrained" class="main-inputexp">${count}) Vortrainiert<br><span class="main-inputinfo">Gebe an, ob dein Modell vortrainiert wurde.</span></td>
-            <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
-                <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
-            </td>
-            <td id="" class="main-inputalert"></td>
-        </tr>
-    `;
+            // Vortrainiert-Auswahl
+            tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-pretrained" class="main-inputexp">${count}) Vortrainiert<br><span class="main-inputinfo">Gebe an, ob dein Modell vortrainiert wurde.</span></td>
+                    <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                        <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
+                    </td>
+                    <td id="" class="main-inputalert"></td>
+                </tr>
+            `;
 
-    // Buttons zum absenden un analysieren
-    container.innerHTML += `
-        <div id="main-buttonarea">
-            <button class="button-input" onclick="analyzeInput()"id="main-button-analyse">Analysieren</button>
-            <button class="button-input" onclick="sendInput();window.location.href='#topbar'"id="main-button-send">Abschicken</button>
-        </div>
-    `
-    createDynamicInputs();
+            // Buttons zum absenden un analysieren
+            container.innerHTML += `
+                <div id="main-buttonarea">
+                    <button class="button-input" onclick="analyzeInput(getExpectedItemInputs())"id="main-button-analyse">Analysieren</button>
+                    <button class="button-input" onclick="sendInput(getExpectedItemInputs());window.location.href='#topbar'"id="main-button-send">Abschicken</button>
+                </div>
+            `
+            createDynamicInputs();
+        break;
+        case('/addcollection.html'):
+            // Bounding Box-Option
+            tableBody.innerHTML += `
+            <tr id="main-inputgroup">
+                <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box<br><span class="main-inputinfo">Markiere auf der Karte den Bereich, für den die Collection gedacht ist.</span></td>
+                <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
+                    <div id="map" style="width:120%;height:100%;"></div>
+                </td>
+                <td id="" class="main-inputalert"></td>
+            </tr>
+            `;
+            count += 1;
+
+            // Zeitraumauswahl
+            tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum die Collection Modelle halten soll.</span></td>
+                    <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                        <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
+                    </td>
+                    <td id="" class="main-inputalert"></td>
+                </tr>
+            `;
+
+            count += 1;
+
+            // Buttons zum absenden un analysieren
+            container.innerHTML += `
+            <div id="main-buttonarea">
+                <button class="button-input" onclick="analyzeInput(getExpectedCollectionInputs())"id="main-button-analyse">Analysieren</button>
+                <button class="button-input" onclick="sendInput(getExpectedCollectionInputs());window.location.href='#topbar'"id="main-button-send">Abschicken</button>
+            </div>
+            `
+        break;
+    }
 }
 
 // Funktion um Tasks mit Dropdownmenü anzureichern
@@ -838,16 +1005,18 @@ function updateSelectedTasks() {
 
 // Funktion um alle User Eingaben abzugreifen und in ein Array zu bündeln
 function getUserInputs() {
-    const currentPath = window.location.pathname;
+    const file = window.location.pathname.trim().toLowerCase();
     let expected;
 
-    if (currentPath === '/addmodel.html') {
-        expected = getExpectedItemInputs();
-    } else if (currentPath === '/addcollection') {
-        expected = getExpectedCollectionInputs();
-    } else {
-        console.error('Unbekannter Pfad:', currentPath);
-        return null;
+    switch(file){
+        case('/addmodel.html'):
+            expected = getExpectedItemInputs();
+        break;
+        case('/addcollection.html'):
+            expected = getExpectedCollectionInputs();
+        break;
+        default:
+            console.log('Aus getUserInputs(): Keine Userinputs auf dieser Seite gefunden')
     }
 
     const input = {};
@@ -861,8 +1030,9 @@ function getUserInputs() {
 }
 
 //Funktion um den Inhalt des Input forms vor dem Abschicken zu analysieren
-function analyzeInput(){
-    const parameters = getExpectedItemInputs();
+function analyzeInput(expected){
+    const file = window.location.pathname.trim().toLowerCase();
+    const parameters = expected;
     const data = getUserInputs(); 
     const missing = [];
     parameters.forEach(parameter =>{
@@ -872,33 +1042,46 @@ function analyzeInput(){
             return;
         }
     });
-    const bounding = getBounds();
-    const hex = document.getElementById("main-inputelem-color").value;
-    const date = getDateRange();
-    if (bounding === undefined || bounding === null || bounding === "") {
-        console.log(bounding)
-        missing.push('Bounding')
-    }
-    if (hex === undefined || hex === null || hex === "" || hex === '#000000') {
-        missing.push('Color')
-    }
-    if (date === undefined || date === null || date === "") {
-        missing.push('Date')
+    switch(file){
+        case('/addmodel.html'):
+            const bounding = getBounds();
+            const hex = document.getElementById("main-inputelem-color").value;
+            const date = getDateRange();
+            if (bounding === undefined || bounding === null || bounding === "") {
+                console.log(bounding)
+                missing.push('Bounding')
+            }
+            if (hex === undefined || hex === null || hex === "" || hex === '#000000') {
+                missing.push('Color')
+            }
+            if (date === undefined || date === null || date === "") {
+                missing.push('Date')
+            }
+        break;
+        case('/addcollection.html'):
+        break;
     }
     changeInputTOC(parameters, missing);
     return missing;
 }
 
 // Funktion um den Inputform abzusenden, falls korrekt gefüllt
-function sendInput() {
-    const missing = analyzeInput();
+function sendInput(expected){
+    const file = window.location.pathname.trim().toLowerCase();
+
+    const missing = analyzeInput(expected);
 
     if (missing.length > 0) {
         showAlert(4, "Bitte füllen Sie alle Eingabefelder korrekt aus.", "");
     } else {
-        const userInputs = getUserInputs();
-        console.log("SendInputs => addItems")
-        addItems(); 
+        switch(file){
+            case('/addmodel.html'):
+                addItems(); 
+            break;
+            case('/addcollection.html'):
+                addCollections();
+            break;
+        }
     }
 }
 
@@ -913,6 +1096,7 @@ function getSelectedColor() {
 
 // Funktion zum dynamischen Erstellen des Inhaltsverzeichnisses mit Scrollfunktion
 async function createInputTOC(data) {
+    const file = window.location.pathname.trim().toLowerCase();
     const parameters = data;
     const sidebar = document.getElementById("sidebar");
     const sidebarList = sidebar.querySelector(".nav.flex-column");
@@ -933,21 +1117,28 @@ async function createInputTOC(data) {
     });
     
     // Feststehende Elemente hinzufügen
-    sidebarList.innerHTML += `
-    <li class="nav-item">
-        <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-map">Bounding Box</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
-    </li>
-    `;
+    switch(file){
+        case('/addmodel.html'):
+            sidebarList.innerHTML += `
+            <li class="nav-item">
+                <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-map">Bounding Box</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+            </li>
+            `;
+        break;
+        case('/addcollection.html'):
+        break;
+    }
 }
 
 // Funktion zum anpassen vom Inhaltsverzeichnis des Inputsforms je nach Eingabe 
 function changeInputTOC(data, pois){
+    const file = window.location.pathname.trim().toLowerCase();
     const parameters = data;
     const changeList = pois;
 
@@ -984,67 +1175,73 @@ function changeInputTOC(data, pois){
         }
     });
 
-    if (changeList.includes('Bounding')){
-            sidebarList.innerHTML += `
-                        <li class="nav-item d-flex align-items-center">
-                            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
-                            </svg>
-                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
-                        </li>
-            `;
-        }
-    else{
-        sidebarList.innerHTML += `
-        <li class="nav-item d-flex align-items-center">
-            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-            </svg>
-             <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
-        </li>
-`;
-    }
-
-    if (changeList.includes('Color')){
-            sidebarList.innerHTML += `
-                        <li class="nav-item d-flex align-items-center">
-                            <svg style="margin-top: -10px;"xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
-                            </svg>
-                            <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
-                        </li>
-            `;
-        }
-    else{
-        sidebarList.innerHTML += `
-        <li class="nav-item d-flex align-items-center">
-            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-            </svg>
-            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
-        </li>
-`;
-    }
-
-    if (changeList.includes('Date')){
-        sidebarList.innerHTML += `
-                    <li class="nav-item d-flex align-items-center">
-                        <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
-                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
-                        </svg>
-                        <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
-                    </li>
+    switch(file){
+        case('/addmodel.html'):
+            if (changeList.includes('Bounding')){
+                    sidebarList.innerHTML += `
+                                <li class="nav-item d-flex align-items-center">
+                                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                                    </svg>
+                                    <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
+                                </li>
+                    `;
+                }
+            else{
+                sidebarList.innerHTML += `
+                <li class="nav-item d-flex align-items-center">
+                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                    <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
+                </li>
         `;
-    }
-    else{
-        sidebarList.innerHTML += `
-        <li class="nav-item d-flex align-items-center">
-            <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-            </svg>
-            <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
-        </li>
-    `;
+            }
+
+            if (changeList.includes('Color')){
+                    sidebarList.innerHTML += `
+                                <li class="nav-item d-flex align-items-center">
+                                    <svg style="margin-top: -10px;"xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                                    </svg>
+                                    <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+                                </li>
+                    `;
+                }
+            else{
+                sidebarList.innerHTML += `
+                <li class="nav-item d-flex align-items-center">
+                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                    <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-color">Farbgebung</a>
+                </li>
+        `;
+            }
+
+            if (changeList.includes('Date')){
+                sidebarList.innerHTML += `
+                            <li class="nav-item d-flex align-items-center">
+                                <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                                </svg>
+                                <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                            </li>
+                `;
+            }
+            else{
+                sidebarList.innerHTML += `
+                <li class="nav-item d-flex align-items-center">
+                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                    <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                </li>
+            `;
+            }
+        break;
+        case('/addcollection.html'):
+        break;
     }
 }
 
