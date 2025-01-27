@@ -129,9 +129,6 @@
                                 <li class="nav-item">
                                     <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#katfourthscroll">Verfügbare Aufgaben</a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" style="color:#1C3D86; margin-top: -15px;" href="#">Einführung</a>
-                                </li>
 
                             <!-- Sidebar: Footer -->
                             <div id="sidebar-footer" class="mt-auto">
@@ -228,99 +225,248 @@
                                 </div>
                                 <section>
                                     <h2 id="firstscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Einführung</h2>
-                                    <p>STAC (SpatioTemporal Asset Catalog) bietet eine standardisierte Möglichkeit, Geodaten zu katalogisieren und darauf zuzugreifen. Mit der Python-Bibliothek <strong>PySTAC</strong> kann diese Struktur leicht durchsucht und verarbeitet werden. Hier erklären wir Schritt für Schritt, wie man mit PySTAC arbeitet.</p>
+                                    <p>Ein STAC (SpatioTemporal Asset Catalog) bietet eine standardisierte Möglichkeit, Geodaten zu katalogisieren und darauf zuzugreifen. Mit der Python-Bibliothek <strong>PySTAC</strong> kann diese Struktur leicht durchsucht und verarbeitet werden. Hier erklären wir Schritt für Schritt, wie man mit PySTAC arbeitet.</p>
                                 </section>
                                 <section>
                                     <h2 id="secondscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Grundlegender Code</h2>
-                                    <p>Unten finden Sie ein Beispielskript, das zeigt, wie Sie eine Verbindung zu einem STAC-Katalog herstellen, auf Collections und Items zugreifen und spezifische Daten abfragen können:</p>
-                                    <pre><code>
-    import json
-    import pystac
-    import requests
-    import pystac_client
-    from pystac_client import Client
-    
-    url1 = "http://localhost:8000"
-    url2 = "https://ai-extensions-stac.terradue.com/"
-    
-    try:
-        catalog = Client.open(url1)
-        print("Verbindung zu STAC-API erfolgreich!")
-    except Exception as e:
-        print(f"Fehler beim Verbinden mit der STAC-API: {e}")
-    
-    # Hole die Collection mit der ID "MLM_Collection"
-    col1 = catalog.get_child("MLM_Collection")
-    
-    # Hole alle Items in der Collection
-    # items = col1.get_all_items()
-    
-    # for item in items:
-    #   print(f"Item ID: {item.id}")
-    
-    # Collection abrufen
-    collection = catalog.get_child("MLM_Collection", "MLM_Collection_2")
-    
-    items = []
-    # Durch alle Items in allen Collections iterieren
-    for collection in catalog.get_children():
-        print(f"Collection ID: {collection.id}")
-        for item in collection.get_all_items():
-            print(item.id)
-            if item.id == "solar_satlas_sentinel2":
-                items.append(item)
-    
-    # Ausgabe der Items
-    for item in items:
-        print(item.assets)
-                                    </code></pre>
+                                    <p>Dies ist ein Beispielskript, welches zeigt, wie man eine Verbindung zu einem STAC-Katalog herstellen, auf Collections und Items zugreifen und spezifische Daten abfragen kann:</p>
+                                    <pre><code># Description: Python-Beispielcode für die Nutzung des STAC für Machine Learning Modells (MLM)
+
+import json
+import requests
+from pystac import Catalog
+
+####################################################################################################
+# STAC-Server-URL definieren
+####################################################################################################
+url = "http://localhost:8000"
+
+####################################################################################################
+# Katalog laden
+####################################################################################################
+
+try:
+    catalog = Catalog.from_file(url)
+    print("Katalog erfolgreich geladen")
+except Exception as e:
+    print(f"Fehler beim Laden des Katalogs: {e}")
+
+####################################################################################################
+# STAC-API-Features: `conformance` überprüfen
+####################################################################################################
+
+# try:
+#     response = requests.get(f"{url}/conformance")
+#     if response.status_code == 200:
+#         conformance_info = response.json()
+#         print("API Conformance Informationen:")
+#         print(json.dumps(conformance_info, indent=4))
+#     else:
+#         print(f"Fehler beim Abrufen der Conformance-Daten: {response.status_code}")
+# except Exception as e:
+#     print(f"Fehler beim Abrufen der Conformance-Informationen: {e}")
+
+####################################################################################################
+# Collections abrufen und Informationen extrahieren
+####################################################################################################
+
+# try:
+#     collections = catalog.get_collections()
+#     print("Sammlungen im Katalog:")
+#     for collection in collections:
+#         collection.describe()
+# except Exception as e:
+#     print(f"Fehler beim Abrufen der Collections: {e}")
+
+####################################################################################################
+# Ein bestimmtes Collection-Element abrufen
+####################################################################################################
+
+# collection_id = "MLM_Collection" # Beispiel für eine Collection-ID
+# try:
+#     collection = catalog.get_child(collection_id)
+#     print(f"Collection mit ID {collection_id} gefunden.")
+#     collection.describe()
+# except Exception as e:
+#     print(f"Fehler beim Abrufen der Collection {collection_id}: {e}")
+
+####################################################################################################
+# Items aus einer Collection abrufen und Informationen extrahieren
+####################################################################################################
+
+# collection_id = "MLM_Collection"  # Beispiel für eine Collection-ID
+# try:
+#     collection = catalog.get_child(collection_id)
+#     items = collection.get_all_items()
+#     for item in items:
+#         assets = {key: asset.to_dict() for key, asset in item.assets.items()}
+#         item_summary = {
+#             "ID": item.id,
+#             "Bounding Box": item.bbox,
+#             "Datetime": item.datetime.isoformat() if item.datetime else None,
+#             "Properties": item.properties,
+#             "Assets": assets,
+#         }
+#         print(json.dumps(item_summary, indent=4) )
+# except Exception as e:
+#     print(f"Fehler beim Abrufen der Items: {e}")
+
+####################################################################################################
+# Suche nach Items basierend auf unterschiedlichen Parametern
+####################################################################################################
+
+# bbox = [-180, -90, 180, 90]  # Beispiel einer Bounding Box
+# datetime = "2020-01-01T00:00:00/2025-01-15T23:59:59" # Beispiel für einen Zeitbereich
+# collections = ["MLM_Collection"]  # Beispiel für eine Collection-ID
+# ids = ["solar_satlas_sentinel2"]  # Beispiel für eine Item-ID
+# limit = 10  # Anzahl der zurückgegebenen Items
+
+# search_query = {
+#     "bbox": bbox,
+#     "collections": collections,
+#     "datetime": datetime,
+#     "ids": ids,
+#     "limit": limit
+# }
+# try:
+#     response = requests.post(f"{url}/search", json=search_query)
+#     if response.status_code == 200:
+#         items = response.json().get('features', [])
+#         print(json.dumps(items, indent=4))
+#         print(f"Gefundene Items: {len(items)}")
+#     else:
+#         print(f"Fehler bei der Suche: {response.status_code} - {response.text}")
+# except Exception as e:
+#     print(f"Fehler bei der Suche nach Items: {e}")
+
+####################################################################################################
+# Assets eines Items abrufen
+####################################################################################################
+
+# item_id = "solar_satlas_sentinel2"  # Beispiel für eine Item-ID
+# items = catalog.get_all_items()
+# for item in items:
+#     if item.id == item_id:
+#         print(f"Assets für Item {item_id}:")
+#         for key, asset in item.assets.items():
+#             print(f"Asset: {key}")
+#             print(json.dumps(asset.to_dict(), indent=4))</code></pre>
                                 </section>
                                 <section>
                                     <h2 id="thirdscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Schritt-für-Schritt-Erklärung</h2>
                         
-                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">1. Verbindung zu einem STAC-Katalog herstellen</h3>
-                                    <p>Mit <code>Client.open()</code> stellen Sie eine Verbindung zu einer STAC-API her. Sie können unterschiedliche URLs verwenden, um auf verschiedene Kataloge zuzugreifen:</p>
-                                    <pre><code>
-    url1 = "http://localhost:8000" 
-    url2 = "https://ai-extensions-stac.terradue.com/"
-    catalog = Client.open(url1)
-                                    </code></pre>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Verbindung zu einem STAC-Katalog herstellen</h3>
+                                    <p>Die Route zum STAC wird über die url festgelegt. Mit <code>Catalog.from_file(url)</code> wird die Verbindung zur STAC-API hergestellt.</p>
+                                    <pre><code>url = "http://localhost:8000"
+try:
+    catalog = Catalog.from_file(url)
+    print("Katalog erfolgreich geladen")
+except Exception as e:
+    print(f"Fehler beim Laden des Katalogs: {e}")</code></pre>
                         
-                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">2. Eine spezifische Collection abrufen</h3>
-                                    <p>Sie können eine Collection anhand ihrer ID abrufen. Hier holen wir eine Collection mit der ID <code>"MLM_Collection"</code>:</p>
-                                    <pre><code>
-    col1 = catalog.get_child("MLM_Collection")
-                                    </code></pre>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Konformität des STAC abrufen</h3>
+                                    <p>Die Konformitätsklassen, mit denen der STAC übereinstimmt, lassen sich über die <code>/conformance</code>-Route abfragen:</p>
+                                    <pre><code>try:
+    response = requests.get(f"{url}/conformance")
+    if response.status_code == 200:
+        conformance_info = response.json()
+        print("API Conformance Informationen:")
+        print(json.dumps(conformance_info, indent=4))
+    else:
+        print(f"Fehler beim Abrufen der Conformance-Daten: {response.status_code}")
+except Exception as e:
+    print(f"Fehler beim Abrufen der Conformance-Informationen: {e}")</code></pre>
+                                    <!-- <p>Response:</p>
+                                    <pre><code>API Conformance Informationen:
+{
+    "conformsTo": [
+        "http://api.stacspec.org/v1.0.0/core",
+        "http://api.stacspec.org/v1.0.0/collections",
+        "http://api.stacspec.org/v1.0.0/item-search",
+        "http://api.stacspec.org/v1.0.0/features",
+        "https://stac-extensions.github.io/mlm/v1.3.0/schema.json"
+    ]
+}</code></pre> -->
+
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Collections und ihre Items abrufen</h3>
+                                    <p>Mit <code>collection.describe()</code> lassen sich die Item-IDs der Collections abrufen. Hier werden alle Collections des Katalogs mit ihren Items abgefragt:</p>
+                                    <pre><code>try:
+    collections = catalog.get_collections()
+    print("Sammlungen im Katalog:")
+    for collection in collections:
+        collection.describe()
+except Exception as e:
+    print(f"Fehler beim Abrufen der Collections: {e}")</code></pre>
+
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Eine spezifische Collection abrufen</h3>
+                                    <p>Collections lassen sich anhand ihrer ID abrufen. Hier holen wir eine Collection mit der ID <code>"MLM_Collection"</code>:</p>
+                                    <pre><code>collection_id = "MLM_Collection"
+try:
+    collection = catalog.get_child(collection_id)
+    print(f"Collection mit ID {collection_id} gefunden.")
+    collection.describe()
+except Exception as e:
+    print(f"Fehler beim Abrufen der Collection {collection_id}: {e}")</code></pre>
                         
-                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">3. Items aus der Collection abrufen</h3>
-                                    <p>Nach dem Abrufen einer Collection können Sie alle enthaltenen Items durchsuchen:</p>
-                                    <pre><code>
-    items = col1.get_all_items()
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Items aus der Collection abrufen</h3>
+                                    <p>Nach dem Abrufen einer Collection können Sie alle enthaltenen Items durchsuchen. Hier werden bereits die wichtigsten Attribute Selektiert und in die Konsole ausgegeben:</p>
+                                    <pre><code>collection_id = "MLM_Collection"
+try:
+    collection = catalog.get_child(collection_id)
+    items = collection.get_all_items()
     for item in items:
-        print(f"Item ID: {item.id}")
-                                        </code></pre>
+        assets = {key: asset.to_dict() for key, asset in item.assets.items()}
+        item_summary = {
+            "ID": item.id,
+            "Bounding Box": item.bbox,
+            "Datetime": item.datetime.isoformat() if item.datetime else None,
+            "Properties": item.properties,
+            "Assets": assets,
+        }
+        print(json.dumps(item_summary, indent=4) )
+except Exception as e:
+    print(f"Fehler beim Abrufen der Items: {e}")</code></pre>
                         
-                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">4. Iteration durch Collections und Abfrage eines spezifischen Items</h3>
-                                    <p>Durch Iteration durch alle Collections und Items können Sie nach spezifischen Daten suchen:</p>
-                                    <pre><code>
-    items = []
-    for collection in catalog.get_children():
-        print(f"Collection ID: {collection.id}")
-        for item in collection.get_all_items():
-            print(item.id)
-            if item.id == "solar_satlas_sentinel2":
-                items.append(item)</code></pre>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Suche nach bestimmten Items</h3>
+                                    <p>Als erstes definiert man die Suchparameter. Dabei stehen eine Boundingbox, Collection-Namen, ein bestimmtes Zeitintervall und Item-IDs als Parameter zur Verfügung. Außerdem lässt sich die Suche auf eine bestimmte Anzahl an Ergebnissen limitieren:</p>
+                                    <pre><code>bbox = [-180, -90, 180, 90]
+datetime = "2020-01-01T00:00:00/2025-01-15T23:59:59"
+collections = ["MLM_Collection"]
+ids = ["solar_satlas_sentinel2"]
+limit = 10</code></pre>
+                                    <p>Die Suchanfrage wird dann an den STAC-Server gesendet und die Ergebnisse werden in der Konsole ausgegeben:</p>
+                                    <pre><code>search_query = {
+    "bbox": bbox,
+    "collections": collections,
+    "datetime": datetime,
+    "ids": ids,
+    "limit": limit
+}
+try:
+    response = requests.post(f"{url}/search", json=search_query)
+    if response.status_code == 200:
+        items = response.json().get('features', [])
+        print(json.dumps(items, indent=4))
+        print(f"Gefundene Items: {len(items)}")
+    else:
+        print(f"Fehler bei der Suche: {response.status_code} - {response.text}")
+except Exception as e:
+    print(f"Fehler bei der Suche nach Items: {e}")</code></pre>
                         
-                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">5. Assets eines Items abrufen</h3>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Assets eines Items abrufen</h3>
                                     <p>Nachdem Sie ein spezifisches Item gefunden haben, können Sie dessen Assets anzeigen:</p>
-                                    <pre><code>
-    for item in items:
-        print(item.assets)
-                                    </code></pre>
+                                    <pre><code>item_id = "solar_satlas_sentinel2"
+items = catalog.get_all_items()
+for item in items:
+    if item.id == item_id:
+        print(f"Assets für Item {item_id}:")
+        for key, asset in item.assets.items():
+            print(f"Asset: {key}")
+            print(json.dumps(asset.to_dict(), indent=4))</code></pre>
                                 </section>
                                 <section>
                                     <h2 id="fourthscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Zusammenfassung</h2>
-                                    <p>Mit PySTAC können Sie einfach auf STAC-Kataloge zugreifen, Collections und Items abrufen sowie spezifische Daten finden. Probieren Sie den Code aus, passen Sie ihn an Ihre Bedürfnisse an, und entdecken Sie die Möglichkeiten von STAC!</p>
+                                    <p>Mit PySTAC wird der Zugriff auf STAC-Kataloge, das Abrufen von Collections und Items sowie das Finden spezifischer Daten vereinfacht. Der Code kann flexibel angepasst werden, um die Möglichkeiten des Katalogs optimal zu nutzen.</p>
                                 </section>
                                 <div style="margin-top: 70px;" class="d-flex justify-content-between align-items-center">
                                     <h1 id="katfirstscroll" style="text-align: center; color: #1C3D86; font-size: 32px; font-weight: 700;">How-To-Katalog</h1>

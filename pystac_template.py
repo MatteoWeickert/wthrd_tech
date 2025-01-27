@@ -1,7 +1,8 @@
+# Description: Python-Beispielcode für die Nutzung des STAC für Machine Learning Modells (MLM)
+
 import json
 import requests
 from pystac import Catalog
-
 
 ####################################################################################################
 # STAC-Server-URL definieren
@@ -85,13 +86,15 @@ except Exception as e:
 # bbox = [-180, -90, 180, 90]  # Beispiel einer Bounding Box
 # datetime = "2020-01-01T00:00:00/2025-01-15T23:59:59" # Beispiel für einen Zeitbereich
 # collections = ["MLM_Collection"]  # Beispiel für eine Collection-ID
+# ids = ["solar_satlas_sentinel2"]  # Beispiel für eine Item-ID
 # limit = 10  # Anzahl der zurückgegebenen Items
 
 # search_query = {
 #     "bbox": bbox,
 #     "collections": collections,
 #     "datetime": datetime,
-#     "limit": limit,
+#     "ids": ids,
+#     "limit": limit
 # }
 # try:
 #     response = requests.post(f"{url}/search", json=search_query)
@@ -105,25 +108,14 @@ except Exception as e:
 #     print(f"Fehler bei der Suche nach Items: {e}")
 
 ####################################################################################################
-# Weitere nützliche Operationen: Metadaten des Items anzeigen
+# Assets eines Items abrufen
 ####################################################################################################
 
-# item_id = "solar_satellite_timeseries"  # Beispiel für eine Item-ID
-# collection_id = "MLM_Collection"  # Beispiel für eine Collection-ID
-# try:
-#     item = catalog.get_child(collection_id).get_item(item_id)  # Item anhand der ID abrufen
-#     print(item.collection_id)
-#     assets = {key: asset.to_dict() for key, asset in item.assets.items()}
-#     item_summary = {
-#             "ID": item.id,
-#             "Bounding Box": item.bbox,
-#             "Datetime": item.datetime.isoformat() if item.datetime else None,
-#             "Properties": item.properties,
-#             "Assets": assets,
-#     }
-#     print(json.dumps(item_summary, indent=4))
-# except Exception as e:
-#     print(f"Fehler beim Abrufen des Items mit ID {item_id}: {e}")
-
-
-
+# item_id = "solar_satlas_sentinel2"  # Beispiel für eine Item-ID
+# items = catalog.get_all_items()
+# for item in items:
+#     if item.id == item_id:
+#         print(f"Assets für Item {item_id}:")
+#         for key, asset in item.assets.items():
+#             print(f"Asset: {key}")
+#             print(json.dumps(asset.to_dict(), indent=4))
