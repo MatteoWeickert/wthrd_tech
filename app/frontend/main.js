@@ -175,7 +175,6 @@ async function startWebsite(){
 startWebsite();
 
 // Funktion zum Filtern von Items (Suchleiste)
-
 function filterItemsForSearch(searchTerm) { 
     if (!Array.isArray(allItems) || allItems.length === 0) 
         {
