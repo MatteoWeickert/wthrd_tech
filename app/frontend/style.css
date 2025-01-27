@@ -428,3 +428,40 @@
 .card a:hover {
   text-decoration: none;
 }
+
+
+/* How-To */
+#inhaltsverzeichnis{
+  margin-top: auto; 
+  margin-bottom: 0px; 
+  padding: 15px; 
+  border-top: 1px solid #ccc;
+}
+
+#inhaltsverzeichnis h3 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1C3D86;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+#inhaltsverzeichnis ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+#inhaltsverzeichnis li {
+  margin-bottom: 5px;
+}
+
+#inhaltsverzeichnis a {
+  color: #414243;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+#inhaltsverzeichnis a:hover,
+#inhaltsverzeichnis a:active {
+  color: #979ca1;
+}
