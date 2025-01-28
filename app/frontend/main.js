@@ -472,12 +472,10 @@ function getExpectedItemInputsInfo(){
 
 // Funktion um Informationen zu den gewollten Userinputs zu verwalten
 function getExpectedCollectionInputsInfo(){
-    return [    'id',
-                'title',
-                'description',
-                'license',
-                'extent'
-    ]
+    return [    'Eindeutige ID der Collection. Es sollte ein kurzer, lesbarer und einzigartiger String sein, der die Collection identifiziert.',
+                'Titel der Collection. Eine kurze, beschreibende Bezeichnung, die den Inhalt der Collection zusammenfasst.',
+                'Detaillierte Beschreibung der Collection. Was enthält die Collection und wofür ist sie gedacht?',
+                'Die Lizenz der Collection. Hier wird definiert, wie die Daten verwendet werden dürfen (z. B. "CC-BY-4.0").'    ]
 }
 
 // Funktion um vorhandene Tasks zu verwalten
@@ -818,15 +816,17 @@ async function addItems() {
                     if (error.loc.includes("geometry") && error.msg === "The geometry must have 'type' and 'coordinates' keys.") {
                         showAlert(4, "Geometrie muss ein valides JSON sein und 'type' sowie 'coordinates' enthalten!");
                     } else if(error.loc.includes("geometry") && error.msg.includes("Invalid geometry type")) {
-                        showAlert(4, `Ungültiger Geometrietyp: ${error.msg}`);
+                        showAlert(4, `Ungültiger Geometrietyp: ${error.msg}`, "");
                     } else if(error.loc.includes("geometry") && error.msg === ("The 'coordinates' key must contain a list.")) {
-                        showAlert(4, "Zum Key 'coordinates' muss der Value ein Array sein.");
+                        showAlert(4, "Zum Key 'coordinates' muss der Value ein Array sein.", "");
                     } else if (error.loc.includes("geometry") && error.msg.includes("field required")) {
-                        showAlert(4, "JSON der Geometrie leer oder Syntax-Fehler!");
+                        showAlert(4, "JSON der Geometrie leer oder Syntax-Fehler!", "");
                     } else if (error.loc.includes("color") && error.msg.includes("Invalid color format")) {
-                        showAlert(4, "Ungültiger Farbcode! Bitte einen HEX-Wert wie #RRGGBB eingeben.");
+                        showAlert(4, "Ungültiger Farbcode! Bitte einen HEX-Wert wie #RRGGBB eingeben.", "");
                     } else if (error.loc.includes("properties") && error.msg.includes("must contain following keys")) {
-                        showAlert(4, `Die benötigten MLM-Properties wurden nicht angegeben. Bitte gib die folgenden Werte an: ${error.msg}`);
+                        showAlert(4, `Die benötigten MLM-Properties wurden nicht angegeben. Bitte gib die folgenden Werte an: ${error.msg}`, "");
+                    } else if (error.loc.includes("properties") && error.msg.includes("Batchgröße muss ein Integer sein")) {
+                        showAlert(4, `${error.msg}`, "");
                     }
                     else {
                         // Generische Fehlermeldung für alles andere
@@ -889,7 +889,7 @@ async function addCollections(){
                 "catalog_id": "Catalog for MLM",
                 "updated_at": "2025-01-27T10:50:20.469758+00:00",
                 "id": input.id,
-                "stac_extensions": [],
+                "stac_extensions": ["https://stac-extensions.github.io/file/v2.1.0/schema.json","https://crim-ca.github.io/mlm-extension/v1.2.0/schema.json"],
                 "description": input.description,
                 "extent": {
                   "spatial": {
@@ -934,9 +934,35 @@ async function addCollections(){
         const data = await response.json();
 
         if (data.message === "Collection added successfully") {
-            showAlert(1, "Neues Collection erfolgreich hinzugefügt.", "");
-        } else {
-            showAlert(4, "Fehler beim hinzufügen. Prüfe erneut, ob alle Daten korrekt eingetragen wurden.", "");
+
+            showAlert(3, "Neue Collection erfolgreich hinzugefügt.", "");
+        } else if (data.detail){
+            if (Array.isArray(data.detail)){
+                data.detail.forEach((error) => {
+                    console.log("Detail:", data.detail);
+
+                    if (error.loc.includes("title") && error.msg === "title must be provided") {
+                        showAlert(4, "Bitte einen Titel angeben!", "");
+                    } else if(error.loc.includes("id") && error.msg.includes("id must be provided")) {
+                        showAlert(4, `ID darf nicht leer sein!`, "");
+                    } else if(error.loc.includes("description") && error.msg === ("description must be provided")) {
+                        showAlert(4, "Bitte eine Beschreibung angeben!", "");
+                    } else if (error.loc.includes("license") && error.msg.includes("license must be provided")) {
+                        showAlert(4, "Bitte eine Lizenz angeben!", "");
+                    }
+                    else {
+                        // Generische Fehlermeldung für alles andere
+                        showAlert(4, `Fehler bei Feld '${error.loc.join(" -> ")}': ${error.msg}`);
+                    }
+                });
+            }
+            else {
+                showAlert(4, `${data.detail}`, "");
+            }
+        }
+        else{
+            // Fallback für unerwartete Fehler
+            showAlert(4, "Ein unbekannter Fehler ist aufgetreten.", "");
         }    
     } catch (error) {
         console.log("Error aus addCollection", error);

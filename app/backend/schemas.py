@@ -63,6 +63,9 @@ class ItemCreate(BaseModel):
 
         if not isinstance(value["mlm:name"], str):
             raise ValueError(f"Invalid value for 'mlm:name'. It must be a string.")
+        
+        if not isinstance(value["mlm:batch_size_suggestion"], int):
+            raise ValueError(f"Die Batchgröße muss ein Integer sein!")
 
         return value
     
@@ -90,7 +93,7 @@ class ItemCreate(BaseModel):
                 raise ValueError("The 'rel' value in each object must be a string.")
 
         return value
-
+    
     def dict(self, *args, **kwargs):
         # Überschreiben der dict-Methode, um assets zu serialisieren
         obj_dict = super().dict(*args, **kwargs)
