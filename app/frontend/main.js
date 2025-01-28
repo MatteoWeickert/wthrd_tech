@@ -800,10 +800,40 @@ async function addItems() {
         // Verarbeiten der Nachricht aus der API-Antwort
         if (data.message === "Item added successfully") {
 
-            showAlert(1, "Neues Modell erfolgreich hinzugefügt.", "");
-        } else {
-            showAlert(4, "Fehler beim hinzufügen. Prüfe erneut, ob alle Daten korrekt eingetragen wurden.", "");
-        }    
+            showAlert(3, "Neues Modell erfolgreich hinzugefügt.", "");
+        } else if (data.detail){
+            if (Array.isArray(data.detail)){
+                data.detail.forEach((error) => {
+                    console.log("Detail:", data.detail);
+
+                    if (error.loc.includes("geometry") && error.msg === "The geometry must have 'type' and 'coordinates' keys.") {
+                        showAlert(4, "Geometrie muss ein valides JSON sein und 'type' sowie 'coordinates' enthalten!");
+                    } else if(error.loc.includes("geometry") && error.msg.includes("Invalid geometry type")) {
+                        showAlert(4, `Ungültiger Geometrietyp: ${error.msg}`);
+                    } else if(error.loc.includes("geometry") && error.msg === ("The 'coordinates' key must contain a list.")) {
+                        showAlert(4, "Zum Key 'coordinates' muss der Value ein Array sein.");
+                    } else if (error.loc.includes("geometry") && error.msg.includes("field required")) {
+                        showAlert(4, "JSON der Geometrie leer oder Syntax-Fehler!");
+                    } else if (error.loc.includes("color") && error.msg.includes("Invalid color format")) {
+                        showAlert(4, "Ungültiger Farbcode! Bitte einen HEX-Wert wie #RRGGBB eingeben.");
+                    } else if (error.loc.includes("properties") && error.msg.includes("must contain following keys")) {
+                        showAlert(4, `Die benötigten MLM-Properties wurden nicht angegeben. Bitte gib die folgenden Werte an: ${error.msg}`);
+                    }
+                    else {
+                        // Generische Fehlermeldung für alles andere
+                        showAlert(4, `Fehler bei Feld '${error.loc.join(" -> ")}': ${error.msg}`);
+                    }
+                });
+            }
+            else {
+                showAlert(4, `${data.detail}`);
+            }
+        }
+        else{
+            // Fallback für unerwartete Fehler
+            showAlert(4, "Ein unbekannter Fehler ist aufgetreten.", "");
+        }
+                   
     } catch (error) {
         console.log("Error aus addItems", error);
         showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
@@ -890,7 +920,15 @@ async function addCollections(){
 function getGeometry() {
     const userInputs = getUserInputs()
     const geometry = userInputs.geometry
-    return JSON.parse(geometry)
+    try{
+        const result = JSON.parse(geometry)
+        return result
+    }
+    catch(error){
+        console.log("error")
+        showAlert(4, "Die Geometrie ist kein valides JSON. Achte auf korrekte Syntax.")
+    }
+
 }
 
 // Funktion um immer die aktuelle Bounding Box von der Karte zu extrahieren
