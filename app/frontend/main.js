@@ -240,6 +240,14 @@ async function startWebsite(){
         }
         break;
         case('/catalog.html'):
+            document.addEventListener('DOMContentLoaded', () => {
+                const modal = new bootstrap.Modal(document.getElementById('overlayWelcome'));
+                if (sessionStorage.getItem('overlayWelcome') !== 'true') modal.show();
+                document.getElementById('disableOverlay').onclick = () => {
+                modal.hide();
+                sessionStorage.setItem('overlayWelcome', 'true');
+                };
+            });
             lastSearchedBbox = null;
             fetchItems();
             document.getElementById('search-input').addEventListener('input', (e) => {
@@ -1533,6 +1541,14 @@ function printAllFilters(items){
                     drawnRectangle = e.layer;
                     map.addLayer(drawnRectangle);
                 
+                    drawnRectangle.setStyle({
+                        color: '#1C3D86',
+                        weight: 2,
+                        opacity: 1,
+                        fillColor: '#1C3D86',
+                        fillOpacity: 0.3
+                    });
+
                     const bounds = drawnRectangle.getBounds();
                     selectedFilters['bbox'] = [
                         bounds.getWest(),
