@@ -317,7 +317,7 @@ async function recentItems() {
     });
 
     // Die ersten 3 Elemente zurückgeben
-    return sortedItems.slice(0, 3);
+    return sortedItems.slice(0, 5);
 }
 
 
