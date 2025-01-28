@@ -411,12 +411,21 @@
 
 /* Welcome Page */
 
-#transparent-card {
-  background-color: rgba(0, 0, 0, 0.3);
-  color: white;
+.hover-card {
+  transition: background-color 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  color: #1C3D86 !important;
+  border-color: rgba(0, 0, 0, 0.7) !important;
 }
 
-.card:hover {
-  transform: none;
-  box-shadow: none;
+.hover-card:hover {
+  background-color: rgba(0, 0, 0,0.1) !important; 
+  color: white; 
+}
+
+/* Cards without hover effect */
+.no-hover-card {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #1C3D86 !important;
+  border-color: rgba(255, 255, 255, 0.7);
 }
