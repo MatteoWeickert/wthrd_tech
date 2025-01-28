@@ -59,7 +59,7 @@ VALUES (
     '1.0.0', 
     ARRAY['stac-core', 'extended'], 
     'Example Catalog', 
-    'Dies ist ein Beispielkatalog für STAC-Daten.',
+    'Dies ist ein Katalog für Machine Learning Models (MLM).',
     NOW(), 
     NOW()
 );

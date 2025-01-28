@@ -137,6 +137,19 @@ def add_collection(collection: CollectionCreate, user: user_dependency):
         db.commit()
         db.refresh(new_collection)
         return {"message": "Collection added successfully", "collection_id": new_collection.id}
+    except IntegrityError as e:
+    # Prüfen, ob es sich um einen ForeignKeyViolation-Fehler handelt
+        if isinstance(e.orig, UniqueViolation):
+            raise HTTPException(
+                status_code=422, 
+                detail=f"Collection mit der ID '{collection_data['id']}' existiert bereits. Bitte wähle eine andere ID."
+            )
+        else:
+            raise HTTPException(status_code=500, detail=f"Error adding Collection: {str(e)}")
+    except ValidationError as ve:
+        # Protokolliere detaillierte Pydantic-Fehler
+        print("Validierungsfehler:", ve.errors())
+        raise HTTPException(status_code=422, detail=ve.errors())    
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error adding collection: {str(e)}")
