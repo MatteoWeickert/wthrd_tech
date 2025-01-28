@@ -435,12 +435,12 @@
   box-shadow: none;
 }
 
-/* Cards without hover effect */
 .no-hover-card {
   background-color: rgba(0, 0, 0, 0.1);
   color: #1C3D86 !important;
-  border-color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.7) !important;
 }
+
 /* Pageing */
 #paginationButtons{
   display: flex;
