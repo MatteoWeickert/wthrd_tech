@@ -208,17 +208,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!--script to disable overlay after one showing-->
-                            <script> 
-                                document.addEventListener('DOMContentLoaded', () => {
-                                    const modal = new bootstrap.Modal(document.getElementById('overlayWelcome'));
-                                    if (sessionStorage.getItem('overlayWelcome') !== 'true') modal.show();
-                                    document.getElementById('disableOverlay').onclick = () => {
-                                    modal.hide();
-                                    sessionStorage.setItem('overlayWelcome', 'true');
-                                    };
-                                });
-                            </script>
                             <!-- Modell Container -->
                             <div id="main-modell" class="container">
                                 <div id="modell-itemamount-container"></div>

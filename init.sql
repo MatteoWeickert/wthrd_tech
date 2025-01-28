@@ -74,7 +74,7 @@ VALUES
     ARRAY[]::text[],
     'Example Collection', 
     'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
-    '{"spatial": {"bbox": [[-180, -90, 180, 90]]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
+    '{"spatial": {"bbox": [[36.72418053653766, 36.04608406198559, -37.1751413641512, -29.414448517025097]]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
     (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW()
 ),
 (
@@ -85,7 +85,7 @@ VALUES
     'Example Collection 2', -- Neuer Titel
     'Eine zweite Beispiel-Collection, die innerhalb desselben Beispielkatalogs enthalten ist.', -- Neue Beschreibung
     'CC BY 4.0', 
-    '{"spatial": {"bbox": [[-180, -90, 180, 90]]}, "temporal": {"interval": [["2023-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]]}}', 
+    '{"spatial": {"bbox": [[51.49732237251003, -56.43988855665618, -29.354629936450973, -113.66884303505508]]}, "temporal": {"interval": [["2023-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]]}}', 
     (SELECT id FROM catalogs WHERE title = 'Example Catalog'), 
     NOW(), 
     NOW()
