@@ -46,7 +46,7 @@ class ItemCreate(BaseModel):
         # Prüfen, ob der Wert von 'type' ein gültiger GeoJSON-Typ ist
         valid_types = {"Point", "LineString", "Polygon", "MultiPoint", "MultiLineString", "MultiPolygon", "GeometryCollection"}
         if value["type"] not in valid_types:
-            raise ValueError(f"Invalid geometry type: {value['type']}. Must be one of {valid_types}.")
+            raise ValueError(f"{value['type']}. Type muss einer dieser Typen sein: {valid_types}.")
 
         # Prüfen, ob "coordinates" eine Liste ist
         if not isinstance(value["coordinates"], list):
@@ -59,10 +59,13 @@ class ItemCreate(BaseModel):
         required_keys = ["datetime", "mlm:name", "mlm:architecture", "mlm:tasks", "mlm:input", "mlm:output"]
         missing_keys = [key for key in required_keys if key not in value]
         if missing_keys:
-            raise ValueError(f"Properties must contain the following keys: {', '.join(missing_keys)}.")
+            raise ValueError(f"{', '.join(missing_keys)}.")
 
         if not isinstance(value["mlm:name"], str):
             raise ValueError(f"Invalid value for 'mlm:name'. It must be a string.")
+        
+        if not isinstance(value["mlm:batch_size_suggestion"], int):
+            raise ValueError(f"Die Batchgröße muss ein Integer sein!")
 
         return value
     
@@ -90,7 +93,7 @@ class ItemCreate(BaseModel):
                 raise ValueError("The 'rel' value in each object must be a string.")
 
         return value
-
+    
     def dict(self, *args, **kwargs):
         # Überschreiben der dict-Methode, um assets zu serialisieren
         obj_dict = super().dict(*args, **kwargs)
