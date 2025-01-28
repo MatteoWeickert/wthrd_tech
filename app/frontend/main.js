@@ -249,10 +249,9 @@ async function startWebsite(){
                 }
                 else{
                     let filteredItems = filterItemsForSearch(searchTerm);
-                    console.log(filteredItems)
-                    if(filteredItems.length === 0){
-                        showAlert(4,"Kein Item mit dem Suchterm ", `${searchTerm} gefunden.`);
+                    if(filteredItems.length == 0){
                         displayItems(filteredItems);
+                        showAlert(4,"Kein Item mit dem Suchterm ", `"${searchTerm}" gefunden.`);
                     }
                     else{
                         displayItems(filteredItems);        }
