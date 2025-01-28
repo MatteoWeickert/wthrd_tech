@@ -16,20 +16,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
-
-   
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Topbar --
-    <div id="topbar-welcome" class="container-fluid py-3" style="background-color: #9ec4f2;">
-        <div class="d-flex justify-content-center">
-            <img src="wthrdicon.svg" alt="Logo" height="40">
-        </div>
-    </div>-->
-    
-
     <!-- Main Content -->
-    <div style="height: 50px; width: 100%; background-color: #c6dbf7;"></div>
+    <div style="height: 50px; width: 100%; background-color: #c6dbf7;">
+        <img src="wthrdicon.svg" alt="Logo" height="40" style="margin-top: 5px; margin-left: 48.1%;">
+    </div>
     <div class="container-fluid">
         <div class="row vh-100 d-flex align-items-stretch" style="margin-top: 2%; color: #1C3D86 ;">
             <!-- Left Section -->
@@ -37,37 +30,43 @@
                 <div class="d-flex flex-wrap justify-content-between px-4" style="height: 100%;">
                     <a href="catalog.html" class="text-decoration-none" style="width: 48%; height: 40%; margin-top: 0%;">
                         <div class="card hover-card d-flex flex-column" style="height: 100%;">
-                            <img src="icon_howto.png" alt="Card Image" class="card-img-top" style="object-fit: contain; height: 50%; width: 100%; margin-bottom: 10px;">
+                            <div class="card-img-top" style="text-align: center; margin-top: 10%;">
+                                <i class="bi bi-book card-img-top" style="font-size: 8rem; object-fit: contain; width: 100%; margin-bottom: 10px;"></i>
+                            </div>
                             <div class="card-body d-flex flex-column justify-content-end" style="margin-top: auto;">
-                                <h5 class="card-title">About Us</h5>
-                                <p class="card-text">Learn more about our Start-Up</p>
+                                <h5 class="card-title">Catalog</h5>
+                                <p class="card-text">Explore all MLM's</p>
                             </div>
                         </div>
                     </a>
                     <a href="catalog.html" class="text-decoration-none" style="width: 48%; height: 40%; margin-top: 0%;">
                         <div class="card hover-card d-flex flex-column" style="height: 100%;">
-                            <img src="icon_howto.png" alt="Card Image" class="card-img-top" style="object-fit: contain; height: 50%; width: 100%; margin-bottom: 10px;">
+                            <div class="card-img-top" style="text-align: center; margin-top: 10%;">
+                                <i class="bi bi-file-earmark-plus card-img-top" style="font-size: 8rem; object-fit: contain; width: 100%; margin-bottom: 10px;"></i>
+                            </div>                            
                             <div class="card-body d-flex flex-column justify-content-end" style="margin-top: auto;">
-                                <h5 class="card-title">About Us</h5>
-                                <p class="card-text">Learn more about our Start-Up</p>
+                                <h5 class="card-title">Add your MlM</h5>
+                                <p class="card-text">Share your work</p>
                             </div>
                         </div>
                     </a>
                     <a href="catalog.html" class="text-decoration-none" style="width: 48%; height: 40%; margin-top: 0%;">
                         <div class="card hover-card d-flex flex-column" style="height: 100%;">
-                            <img src="icon_howto.png" alt="Card Image" class="card-img-top" style="object-fit: contain; height: 50%; width: 100%; margin-bottom: 10px;">
+                            <img src="icon_howto.png" alt="Card Image" class="card-img-top" style="object-fit: contain; height: 60%; width: 100%; margin-bottom: 10px;">
                             <div class="card-body d-flex flex-column justify-content-end" style="margin-top: auto;">
-                                <h5 class="card-title">About Us</h5>
-                                <p class="card-text">Learn more about our Start-Up</p>
+                                <h5 class="card-title">How-To</h5>
+                                <p class="card-text">Tutorial for PySTAC</p>
                             </div>
                         </div>
                     </a>
                     <a href="catalog.html" class="text-decoration-none" style="width: 48%; height: 40%; margin-top: 0%;">
                         <div class="card hover-card d-flex flex-column" style="height: 100%;">
-                            <img src="background_test.jpg" alt="Card Image" class="card-img-top" style="object-fit: contain; height: 50%; width: 100%; margin-bottom: 10px;">
+                            <div class="card-img-top" style="text-align: center; margin-top: 10%;">
+                                <img src="wthrdicon.svg" alt="Card Image" class="card-img-top" style="object-fit: contain; height: 70%; width: 100%; margin-bottom: 10px;">
+                            </div>
                             <div class="card-body d-flex flex-column justify-content-end" style="margin-top: auto;">
-                                <h5 class="card-title">About Us</h5>
-                                <p class="card-text">Learn more about our Start-Up</p>
+                                <h5 class="card-title">About US</h5>
+                                <p class="card-text">We are wthrd.tech</p>
                             </div>
                         </div>
                     </a>
@@ -93,23 +92,13 @@
 
             <!-- Right Section -->
             <div class="col-sm-4 col-md-4 col-lg-4">
-                <div class="px-4 text-end" style="margin-top: 6%;">
+                <div class="px-4 text-end" style="margin-top: 2%;">
                     <h1>Most Recently Added</h1>
                 </div>
-                <div class="card mx-4 no-hover-card">
+                <div class="card mx-4 no-hover-card" style="margin-top: 4.5%;">
                     <div class="card-body" id = "recent-items">
                         <p>This card can display the most du added data or relevant content.</p>
                     </div>
-                </div>
-                <!-- Properly aligned bottom card -->
-                <a href="catalog.html" class="text-decoration-none">
-                            <div class="card mx-4 mt-3 hover-card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Explore More</h5>
-                                    <p class="card-text">Enter the Catalog to visit all available models</p>
-                                </div>
-                            </div>
-                    </a>
                 </div>
             </div>
         </div>
