@@ -20,6 +20,15 @@ function getDateRange() {
     }
 }
 
+// Funktion um den ausgwählten Itemamount aus der Radiobox zu extrahieren
+function getItemAmount() {
+    const selectedRadio = document.querySelector('input[name="itemAmount"]:checked');
+    if (selectedRadio) {
+        return parseInt(selectedRadio.value);
+    }
+    return 5;
+}
+
 // Singleton-Fkt um gezeichnete Elemente zu verwalten
 function getDrawnItems() {
     if (!sharedDrawnItems) {
@@ -258,8 +267,6 @@ async function startWebsite(){
             }, 50)
         break;  
         case('/welcome.html'):
-            console.log("hier simma")
-            displayRecentItems();
             setTimeout(function(){
                 isLoggedIn()
             }, 50)
@@ -275,75 +282,6 @@ async function startWebsite(){
     }
 }
 startWebsite();
-
-async function recentItems() {
-    // Überprüfen, ob allItems ein Array ist
-
-    response = await fetch('http://localhost:8000/items');
-        if (!response.ok) {
-            showAlert(4, "Fehler beim verbinden zum STAC.", "Überprüfe die Netzwerkverbindung.")
-        }
-        const data = await response.json();
-
-        if (Array.isArray(data) && data.length > 0) {
-            allItems = data;
-        } else {
-            showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler")
-        }
-
-    // Nach dem created_at-Attribut sortieren (neueste zuerst)
-    const sortedItems = allItems.sort((a, b) => {
-        const dateA = new Date(a.created_at);
-        const dateB = new Date(b.created_at);
-        return dateB - dateA; // Neueste zuerst
-    });
-
-    // Die ersten 3 Elemente zurückgeben
-    return sortedItems.slice(0, 3);
-}
-
-async function displayRecentItems() {
-
-    console.log("hier kommer rein")
-
-    const lastItems = await recentItems(); // Hol die letzten 3 Items
-
-    console.log(lastItems)
-    
-    // Container für die Ausgabe finden
-    const container = document.getElementById('recent-items');
-    if (!container) {
-        console.error("Container mit ID 'recent-items' wurde nicht gefunden.");
-        return;
-    }
-
-    // Container leeren
-    container.innerHTML = '';
-
-    // Neue Elemente hinzufügen
-    lastItems.forEach(item => {
-        // Erstelle ein übergeordnetes Div für jedes Item
-        const itemContainer = document.createElement('div');
-        itemContainer.style.marginBottom = "1em"; // Abstand zwischen den Items
-    
-        // Erstelle ein h4-Element für mlm:name
-        const nameElement = document.createElement('h4');
-        nameElement.textContent = item.properties["mlm:name"];
-        nameElement.style.margin = "0"; // Entfernung des Standardabstands
-    
-        // Erstelle ein p-Element für die restlichen Informationen
-        const detailsElement = document.createElement('p');
-        detailsElement.textContent = `Name: ${item.id}, Collection ID: ${item.collection_id}, Description: ${item.properties.description}`;
-        detailsElement.style.marginTop = "0.5em"; // Optional: Abstand nach der Überschrift
-    
-        // Füge die Überschrift und den Text in das Container-Div ein
-        itemContainer.appendChild(nameElement);
-        itemContainer.appendChild(detailsElement);
-    
-        // Füge das Container-Div in den Hauptcontainer ein
-        container.appendChild(itemContainer);
-    });
-}
 
 // Funktion zum Filtern von Items (Suchleiste)
 function filterItemsForSearch(searchTerm) { 
@@ -708,8 +646,8 @@ async function fetchItems() {
 
         if (Array.isArray(data) && data.length > 0) {
             allItems = data;
-            displayItems(data, undefined);
             printAllFilters(data);
+            displayItems(data, undefined);
         } else {
             showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
         }
@@ -1735,121 +1673,202 @@ function createMapOnModell(data) {
 }
 
 // Funktion zum Anzeigen aller Modelle
-function displayItems(items, filters){
+function displayItems(items, filters) {
+    const itemAmountContainer = document.getElementById('modell-itemamount-container');
     const container = document.getElementById('modell-container');
     container.innerHTML = '';
     const selectedFilters = filters;
     const filteredItems = filterItems(items, filters);
+    const itemsPerPage = getItemAmount();
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
-    filteredItems.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.classList.add('p-3', 'modell-item');
+    if (!document.getElementById('modell-itemamount')) {
+        const amountItemsPerPage = document.createElement('div');
+        amountItemsPerPage.id = 'modell-itemamount';
+        amountItemsPerPage.classList.add('modell-itemamount');
+        amountItemsPerPage.innerHTML = `
+            <span style="font-weight:300;font-size:10px; margin: 7px;">Modelle pro Seite:</span>
+            <form id="amountForm">
+                <label class="modell-itemamount-button">
+                    <input type="radio" onchange="displayItems(allItems)" name="itemAmount" value="5" checked style="display: none;">
+                    <span class="button-visual">5</span>
+                </label>
+                <label class="modell-itemamount-button">
+                    <input type="radio" onchange="displayItems(allItems)" name="itemAmount" value="10" style="display: none;">
+                    <span class="button-visual">10</span>
+                </label>
+                <label class="modell-itemamount-button">
+                    <input type="radio" onchange="displayItems(allItems)" name="itemAmount" value="25" style="display: none;">
+                    <span class="button-visual">25</span>
+                </label>
+            </form>
+        `;
+        itemAmountContainer.appendChild(amountItemsPerPage);
+    }
 
-                const title = document.createElement('span');
-                title.innerHTML = `${item.properties['mlm:name']}`;
-                title.style.color = `${item.color|| ''}`;
+    for (let page = 1; page <= totalPages; page++) {
+        const pageDiv = document.createElement('div');
+        pageDiv.id = `page-${page}`;
+        pageDiv.classList.add('page');
+        pageDiv.style.display = page === 1 ? 'block' : 'none';
 
-                const parameters = document.createElement('div');
-                parameters.classList.add('modell-itemparameter');
-                parameters.id = `modell-itemparameter-${item.id}`;
-                parameters.innerHTML = `
-                    ${fillInParameters(item, selectedFilters)}
-                    <button type="button" class="btn-expand" data-bs-toggle="collapse" data-bs-target="#collapse-${item.id}" aria-expanded="false" aria-controls="collapse-${item.id}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, filteredItems.length);
+
+        for (let i = startIndex; i < endIndex; i++) {
+            const item = filteredItems[i];
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('p-3', 'modell-item');
+
+            const title = document.createElement('span');
+            title.innerHTML = `${item.properties['mlm:name']}`;
+            title.style.color = `${item.color|| ''}`;
+
+            const parameters = document.createElement('div');
+            parameters.classList.add('modell-itemparameter');
+            parameters.id = `modell-itemparameter-${item.id}`;
+            parameters.innerHTML = `
+                ${fillInParameters(item, selectedFilters)}
+                <button type="button" class="btn-expand" data-bs-toggle="collapse" data-bs-target="#collapse-${item.id}" aria-expanded="false" aria-controls="collapse-${item.id}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
                         <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
                     </svg>
-                    </button>
-                `;
+                </button>
+            `;
 
-                const information = document.createElement('div');
-                information.id = 'modell-itemcollapse'
-                information.innerHTML = `
-                    <div class="collapse" id="collapse-${item.id}">
-                        <div class="card card-body">
-                            <div class="card-body-title">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
-                                    <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
+            const information = document.createElement('div');
+            information.id = 'modell-itemcollapse';
+            information.innerHTML = `
+                <div class="collapse" id="collapse-${item.id}">
+                    <div class="card card-body">
+                        <div class="card-body-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
+                                <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
+                            </svg>
+                            <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
+                        </div>
+                        <hr>
+                        <div class="card-body-download">
+                            <span style="font-size:15px;">Download:</span>
+                            <br>
+                            <span style="font-size:12px;">Für den Download des Items als JSON auf den Button klicken.</span>
+                            <button type="button" class="btn-clipboard" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-download" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
                                 </svg>
-                                <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
-                            </div>
-                            <hr>
-                            <div class="card-body-download">
-                                <span style="font-size:15px;">Download:</span>
-                                <br>
-                                <span style="font-size:12px;">Für den Download des Items als JSON auf den Button klicken.</span>
-                                <button type="button" class="btn-clipboard" onclick="downloadItemAsJSON('${item.id}')" id="download-${item.id}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-download" viewBox="0 0 16 16">
-                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                            </button>
+                        </div>
+                        <hr>
+                        <span style="font-size:15px;">Beschreibung:</span>
+                        <span style="font-size:12px;">${item.properties.description}</span>
+                        <hr>
+                        <div class="card-body-download">
+                            <span style="font-size:15px;">Einbinden:</span><br> <span style="font-size:12px;">${item.assets.model['href']}</span>
+                                <button type="button" class="btn-clipboard" onclick="copyToClipboard('${item.assets.model['href']}', '${item.properties['mlm:name']}')" id="clipboard-${item.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                        <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+                                        <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
                                     </svg>
                                 </button>
-                            </div>
-                            <hr>
-                            <span style="font-size:15px;">Beschreibung:</span>
-                            <span style="font-size:12px;">${item.properties.description}</span>
-                            <hr>
-                            <div class="card-body-download">
-                                <span style="font-size:15px;">Einbinden:</span><br> <span style="font-size:12px;">${item.assets.model['href']}</span>
-                                    <button type="button" class="btn-clipboard" onclick="copyToClipboard('${item.assets.model['href']}', '${item.properties['mlm:name']}')" id="clipboard-${item.id}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#414243" class="bi bi-clipboard" viewBox="0 0 16 16">
-                                            <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
-                                            <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
-                                        </svg>
-                                    </button>
-                            </div>
-                            <hr>
-                            <div class="row">
-                                <div class="col-md-6 col-lg-8">
-                                        <div style="font-size:12px;"class="card-body-parameters">
-                                            <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
-                                            <span>Empfohlener Zeitraum: ${item.properties.start_datetime || 'Unbekannt'} bis ${item.properties.end_datetime || 'Unbekannt'} </span><br>
-                                            <span>Erwartete Eingabe: ${item.properties['mlm:input'][0].name || 'Unbekannt'} </span><br>
-                                            <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].type || 'Unbekannt'}</span><br>
-                                            <span>Accelerator: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
-                                            <span>Architektur: ${item.properties['mlm:architecture'] || 'Unbekannt'}</span><br>
-                                            <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} in der Version: ${item.properties['mlm:framework_version'] || 'Unbekannt'} </span><br>
-                                            <span>Empfohlene Batchgröße: ${item.properties['mlm:batch_size_suggestion'] || 'Unbekannt'}
-                                            <hr>
-                                            <span>Weitere Information: ${item.properties['mlm:accelerator_summary'] || 'Keine weiteren Informationen hinterlegt.'} </span><br>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-lg-4">
-                                            <div style="width: 100%;height:100%;" id="map-${item.id}"></div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-8">
+                                    <div style="font-size:12px;"class="card-body-parameters">
+                                        <span>Tasks: ${item.properties['mlm:tasks'] || 'Unbekannt'} </span><br>
+                                        <span>Empfohlener Zeitraum: ${item.properties.start_datetime || 'Unbekannt'} bis ${item.properties.end_datetime || 'Unbekannt'} </span><br>
+                                        <span>Erwartete Eingabe: ${item.properties['mlm:input'][0].name || 'Unbekannt'} </span><br>
+                                        <span>Eingabeeinschränkung: ${item.properties['mlm:input'][0].type || 'Unbekannt'}</span><br>
+                                        <span>Accelerator: ${item.properties['mlm:accelerator'] || 'Unbekannt'} </span><br>
+                                        <span>Architektur: ${item.properties['mlm:architecture'] || 'Unbekannt'}</span><br>
+                                        <span>Framework: ${item.properties['mlm:framework'] || 'Unbekannt'} in der Version: ${item.properties['mlm:framework_version'] || 'Unbekannt'} </span><br>
+                                        <span>Empfohlene Batchgröße: ${item.properties['mlm:batch_size_suggestion'] || 'Unbekannt'}
+                                        <hr>
+                                        <span>Weitere Information: ${item.properties['mlm:accelerator_summary'] || 'Keine weiteren Informationen hinterlegt.'} </span><br>
                                     </div>
                                 </div>
-                                <hr>
-                                <span style="font-size:10px;">Vortrainiert: ${isPretrained(item.properties['mlm:pretrained'] || undefined, item.properties['mlm:pretrained_source'] || undefined)} </span>
-                                <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
+                                <div class="col-md-6 col-lg-4">
+                                        <div style="width: 100%;height:100%;" id="map-${item.id}"></div>
+                                </div>
                             </div>
-                    </div>
-                `;
+                            <hr>
+                            <span style="font-size:10px;">Vortrainiert: ${isPretrained(item.properties['mlm:pretrained'] || undefined, item.properties['mlm:pretrained_source'] || undefined)} </span>
+                            <span style="font-size:10px;">Letztes Update: ${item['updated_at'] || 'Unbekannt'} </span>
+                        </div>
+                </div>
+            `;
 
-                itemDiv.appendChild(title);
-                itemDiv.appendChild(parameters);
-                itemDiv.appendChild(information);
-                container.appendChild(itemDiv);
+            itemDiv.appendChild(title);
+            itemDiv.appendChild(parameters);
+            itemDiv.appendChild(information);
+            pageDiv.appendChild(itemDiv);
 
-                createMapOnModell(item);
+            const button = parameters.querySelector('.btn-expand');
+            button.addEventListener('click', () => {
+                const svg = button.querySelector('svg');
+                if (button.getAttribute('aria-expanded') === 'true') {
+                    svg.outerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
+                            <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
+                        </svg>
+                    `;
+                } else {
+                    svg.outerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
+                            <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
+                        </svg>
+                    `;
+                }
+            });
+        }
 
-        const button = parameters.querySelector('.btn-expand');
-        button.addEventListener('click', () => {
-            const svg = button.querySelector('svg');
-            if (button.getAttribute('aria-expanded') === 'true') {
-                svg.outerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-caret-down" viewBox="0 0 16 16">
-                        <path d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659"/>
-                    </svg>
-                `;
-            } else {
-                svg.outerHTML = `
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-left" viewBox="0 0 16 16">
-                        <path d="M10 12.796V3.204L4.519 8zm-.659.753-5.48-4.796a1 1 0 0 1 0-1.506l5.48-4.796A1 1 0 0 1 11 3.204v9.592a1 1 0 0 1-1.659.753"/>
-                    </svg>
-                `;
+        container.appendChild(pageDiv);
+
+        for (let i = startIndex; i < endIndex; i++) {
+            const item = filteredItems[i];
+            createMapOnModell(item);
+        }
+    }
+
+    if (totalPages > 1) {
+        const paginationButtons = document.createElement('div');
+        paginationButtons.id = 'paginationButtons';
+    
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.addEventListener('click', () => showPage(i));
+            pageButton.classList.add('pageButton');
+            pageButton.id = `pageButton-${i}`;
+            if (i === 1) {
+                pageButton.classList.add('activePageButton');
             }
+            paginationButtons.appendChild(pageButton);
+        }
+    
+        document.getElementById('modell-container').appendChild(paginationButtons);
+    }
+
+    // Funktion um eine gewisse Seite anzuzeigen
+    function showPage(pageNumber) {
+        const pages = document.querySelectorAll('.page');
+        pages.forEach(page => {
+            page.style.display = page.id === `page-${pageNumber}` ? 'block' : 'none';
         });
-    });      
+
+        const buttons = document.querySelectorAll('.pageButton');
+        buttons.forEach(button => {
+            button.classList.remove('activePageButton');
+        });
+
+        const activeButton = document.getElementById(`pageButton-${pageNumber}`);
+        if (activeButton) {
+            activeButton.classList.add('activePageButton');
+        }
+    }
 }
+
 
 // Funktion um Modell download zu starten 
 function downloadItemAsJSON(itemId) {

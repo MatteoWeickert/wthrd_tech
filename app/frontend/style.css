@@ -314,6 +314,13 @@
     justify-content: center;
   }
 
+  .modell-itemamount-container{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
   .modell-item{
     color:#414243;
     background-color: #dce2eb88;
@@ -419,4 +426,63 @@
 .card:hover {
   transform: none;
   box-shadow: none;
+}
+
+/* Pageing */
+#paginationButtons{
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pageButton{
+  margin: 0 5px;
+  font-weight: 300 ;
+  padding: 5px 10px;
+  cursor: pointer;
+  border: 0px transparent;
+  background-color: transparent;
+}
+
+.pageButton:hover{
+  margin: 0 5px;
+  font-weight: 500 ;
+  padding: 5px 10px;
+  cursor: pointer;
+  border: 2px solid #1C3D86;
+  background-color: transparent;
+}
+
+.activePageButton{
+  margin: 0 5px;
+  font-weight: 500 ;
+  padding: 5px 10px;
+  cursor: pointer;
+  border: 2px solid #1C3D86;
+  background-color: transparent;
+}
+
+.modell-itemamount{
+  display: flex;
+  justify-content: right;
+  margin: 20px;
+}
+
+.modell-itemamount-button .button-visual {
+  font-weight: 300;
+  font-size: 10px;
+  width: 20px;
+  color:#1C3D86;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background-color: transparent;
+}
+
+.modell-itemamount-button:hover .button-visual {
+  font-weight: 800;
+}
+
+.modell-itemamount-button input:checked + .button-visual {
+  font-weight: 800;
 }
