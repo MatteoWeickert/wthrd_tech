@@ -2,10 +2,12 @@ from fastapi import FastAPI, HTTPException, Query, status, Depends
 import logging
 from fastapi.security import OAuth2PasswordBearer
 from typing import Optional, List, Annotated
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from sqlalchemy import create_engine, and_, or_ 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.exc import IntegrityError
+from psycopg2.errors import ForeignKeyViolation, UniqueViolation
 from models import Item, Catalog, Collection, User
 import os
 import datetime as dt
@@ -174,6 +176,24 @@ def add_item(item: ItemCreate, user: user_dependency):
         db.commit()
         db.refresh(new_item)
         return {"message": "Item added successfully", "item_id": new_item.id}
+    except IntegrityError as e:
+    # Prüfen, ob es sich um einen ForeignKeyViolation-Fehler handelt
+        if isinstance(e.orig, ForeignKeyViolation):
+            raise HTTPException(
+                status_code=422, 
+                detail=f"Collection mit der ID '{item_data['collection_id']}' existiert nicht. Bitte wähle eine bereits bestehende aus oder lege eine neue an."
+            )
+        elif isinstance(e.orig, UniqueViolation):
+            raise HTTPException(
+                    status_code=422, 
+                    detail=f"Item mit der ID '{item_data['id']}' existiert bereits. Bitte gib eine andere Item-ID an."
+                )
+        else:
+            raise HTTPException(status_code=500, detail=f"Error adding item: {str(e)}")
+    except ValidationError as ve:
+        # Protokolliere detaillierte Pydantic-Fehler
+        print("Validierungsfehler:", ve.errors())
+        raise HTTPException(status_code=422, detail=ve.errors())    
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error adding item: {str(e)}")

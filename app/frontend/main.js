@@ -7,6 +7,7 @@ let lastSearchedBbox= null;
 let startDatum = null;
 let endDatum = null;
 let allItems = [];
+let allCollections = [];
 
 // Singleton-Fkt speichert die angegebenen Daten (range)
 function getDateRange() {
@@ -68,6 +69,7 @@ async function startWebsite(){
     const data = window.location.pathname.trim().toLowerCase();
     switch(data){
         case('/addmodel.html'):
+            fetchCollections();
             const loggedIn = await isLoggedIn();
             if (loggedIn) {
                 $(function() {
@@ -238,9 +240,16 @@ async function startWebsite(){
         }
         break;
         case('/catalog.html'):
+            document.addEventListener('DOMContentLoaded', () => {
+                const modal = new bootstrap.Modal(document.getElementById('overlayWelcome'));
+                if (sessionStorage.getItem('overlayWelcome') !== 'true') modal.show();
+                document.getElementById('disableOverlay').onclick = () => {
+                modal.hide();
+                sessionStorage.setItem('overlayWelcome', 'true');
+                };
+            });
             lastSearchedBbox = null;
             fetchItems();
-            // Suchleisten-Listener
             document.getElementById('search-input').addEventListener('input', (e) => {
                 const searchTerm = e.target.value;
                 if (searchTerm.length <= 2){
@@ -800,13 +809,63 @@ async function addItems() {
         // Verarbeiten der Nachricht aus der API-Antwort
         if (data.message === "Item added successfully") {
 
-            showAlert(1, "Neues Modell erfolgreich hinzugefügt.", "");
-        } else {
-            showAlert(4, "Fehler beim hinzufügen. Prüfe erneut, ob alle Daten korrekt eingetragen wurden.", "");
-        }    
+            showAlert(3, "Neues Modell erfolgreich hinzugefügt.", "");
+        } else if (data.detail){
+            if (Array.isArray(data.detail)){
+                data.detail.forEach((error) => {
+                    console.log("Detail:", data.detail);
+
+                    if (error.loc.includes("geometry") && error.msg === "The geometry must have 'type' and 'coordinates' keys.") {
+                        showAlert(4, "Geometrie muss ein valides JSON sein und 'type' sowie 'coordinates' enthalten!");
+                    } else if(error.loc.includes("geometry") && error.msg.includes("Invalid geometry type")) {
+                        showAlert(4, `Ungültiger Geometrietyp: ${error.msg}`);
+                    } else if(error.loc.includes("geometry") && error.msg === ("The 'coordinates' key must contain a list.")) {
+                        showAlert(4, "Zum Key 'coordinates' muss der Value ein Array sein.");
+                    } else if (error.loc.includes("geometry") && error.msg.includes("field required")) {
+                        showAlert(4, "JSON der Geometrie leer oder Syntax-Fehler!");
+                    } else if (error.loc.includes("color") && error.msg.includes("Invalid color format")) {
+                        showAlert(4, "Ungültiger Farbcode! Bitte einen HEX-Wert wie #RRGGBB eingeben.");
+                    } else if (error.loc.includes("properties") && error.msg.includes("must contain following keys")) {
+                        showAlert(4, `Die benötigten MLM-Properties wurden nicht angegeben. Bitte gib die folgenden Werte an: ${error.msg}`);
+                    }
+                    else {
+                        // Generische Fehlermeldung für alles andere
+                        showAlert(4, `Fehler bei Feld '${error.loc.join(" -> ")}': ${error.msg}`);
+                    }
+                });
+            }
+            else {
+                showAlert(4, `${data.detail}`);
+            }
+        }
+        else{
+            // Fallback für unerwartete Fehler
+            showAlert(4, "Ein unbekannter Fehler ist aufgetreten.", "");
+        }
+                   
     } catch (error) {
         console.log("Error aus addItems", error);
         showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
+    }
+}
+
+// Funktion um alle bestehenden Collections abzufragen
+async function fetchCollections(){
+    try {
+        const response = await fetch('http://localhost:8000/collections');
+        if (!response.ok) {
+            showAlert(4, "Fehler beim verbinden zum STAC.", "Collections können nicht abgerufen werden.")
+        }
+        const data = await response.json();
+
+        if (data) {
+            allCollections = data;
+        } else {
+            showAlert(4, "Fehler beim Abrufen der Collections.", "Interner Fehler.")
+        }
+    } catch (error) {
+        console.log(error)
+        showAlert(4, "Fehler beim Abrufen der Collections oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.")
     }
 }
 
@@ -890,7 +949,15 @@ async function addCollections(){
 function getGeometry() {
     const userInputs = getUserInputs()
     const geometry = userInputs.geometry
-    return JSON.parse(geometry)
+    try{
+        const result = JSON.parse(geometry)
+        return result
+    }
+    catch(error){
+        console.log("error")
+        showAlert(4, "Die Geometrie ist kein valides JSON. Achte auf korrekte Syntax.")
+    }
+
 }
 
 // Funktion um immer die aktuelle Bounding Box von der Karte zu extrahieren
@@ -1035,18 +1102,18 @@ function createInputForm(data, inputinfo) {
 }
 
 // Funktion um Tasks mit Dropdownmenü anzureichern
-function createDynamicInputs() {
+async function createDynamicInputs() {
     const taskDiv = document.getElementById('input-tasks-div');
     taskDiv.innerHTML = ''
-    const inputField = document.createElement('input');
+    const inputFieldTask = document.createElement('input');
     const dropdown = document.createElement('div');
     const tasks = getPredefinedTasks();
 
-    inputField.setAttribute('class', 'main-inputwindow');
-    inputField.setAttribute('id', 'input-tasks');
-    inputField.setAttribute('placeholder', 'Tasks..');
-    inputField.setAttribute('readonly', 'true');
-    taskDiv.appendChild(inputField);
+    inputFieldTask.setAttribute('class', 'main-inputwindow');
+    inputFieldTask.setAttribute('id', 'input-tasks');
+    inputFieldTask.setAttribute('placeholder', 'Tasks..');
+    inputFieldTask.setAttribute('readonly', 'true');
+    taskDiv.appendChild(inputFieldTask);
 
     dropdown.setAttribute('id', 'dropdown-options');
     dropdown.setAttribute('class', 'main-inputdynamic');
@@ -1063,7 +1130,7 @@ function createDynamicInputs() {
         dropdown.appendChild(checkboxItem);
     });
 
-    inputField.addEventListener('click', () => {
+    inputFieldTask.addEventListener('click', () => {
         dropdown.style.cssText = 'max-width: 150px;'
         dropdown.style.display = dropdown.style.display === 'inherit' ? 'none' : 'inherit';
     });
@@ -1073,13 +1140,72 @@ function createDynamicInputs() {
             dropdown.style.display = 'none';
         }
     });
+
+    const collectionDiv = document.getElementById('input-collectionid-div');
+    collectionDiv.innerHTML = '';
+
+    const inputFieldCol = document.createElement('input');
+    const dropdownCol = document.createElement('div');
+
+    await fetchCollections();
+    const collections = Array.isArray(allCollections) ? allCollections : Object.values(allCollections).flat();
+    console.log(collections)
+
+    inputFieldCol.setAttribute('class', 'main-inputwindow');
+    inputFieldCol.setAttribute('id', 'input-collections');
+    inputFieldCol.setAttribute('placeholder', 'Collections..');
+    inputFieldCol.setAttribute('readonly', 'true');
+    collectionDiv.appendChild(inputFieldCol);
+
+    dropdownCol.setAttribute('id', 'dropdown-collections');
+    dropdownCol.setAttribute('class', 'main-inputdynamic');
+    dropdownCol.style.cssText = 'position: inherit; top: 100%; left: 0; max-height: 350px; overflow-y: auto; display: none;';
+    collectionDiv.appendChild(dropdownCol);
+
+    collections.forEach(col => {
+        if (col && col.id) {
+            const checkboxItemCol = document.createElement('div');
+            checkboxItemCol.style.cssText = 'padding: 5px; cursor: pointer;';
+            checkboxItemCol.innerHTML = `
+                <input type="checkbox" id="collection-${col.id}" value="${col.id}" style="margin-right: 5px;" />
+                <label for="collection-${col.id}">${col.id}</label>
+            `;
+    
+            checkboxItemCol.querySelector('input').addEventListener('change', updateSelectedCollections);
+            dropdownCol.appendChild(checkboxItemCol);
+        }
+    });
+    
+
+    inputFieldCol.addEventListener('click', () => {
+        dropdownCol.style.display = dropdownCol.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', event => {
+        if (!collectionDiv.contains(event.target)) {
+            dropdownCol.style.display = 'none';
+        }
+    }, true);
 }
 
 // Funktion um die ausgewählten Tasks in die Eingabemaske einzufügen
-function updateSelectedTasks() {
+function updateSelectedTasks(){
     const checkboxes = document.querySelectorAll('#dropdown-options input:checked');
     const selectedTasks = Array.from(checkboxes).map(checkbox => checkbox.value);
     document.getElementById('input-tasks').value = selectedTasks.join(', ');
+}
+
+// Funktion um die ausgewählte Collection in die Eingabemaske einzufügen
+function updateSelectedCollections(event){
+    const checkboxes = document.querySelectorAll('#dropdown-collections input[type="checkbox"]');
+
+    checkboxes.forEach(checkbox => {
+        if (checkbox !== event.target) {
+            checkbox.checked = false;
+        }
+    });
+    const selectedCollection = event.target.checked ? event.target.value : '';
+    document.getElementById('input-collections').value = selectedCollection;
 }
 
 // Funktion um alle User Eingaben abzugreifen und in ein Array zu bündeln
@@ -1454,6 +1580,14 @@ function printAllFilters(items){
                     drawnRectangle = e.layer;
                     map.addLayer(drawnRectangle);
                 
+                    drawnRectangle.setStyle({
+                        color: '#1C3D86',
+                        weight: 2,
+                        opacity: 1,
+                        fillColor: '#1C3D86',
+                        fillOpacity: 0.3
+                    });
+
                     const bounds = drawnRectangle.getBounds();
                     selectedFilters['bbox'] = [
                         bounds.getWest(),
@@ -1940,7 +2074,6 @@ function displayItems(items, filters) {
         }
     }
 }
-
 
 // Funktion um Modell download zu starten 
 function downloadItemAsJSON(itemId) {

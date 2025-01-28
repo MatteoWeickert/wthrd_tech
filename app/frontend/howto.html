@@ -473,17 +473,122 @@ for item in items:
                                     <img src="icon_howto.png" alt="Icon" style="width: 100px; height: 100px;">
                                 </div>
                                 <section>
-                                    <h2 id="katsecondscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Modell hinzufügen</h2>
-                                    <p>Text1</p>
+                                    <h2 id="katsecondscroll" style="color: #1C3D86; font-size: 28px; font-weight: 600; margin-top: 30px; margin-bottom: 20px; border-bottom: 2px solid #1C3D86; padding-bottom: 10px;">Modell hinzufügen</h2>
+                                    <p>Fügen Sie hier ein neues Modell hinzu, um Ihre Daten für die Analyse und Verarbeitung vorzubereiten. Wählen Sie aus einer Vielzahl von vorgefertigten Modellen oder laden Sie Ihre eigenen hoch, um maßgeschneiderte Ergebnisse zu erzielen. Dieses Schritt-für-Schritt-Verfahren führt Sie durch den gesamten Prozess, von der Auswahl des Modells bis hin zur Integration in Ihre Workflows.</p>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">1. Einführung</h3>
+                                    <p>Bitte beachten Sie, dass Sie, um ein eigenes Modell im wthrd.tech-Katalog hinzufügen zu können, über einen Account verfügen müssen. Registrieren Sie sich kostenlos und melden Sie sich anschließend an.</p>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">2. Benötigte Parameter</h3>
+                                    <p>Für das Hinzufügen eines Modells sind einige Parameter notwendig.</p>
+                                    <ul>
+                                        <li><b>Name:</b> Wählen Sie hier einen aussagekräftigen Namen evtl. mit Version</li>
+                                        <li><b>Tasks:</b> Wählen Sie hier aus dem Pool an bereitgestellten Tasks die zutreffenden aus. Tipp: Wählen Sie so viele wie möglich.</li>
+                                        <li><b>Description:</b> Beschreiben Sie hier Ihr Modell umfassend, sodass fremde Nutzer Ihr Modell ohne weiteres verstehen kann.</li>
+                                        <li><b>ID:</b> Wähle hier eine eindeutige Modell-ID. Sollte diese schon belegt sein, wird Ihnen der Katalog dies mitteilen.</li>
+                                        <li><b>Description:</b> Beschreiben Sie hier eine Geometrie in folgender Form: <pre><code>
+{ 
+    "type": 
+    "Polygon", 
+    "coordinates": [ 
+    [ 
+    [ -7.882190080512502, 37.13739173208318 ], 
+    [ -7.882190080512502, 58.21798141355221 ], 
+    [ 27.911651652899923, 58.21798141355221 ], 
+    [ 27.911651652899923, 37.13739173208318 ], 
+    [ -7.882190080512502, 37.13739173208318 ] 
+    ] ] 
+}
+                                        </code></pre></li>
+                                        <li><b>Inputname:</b> Wählen Sie hier die erwartete Eingabe, die Ihr Modell erwartet. Bleiben Sie dabei zunächst oberflächig, und beschreiben den InputName z.B. 'Image' oder mit 'Audio'.</li>
+                                        <li><b>Inputtypes:</b> Beschreiben Sie an dieser Stelle, welche Dateitypen Ihr Modell akzeptiert. Wenn Sie mehrere hinzufügen möchten, trennen Sie Ihre Eingaben mit einem Komma (,).</li>
+                                        <li><b>Architecture:</b> Wählen Sie hier, nach welcher Architektur Ihr Modell erstellt wurde.</li>
+                                        <li><b>Framework:</b> Beschreiben Sie, welches Framework Ihr Modell nutzt.</li>
+                                        <li><b>Framework-Version</b> Geben Sie an, welche Version das von Ihnen genutzte Framework zum Zeitpunkt der Erstellung nutzt</li>
+                                        <li><b>Accelerator:</b> Wählen Sie, welche Art von Accelerator für Ihr Modell genutzt wurde.</li>
+                                        <li><b>Acceleratorsummary:</b> Geben Sie hier wenn notwendig weitere Informationen zu dem angegebenen Accelerator an. Sinnvolle Informationen wären an dieser Stelle, wenn nur bestimmte Arten CPUs benutzt wurden.</li>
+                                        <li><b>Pretrained-Source:</b> Wählen Sie hier, aus welcher Quelle Sie hauptsächlich Ihre Daten für das Training des Modells bezogen haben.</li>
+                                        <li><b>Batchsize-Suggestion:</b> Geben Sie an, mit wie vielen Trainingsdaten Ihr Modell im Optimalfall benötigt.</li>
+                                        <li><b>Hyperparameter:</b> Geben Sie hier weitere Informationen zu Ihrem Modell an. Anders als bei den vorherigen Parametern können die Key-Value-Pairs frei belegt und genutzt werden. Das Beispiel im Folgenden ist daher keine Vorage.
+                                        <pre><code>
+{            
+    "learning_rate": 0.001,             
+    "dropout": 0.5         
+}
+                                        </code></pre></li>
+                                        <li><b>CollectionID:</b> Wählen Sie hier aus den vorgegebenen Collections eine aus, in welcher Sie Ihr Modell hinterlegen möchten. Im Folgenden wird ebenfalls erläutert, wie Sie eine eigene Collection anlegen können.</li>
+                                        <li><b>Link:</b> Nutzen Sie dieses Feld nur für den direkten Link zu Ihrem Modell.</li>
+                                        <li><b>Bounding-Box:</b> Zeichnen Sie das Gebiet ein, auf das Ihr Modell trainiert wurde bzw. auf das Ihr Modell anwendbar ist.</li>
+                                        <li><b>Farbgebung:</b> Wählen Sie eine Farbe, passend zu Ihrem Modell. Ihr Modell wird dann in dieser Farbe im wthrd.tech-Katalog angezeigt.</li>
+                                        <li><b>Zeitraum:</b> Wählen Sie, für welchen Zeitraum Ihr Modell trainiert wurde.</li>
+                                        <li><b>Vortrainiert:</b> Geben Sie an, ob Ihr Modell anhand von (Traings-)daten vortrainiert wurde.</li>
+                                    </ul>
+
                                 </section>
+                                
                                 <section>
-                                    <h2 id="katthirdscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Collection hinzufügen</h2>
-                                    <p>Text2</p>
+                                    <h2 id="katthirdscroll" style="color: #1C3D86; font-size: 28px; font-weight: 600; margin-top: 30px; margin-bottom: 20px; border-bottom: 2px solid #1C3D86; padding-bottom: 10px;">Collection hinzufügen</h2>
+                                    <p>In diesem Abschnitt können Sie Ihre Sammlung von Modellen, Daten oder Ressourcen verwalten. Eine Sammlung hilft Ihnen dabei, alle relevanten Elemente in einer übersichtlichen und leicht zugänglichen Struktur zu organisieren. Sie können Ihre Sammlung jederzeit erweitern, indem Sie neue Elemente hinzufügen, um Ihre Projekte effizient zu verwalten.</p>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">1. Einführung</h3>
+                                    <p>Bitte beachten Sie, dass Sie, um eine eigene Collection im wthrd.tech-Katalog hinzufügen zu können, über einen Account verfügen müssen. Registrieren Sie sich kostenlos und melden Sie sich anschließend an.</p>
+                                    <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">2. Benötigte Parameter</h3>
+                                    <p>Für das Hinzufügen einer Collection sind einige Parameter notwendig.</p>
+                                    <ul>
+                                        <li><b>ID:</b>Wähle hier eine eindeutige Collection-ID. Sollte diese schon belegt sein, wird Ihnen der Katalog dies mitteilen.</li>
+                                        <li><b>Title: </b>Wählen Sie einen aussagekräftigen Titel, der unteranderem den räumlichen Bezug der Collection bzw. der Einschränkung beschreibt.</li>
+                                        <li><b>Description: </b>Beschreiben Sie Ihre Collection ausführlich hinsichtlich der räumlichen Einschränkung und angestrebten Modelle.</li>
+                                        <li><b>License:</b> Geben Sie hier die Lizenz an.</li>
+                                        <li><b>Bounding-Box:</b> Zeichnen Sie, für welches Gebiet Ihre Collection Modelle halten soll. Beachten Sie, dass beim hinzufügen eines Modells in eine Collection keine Überprüfung der Bounding-Boxen stattfindet.</li>
+                                        <li><b>Zeitraum: </b>Wählen Sie einen Zeitraum, für welches Ihre Collection Modelle halten soll.</li>
+                                    </ul>
                                 </section>
+                                
                                 <section>
-                                    <h2 id="katfourthscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Verfügbare Aufgaben</h2>
-                                    <p>Text3</p>
+                                    <h2 id="katfourthscroll" style="color: #1C3D86; font-size: 28px; font-weight: 600; margin-top: 30px; margin-bottom: 20px; border-bottom: 2px solid #1C3D86; padding-bottom: 10px;">Verfügbare Aufgaben</h2>
+                                    <p>Hier finden Sie eine Übersicht aller verfügbaren Aufgaben, die im Rahmen Ihres Modells oder Ihrer Collection bearbeitet werden können. Jede Aufgabe ist spezifisch auf bestimmte Anforderungen ausgelegt.</p>
+                                    <ul>
+                                        <li><b>Any-to-Any:</b> Eine Methode zur Modellierung von Beziehungen zwischen beliebigen Eingabe- und Ausgabedaten, wobei das Modell für jedes beliebige Paar von Eingabe- und Ausgabedaten trainiert wird.</li>
+                                        <li><b>Audio Classification:</b> Klassifikation von Audiodaten in verschiedene Kategorien basierend auf ihrer akustischen Merkmale, z. B. Musikgenres oder gesprochene Sprache.</li>
+                                        <li><b>Audio-Text-to-Text:</b> Die Umwandlung von Audioinhalten in Text und die anschließende Textverarbeitung, wie etwa Textklassifikation oder Zusammenfassung.</li>
+                                        <li><b>Audio-to-Audio:</b> Die Umwandlung von Audiodaten von einer Quelle in eine andere, z. B. von Rauschen zu klarem Audio oder von einer Sprache in eine andere.</li>
+                                        <li><b>Automatic Speech Recognition:</b> Die automatische Umwandlung von gesprochener Sprache in Text, die oft für Transkriptionen und Sprachsteuerung verwendet wird.</li>
+                                        <li><b>Depth Estimation:</b> Die Schätzung der Tiefe in Bildern oder Videos, um dreidimensionale Informationen aus zweidimensionalen Daten zu extrahieren.</li>
+                                        <li><b>Document Question Answering:</b> Die Fähigkeit eines Modells, Fragen zu einem Dokument zu verstehen und relevante Antworten aus dem Text zu extrahieren.</li>
+                                        <li><b>Feature Extraction:</b> Der Prozess der Extraktion relevanter Merkmale oder Eigenschaften aus Rohdaten, um sie für eine Modellierung oder Analyse nutzbar zu machen.</li>
+                                        <li><b>Fill-Mask:</b> Ein Verfahren zur Maskierung bestimmter Bereiche eines Textes oder Bildes, das Modell wird dann trainiert, diese maskierten Bereiche zu füllen oder vorherzusagen.</li>
+                                        <li><b>Image Classification:</b> Die Klassifikation von Bildern in vordefinierte Kategorien basierend auf den visuellen Inhalten des Bildes.</li>
+                                        <li><b>Image Feature Extraction:</b> Extraktion von Merkmalen aus Bildern, um diese für weiterführende Modelle oder Analysen vorzubereiten, wie z. B. für die Bildklassifikation oder -analyse.</li>
+                                        <li><b>Image Segmentation:</b> Die Aufteilung eines Bildes in verschiedene Bereiche, um Objekte oder Szenen zu isolieren und zu analysieren.</li>
+                                        <li><b>Image-Text-to-Text:</b> Die Transformation von Bildinhalten in Text, der dann weiter verarbeitet werden kann, z. B. durch Beschreibung oder Klassifikation.</li>
+                                        <li><b>Image-to-3D:</b> Die Umwandlung von zweidimensionalen Bildern in dreidimensionale Modelle, oft verwendet in der Computergrafik oder für virtuelle Realitäten.</li>
+                                        <li><b>Image-to-Image:</b> Die Umwandlung eines Bildes in ein anderes Bild, wobei das Modell zwischen verschiedenen Bildstilen oder -arten übersetzt, z. B. von Skizzen zu realistischen Bildern.</li>
+                                        <li><b>Image-to-Text:</b> Die Umwandlung von Bildinhalten in beschreibenden Text, häufig verwendet in der Bildunterschriften-Generierung oder für visuelle Fragenbeantwortung.</li>
+                                        <li><b>Keypoint Detection:</b> Die Erkennung und Lokalisation spezifischer Merkmale oder "Schlüsselpunkte" in einem Bild, die für Aufgaben wie Objektverfolgung oder Gesichtserkennung verwendet werden.</li>
+                                        <li><b>Msaak Generation:</b> Eine Methode zur Erstellung von musikspezifischen Sequenzen oder Audioabschnitten, die auf bestimmten Eingabedaten basieren.</li>
+                                        <li><b>Object Detection:</b> Die Identifizierung und Klassifikation von Objekten in Bildern oder Videos, einschließlich der Bestimmung ihrer Position und Größe.</li>
+                                        <li><b>Question Answering:</b> Modelle, die Fragen zu einem Text verstehen und präzise Antworten aus den gegebenen Informationen extrahieren.</li>
+                                        <li><b>Reinforcement Learning:</b> Ein Lernprozess, bei dem ein Modell durch Belohnungen oder Strafen lernt, um in einer gegebenen Umgebung optimale Entscheidungen zu treffen.</li>
+                                        <li><b>Sentence Similarity:</b> Die Bestimmung der Ähnlichkeit zwischen zwei Sätzen, basierend auf ihrem Inhalt, was häufig in Suchmaschinen oder Übersetzungsmodellen verwendet wird.</li>
+                                        <li><b>Summarization:</b> Die automatische Erstellung einer kürzeren Version eines Textes, die die wesentlichen Informationen beibehält, häufig genutzt für Nachrichten- oder Inhaltszusammenfassungen.</li>
+                                        <li><b>Table Question Answering:</b> Die Fähigkeit eines Modells, Fragen zu Tabellen zu beantworten, basierend auf den Daten, die in den Zellen enthalten sind.</li>
+                                        <li><b>Tabular Classification:</b> Die Klassifikation von Daten in Tabellenformat, um Vorhersagen oder Gruppierungen auf Basis von Attributen vorzunehmen.</li>
+                                        <li><b>Tabular Regression:</b> Die Vorhersage eines kontinuierlichen Werts aus tabellarischen Daten, häufig in wirtschaftlichen oder wissenschaftlichen Anwendungsbereichen.</li>
+                                        <li><b>Text Classification:</b> Die Zuweisung von Texten zu vordefinierten Kategorien, z. B. zur Spam-Erkennung oder Sentiment-Analyse.</li>
+                                        <li><b>Text Generation:</b> Die automatische Erstellung von Texten, basierend auf einer Eingabe oder einem bestimmten Thema, häufig verwendet in Chatbots oder Content-Generierung.</li>
+                                        <li><b>Text-to-3D:</b> Die Erstellung von 3D-Modellen oder Szenen basierend auf textuellen Beschreibungen, was oft in virtuellen Umgebungen oder Designprozessen verwendet wird.</li>
+                                        <li><b>Text-to-Image:</b> Die Umwandlung von Textbeschreibungen in Bilder, basierend auf den im Text angegebenen Attributen.</li>
+                                        <li><b>Text-to-Speech:</b> Die Umwandlung von Text in gesprochene Sprache, um eine sprachgesteuerte Interaktion mit Maschinen zu ermöglichen.</li>
+                                        <li><b>Text-to-Video:</b> Die Umwandlung von Textinformationen in ein Videoformat, das visuelle und auditive Elemente enthält.</li>
+                                        <li><b>Token Classification:</b> Die Klassifikation von Tokens (z. B. Wörtern oder Satzzeichen) in Texten, häufig verwendet in Named-Entity-Recognition oder anderen NLP-Aufgaben.</li>
+                                        <li><b>Translation:</b> Die Umwandlung von Texten aus einer Sprache in eine andere, eine grundlegende Fähigkeit in der maschinellen Übersetzung.</li>
+                                        <li><b>Unconditional Image Generation:</b> Die generative Erstellung von Bildern ohne Einschränkungen oder Bedingungen, oft verwendet in der Kunst oder kreativen Prozessen.</li>
+                                        <li><b>Video Classification:</b> Die Klassifikation von Videos in Kategorien basierend auf ihrem Inhalt, wie z. B. Erkennung von Aktivitäten oder Szenen in einem Video.</li>
+                                        <li><b>Video-Text-to-Text:</b> Die Umwandlung von Videoinhalten in Text, um wichtige Informationen aus dem Video zu extrahieren und für Textverarbeitung zu nutzen.</li>
+                                        <li><b>Visual Question Answering:</b> Eine Kombination von Bildverarbeitung und NLP, bei der das Modell auf visuelle Fragen eine präzise Antwort basierend auf Bildinhalten gibt.</li>
+                                        <li><b>Zero-Shot Classification:</b> Die Fähigkeit eines Modells, Daten zu klassifizieren, für die es nicht explizit trainiert wurde, indem es auf allgemeines Wissen und Erfahrung zugreift.</li>
+                                        <li><b>Zero-Shot Image Classification:</b> Klassifikation von Bildern in Kategorien, für die das Modell nicht speziell trainiert wurde, häufig durch die Verwendung von semantischen Embeddings.</li>
+                                        <li><b>Zero-Shot Object Detection:</b> Die Fähigkeit, Objekte zu erkennen, ohne dass das Modell zuvor für diese spezifischen Objekte trainiert wurde, basierend auf allgemeinen Konzepten und Features.</li>
+                                    </ul>
                                 </section>
+                                                                
                             </div>
                         </div>
                         

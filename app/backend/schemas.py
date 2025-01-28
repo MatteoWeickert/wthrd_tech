@@ -46,7 +46,7 @@ class ItemCreate(BaseModel):
         # Prüfen, ob der Wert von 'type' ein gültiger GeoJSON-Typ ist
         valid_types = {"Point", "LineString", "Polygon", "MultiPoint", "MultiLineString", "MultiPolygon", "GeometryCollection"}
         if value["type"] not in valid_types:
-            raise ValueError(f"Invalid geometry type: {value['type']}. Must be one of {valid_types}.")
+            raise ValueError(f"{value['type']}. Type muss einer dieser Typen sein: {valid_types}.")
 
         # Prüfen, ob "coordinates" eine Liste ist
         if not isinstance(value["coordinates"], list):
@@ -59,7 +59,7 @@ class ItemCreate(BaseModel):
         required_keys = ["datetime", "mlm:name", "mlm:architecture", "mlm:tasks", "mlm:input", "mlm:output"]
         missing_keys = [key for key in required_keys if key not in value]
         if missing_keys:
-            raise ValueError(f"Properties must contain the following keys: {', '.join(missing_keys)}.")
+            raise ValueError(f"{', '.join(missing_keys)}.")
 
         if not isinstance(value["mlm:name"], str):
             raise ValueError(f"Invalid value for 'mlm:name'. It must be a string.")
@@ -74,20 +74,22 @@ class ItemCreate(BaseModel):
                 raise ValueError("Invalid color format. Must be a HEX color code like #RRGGBB.")
         return value
     
-    # "links"-validation: falsch, weil links kein dict sein dürfen, sondern ein array sein müssen. !!!ÄNDERN!!!
+    @validator("links")
+    def validate_links(cls, value):
+        if not isinstance(value, list):
+            raise ValueError("'links' must be a list of objects.")
 
-    # @validator("links")
-    # def validate_links(cls, value):
-    #     if "href" not in value or "rel" not in value:
-    #         raise ValueError("The links must have 'href' and 'rel' keys.")
+        for item in value:
+            if not isinstance(item, dict):
+                raise ValueError("Each item in 'links' must be an object (dict).")
+            if 'href' not in item or 'rel' not in item:
+                raise ValueError("Each object in 'links' must contain 'href' and 'rel' keys.")
+            if not isinstance(item['href'], str):
+                raise ValueError("The 'href' value in each object must be a string.")
+            if not isinstance(item['rel'], str):
+                raise ValueError("The 'rel' value in each object must be a string.")
 
-    #     # Prüfen, ob beide Werte Strings sind
-    #     if not isinstance(value["href"], str):
-    #         raise ValueError(f"Invalid value for 'href'. It must be a string.")
-    #     if not isinstance(value["rel"], str):
-    #         raise ValueError(f"Invalid value for 'rel'. It must be a string.")
-
-    #     return value
+        return value
 
     def dict(self, *args, **kwargs):
         # Überschreiben der dict-Methode, um assets zu serialisieren
@@ -109,6 +111,31 @@ class CollectionCreate(BaseModel):
     catalog_id: str
     created_at: datetime
     updated_at: datetime
+
+    @validator("title")
+    def validate_title(cls, value):
+        if not value or not value.strip():
+            raise ValueError("The title must be provided and cannot be empty.")
+        return value
+
+    @validator("id")
+    def validate_id(cls, value):
+        if not value or not value.strip():
+            raise ValueError("The id must be provided and cannot be empty.")
+        # Hier könnte zusätzliche Logik hinzugefügt werden, um die Eindeutigkeit zu prüfen
+        return value
+
+    @validator("description")
+    def validate_description(cls, value):
+        if not value or not value.strip():
+            raise ValueError("The description must be provided and cannot be empty.")
+        return value
+
+    @validator("license")
+    def validate_license(cls, value):
+        if not value or not value.strip():
+            raise ValueError("The license must be provided and cannot be empty.")
+        return value
 
 class UserCreate(BaseModel):
     id: int = Field(...)
