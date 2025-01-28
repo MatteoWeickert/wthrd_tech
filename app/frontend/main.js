@@ -64,6 +64,7 @@ function getSearchedBbox(){
 
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
 async function startWebsite(){
+    lastSearchedBbox = null;
     const data = window.location.pathname.trim().toLowerCase();
     switch(data){
         case('/addmodel.html'):
@@ -267,6 +268,7 @@ async function startWebsite(){
             }, 50)
         break;  
         case('/welcome.html'):
+            displayRecentItems();
             setTimeout(function(){
                 isLoggedIn()
             }, 50)
@@ -282,6 +284,76 @@ async function startWebsite(){
     }
 }
 startWebsite();
+
+
+async function recentItems() {
+    // Überprüfen, ob allItems ein Array ist
+
+    response = await fetch('http://localhost:8000/items');
+        if (!response.ok) {
+            showAlert(4, "Fehler beim verbinden zum STAC.", "Überprüfe die Netzwerkverbindung.")
+        }
+        const data = await response.json();
+
+        if (Array.isArray(data) && data.length > 0) {
+            allItems = data;
+        } else {
+            showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler")
+        }
+
+    // Nach dem created_at-Attribut sortieren (neueste zuerst)
+    const sortedItems = allItems.sort((a, b) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateB - dateA; // Neueste zuerst
+    });
+
+    // Die ersten 3 Elemente zurückgeben
+    return sortedItems.slice(0, 3);
+}
+
+
+async function displayRecentItems() {
+    console.log("hier kommer rein")
+
+    const lastItems = await recentItems(); // Hol die letzten 3 Items
+
+    console.log(lastItems)
+    
+    // Container für die Ausgabe finden
+    const container = document.getElementById('recent-items');
+    if (!container) {
+        console.error("Container mit ID 'recent-items' wurde nicht gefunden.");
+        return;
+    }
+
+    // Container leeren
+    container.innerHTML = '';
+
+    // Neue Elemente hinzufügen
+    lastItems.forEach(item => {
+        // Erstelle ein übergeordnetes Div für jedes Item
+        const itemContainer = document.createElement('div');
+        itemContainer.style.marginBottom = "1em"; // Abstand zwischen den Items
+    
+        // Erstelle ein h4-Element für mlm:name
+        const nameElement = document.createElement('h4');
+        nameElement.textContent = item.properties["mlm:name"];
+        nameElement.style.margin = "0"; // Entfernung des Standardabstands
+    
+        // Erstelle ein p-Element für die restlichen Informationen
+        const detailsElement = document.createElement('p');
+        detailsElement.textContent = `Name: ${item.id}, Collection ID: ${item.collection_id}, Description: ${item.properties.description}`;
+        detailsElement.style.marginTop = "0.5em"; // Optional: Abstand nach der Überschrift
+    
+        // Füge die Überschrift und den Text in das Container-Div ein
+        itemContainer.appendChild(nameElement);
+        itemContainer.appendChild(detailsElement);
+    
+        // Füge das Container-Div in den Hauptcontainer ein
+        container.appendChild(itemContainer);
+    });
+}
 
 // Funktion zum Filtern von Items (Suchleiste)
 function filterItemsForSearch(searchTerm) { 
@@ -1397,6 +1469,7 @@ function printAllFilters(items){
                         bounds.getNorth()
                     ]);
                     displayItems(items, selectedFilters);
+                    setSearchedBbox(null)
                 });;
 
                 observer.unobserve(mapContainer);
@@ -1936,6 +2009,7 @@ function fillInParameters(item, data){
 
 // Funktion um alle Filter zu clearen
 function clearFilters(){
+    selectedFilters = {}
     startWebsite()
     setTimeout(function(){
         showAlert(3, "Alle Filter entfernt.", "")}, 100)
