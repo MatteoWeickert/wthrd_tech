@@ -108,15 +108,15 @@ VALUES (
     '{
         "start_datetime": "2020-01-01T00:00:00Z", "end_datetime": "2024-12-31T23:59:59Z", 
         "description": "Forest classification model using Landsat imagery",
-        "mlm:framework": "tensorflow", "mlm:framework_version": "2.8.0",
+        "mlm:framework": "TensorFlow", "mlm:framework_version": "2.8.0",
         "file:size": 250000000, "mlm:memory_size": 2, "mlm:batch_size_suggestion": 16,
         "mlm:accelerator": "gpu", "mlm:accelerator_constrained": false,
         "mlm:accelerator_summary": "GPU recommended for optimal performance, but CPU inference is possible",
         "mlm:name": "Landsat Forest Classifier", 
-        "mlm:architecture": "ResNet50 with custom head", 
-        "mlm:tasks": ["image-classification", "land-cover"],
+        "mlm:architecture": "ResNet50", 
+        "mlm:tasks": ["Image Classification", "Image Segmentation"],
         "mlm:input": [{
-            "name": "Landsat 8 Multispectral Image",
+            "name": "Landsat 8",
             "type": ["B2", "B3", "B4", "B5", "B6", "B7"],
             "input": {"shape": [-1, 6, 224, 224], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "standardization",
@@ -132,8 +132,8 @@ VALUES (
                 {"value": 3, "name": "Mixed", "description": "Mixed forest types"}
             ]
         }],
-        "mlm:total_parameters": 25000000, "mlm:pretrained": true,
-        "mlm:pretrained_source": "ImageNet and custom Landsat dataset",
+        "mlm:total_parameters": 25000000, "mlm:pretrained": false,
+        "mlm:pretrained_source": "ImageNet",
         "datetime": "2023-06-15T08:30:00Z"
     }',
     ARRAY[
@@ -178,15 +178,15 @@ VALUES (
     '{
         "start_datetime": "2022-01-01T00:00:00Z", "end_datetime": "2025-12-31T23:59:59Z", 
         "description": "Crop yield prediction model using Sentinel-2 time series data",
-        "mlm:framework": "pytorch", "mlm:framework_version": "1.10.0",
+        "mlm:framework": "Pytorch", "mlm:framework_version": "1.10.0",
         "file:size": 180000000, "mlm:memory_size": 1.5, "mlm:batch_size_suggestion": 32,
         "mlm:accelerator": "cpu", "mlm:accelerator_constrained": false,
         "mlm:accelerator_summary": "Designed for CPU inference, suitable for edge devices",
         "mlm:name": "Sentinel-2 Crop Yield Predictor", 
-        "mlm:architecture": "LSTM with attention mechanism", 
-        "mlm:tasks": ["regression", "time-series-forecasting"],
+        "mlm:architecture": "LSTM", 
+        "mlm:tasks": ["Image Classification", "Image Feature Extraction"],
         "mlm:input": [{
-            "name": "Sentinel-2 Time Series",
+            "name": "Sentinel-2",
             "type": ["B2", "B3", "B4", "B8", "NDVI"],
             "input": {"shape": [-1, 24, 5], "dim_order": ["batch", "time_steps", "features"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max",
@@ -198,7 +198,7 @@ VALUES (
             "units": "tons/hectare"
         }],
         "mlm:total_parameters": 15000000, "mlm:pretrained": true,
-        "mlm:pretrained_source": "Historical Sentinel-2 data and ground truth yield data",
+        "mlm:pretrained_source": "Sentinel-2",
         "datetime": "2023-09-01T14:45:00Z"
     }',
     ARRAY[
@@ -243,15 +243,15 @@ VALUES (
     '{
         "start_datetime": "1900-01-01T00:00:00Z", "end_datetime": "9999-01-01T00:00:00Z", 
         "description": "Sourced from satlas source code released by Allen AI under Apache 2.0",
-        "mlm:framework": "pytorch", "mlm:framework_version": "2.3.0+cu121",
+        "mlm:framework": "Pytorch", "mlm:framework_version": "2.3.0+cu121",
         "file:size": 333000000, "mlm:memory_size": 1, "mlm:batch_size_suggestion": 10,
         "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
         "mlm:accelerator_summary": "It is necessary to use GPU since it was compiled for NVIDIA Ampere and newer architectures with AOTInductor and the computational demands of the model.",
         "mlm:name": "Satlas Solar Farm Segmentation", 
-        "mlm:architecture": "Swin Transformer V2 with U-Net head", 
-        "mlm:tasks": ["semantic-segmentation", "segmentation"],
+        "mlm:architecture": "Swin Transformer", 
+        "mlm:tasks": ["Reinforcement Learning", "Object Detection"],
         "mlm:input": [{
-            "name": "9 Band Sentinel-2 4 Time Step Series Batch",
+            "name": "Sentinel-2",
             "type": ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"],
             "input": {"shape": [-1, 36, 1024, 1024], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max", "resize_type": "crop",
@@ -267,7 +267,7 @@ VALUES (
             "classification:classes": [{"value": 1, "name": "Solar Farm", "description": "Solar Farm"}]
         }],
         "mlm:total_parameters": 89748193, "mlm:pretrained": true,
-        "mlm:pretrained_source": "Sentinel-2 imagery and SATLAS labels",
+        "mlm:pretrained_source": "Sentinel-2",
         "datetime": "2023-01-01T12:00:00Z"
     }',
     ARRAY[
@@ -312,15 +312,15 @@ ARRAY[-120.0, 30.0, -60.0, 50.0]::double precision[],
 '{
 "start_datetime": "2020-01-01T00:00:00Z", "end_datetime": "2030-12-31T23:59:59Z",
 "description": "Crop yield prediction model using MODIS time series data",
-"mlm:framework": "tensorflow", "mlm:framework_version": "2.8.0",
+"mlm:framework": "TensorFlow", "mlm:framework_version": "2.8.0",
 "file:size": 250000000, "mlm:memory_size": 2, "mlm:batch_size_suggestion": 32,
 "mlm:accelerator": "gpu", "mlm:accelerator_constrained": false,
 "mlm:accelerator_summary": "GPU recommended for optimal performance, but CPU inference is possible",
-"mlm:name": "MODIS Crop Yield Predictor",
-"mlm:architecture": "LSTM with attention mechanism",
-"mlm:tasks": ["regression", "time-series-forecasting"],
+"mlm:name": "LSTM",
+"mlm:architecture": "LSTM",
+"mlm:tasks": ["Summarization", "Image Classification"],
 "mlm:input": [{
-"name": "MODIS Time Series",
+"name": "MODIS",
 "type": ["NDVI", "EVI", "LST"],
 "input": {"shape": [-1, 46, 3], "dim_order": ["batch", "time_steps", "features"], "data_type": "float32"},
 "norm_by_channel": true, "norm_type": "standardization",
@@ -331,8 +331,8 @@ ARRAY[-120.0, 30.0, -60.0, 50.0]::double precision[],
 "result": {"shape": [-1, 1], "data_type": "float32"},
 "units": "bushels/acre"
 }],
-"mlm:total_parameters": 5000000, "mlm:pretrained": true,
-"mlm:pretrained_source": "Historical MODIS data and USDA crop yield reports",
+"mlm:total_parameters": 5000000, "mlm:pretrained": false,
+"mlm:pretrained_source": "MODIS",
 "datetime": "2025-01-15T10:30:00Z"
 }',
 ARRAY[
@@ -377,15 +377,15 @@ ARRAY[100.0, 0.0, 110.0, 10.0]::double precision[],
 '{
 "start_datetime": "2010-01-01T00:00:00Z", "end_datetime": "2030-12-31T23:59:59Z",
 "description": "Urban change detection model using Landsat time series",
-"mlm:framework": "pytorch", "mlm:framework_version": "1.11.0",
+"mlm:framework": "Pytorch", "mlm:framework_version": "1.11.0",
 "file:size": 400000000, "mlm:memory_size": 3, "mlm:batch_size_suggestion": 8,
 "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
 "mlm:accelerator_summary": "CUDA-enabled GPU required for efficient inference",
 "mlm:name": "Landsat Urban Change Detector",
-"mlm:architecture": "U-Net with temporal attention",
-"mlm:tasks": ["change-detection", "semantic-segmentation"],
+"mlm:architecture": "U-Net",
+"mlm:tasks": ["Object Detection", "Image Segmentation"],
 "mlm:input": [{
-"name": "Landsat 8 Time Series",
+"name": "Landsat 8",
 "type": ["B2", "B3", "B4", "B5", "B6", "B7"],
 "input": {"shape": [-1, 6, 5, 256, 256], "dim_order": ["batch", "time_steps", "channel", "height", "width"], "data_type": "float32"},
 "norm_by_channel": true, "norm_type": "min-max",
@@ -400,7 +400,7 @@ ARRAY[100.0, 0.0, 110.0, 10.0]::double precision[],
 ]
 }],
 "mlm:total_parameters": 50000000, "mlm:pretrained": true,
-"mlm:pretrained_source": "Landsat 8 time series and manually labeled urban change maps",
+"mlm:pretrained_source": "Landsat 8",
 "datetime": "2024-11-30T16:45:00Z"
 }',
 ARRAY[
@@ -445,13 +445,13 @@ ARRAY[-125.0, 30.0, -100.0, 50.0]::double precision[],
 '{
 "start_datetime": "2023-01-01T00:00:00Z", "end_datetime": "2030-12-31T23:59:59Z",
 "description": "Forest fire risk assessment model using multi-source satellite data",
-"mlm:framework": "scikit-learn", "mlm:framework_version": "1.0.2",
+"mlm:framework": "SciKit-Learn", "mlm:framework_version": "1.0.2",
 "file:size": 100000000, "mlm:memory_size": 1, "mlm:batch_size_suggestion": 64,
 "mlm:accelerator": "cpu", "mlm:accelerator_constrained": false,
 "mlm:accelerator_summary": "Designed for CPU inference, suitable for edge devices and cloud deployment",
 "mlm:name": "Forest Fire Risk Predictor",
-"mlm:architecture": "Random Forest Classifier",
-"mlm:tasks": ["classification"],
+"mlm:architecture": "ResNet50",
+"mlm:tasks": ["Image Classification", "Keypoint Detection"],
 "mlm:input": [{
 "name": "Multi-source Satellite Data",
 "type": ["NDVI", "LST", "Precipitation", "Wind Speed", "Relative Humidity"],
@@ -476,7 +476,7 @@ ARRAY[-125.0, 30.0, -100.0, 50.0]::double precision[],
 ]
 }],
 "mlm:total_parameters": 500000, "mlm:pretrained": true,
-"mlm:pretrained_source": "Historical satellite data and fire occurrence records",
+"mlm:pretrained_source": "Multi-source Satellite Data",
 "datetime": "2024-06-01T09:00:00Z"
 }',
 ARRAY[
@@ -521,15 +521,15 @@ ARRAY[
     '{
         "start_datetime": "2020-01-01T00:00:00Z", "end_datetime": "2030-12-31T23:59:59Z", 
         "description": "Advanced solar farm detection using Landsat imagery",
-        "mlm:framework": "pytorch", "mlm:framework_version": "2.2.1+cu118",
+        "mlm:framework": "Pytorch", "mlm:framework_version": "2.2.1+cu118",
         "file:size": 280000000, "mlm:memory_size": 1.5, "mlm:batch_size_suggestion": 12,
         "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
         "mlm:accelerator_summary": "GPU required for optimal performance with NVIDIA Turing or newer",
         "mlm:name": "Landsat Solar Farm Detector", 
-        "mlm:architecture": "EfficientNet with Attention Mechanism", 
-        "mlm:tasks": ["semantic-segmentation", "object-detection"],
+        "mlm:architecture": "U-Net", 
+        "mlm:tasks": ["Image Segmentation", "Reinforcement Learning"],
         "mlm:input": [{
-            "name": "Landsat 8 Multi-band Imagery",
+            "name": "Landsat 8",
             "type": ["B2", "B3", "B4", "B5", "B6", "B7"],
             "input": {"shape": [-1, 6, 512, 512], "dim_order": ["batch", "channel", "height", "width"], "data_type": "float32"},
             "norm_by_channel": true, "norm_type": "min-max"
@@ -540,7 +540,7 @@ ARRAY[
             "classification:classes": [{"value": 1, "name": "Solar Farm", "description": "Detected Solar Installation"}]
         }],
         "mlm:total_parameters": 45000000, "mlm:pretrained": true,
-        "mlm:pretrained_source": "Landsat 8 imagery and custom solar farm labels",
+        "mlm:pretrained_source": "Landsat 8",
         "datetime": "2024-01-15T12:00:00Z"
     }',
     ARRAY[
@@ -575,12 +575,12 @@ ARRAY[
     ARRAY[10.0, 50.0, 12.0, 52.0]::double precision[],
     '{
         "description": "Solar farm detection using UAV multispectral imagery",
-        "mlm:framework": "tensorflow", "mlm:framework_version": "2.9.0",
+        "mlm:framework": "TensorFlow", "mlm:framework_version": "2.9.0",
         "mlm:name": "UAV Solar Farm Mapper", 
-        "mlm:architecture": "DeepLab V3+ with ResNet Backbone", 
-        "mlm:tasks": ["semantic-segmentation"],
+        "mlm:architecture": "DeepLab", 
+        "mlm:tasks": ["Image Segmentation", "Zero-Shot Classification"],
         "mlm:input": [{
-            "name": "UAV Multispectral Imagery",
+            "name": "Multi-source Satellite Data",
             "type": ["RGB", "NIR", "RedEdge"],
             "input": {"shape": [-1, 5, 1024, 1024], "data_type": "float32"}
         }],
@@ -623,15 +623,15 @@ ARRAY[-180.0, -90.0, 180.0, 90.0]::double precision[],
 '{
 "start_datetime": "2015-01-01T00:00:00Z", "end_datetime": "2030-12-31T23:59:59Z",
 "description": "Global solar farm detection using multi-year satellite imagery",
-"mlm:framework": "pytorch", "mlm:framework_version": "2.0.0",
+"mlm:framework": "Pytorch", "mlm:framework_version": "2.0.0",
 "file:size": 500000000, "mlm:memory_size": 4, "mlm:batch_size_suggestion": 4,
 "mlm:accelerator": "cuda", "mlm:accelerator_constrained": true,
 "mlm:accelerator_summary": "High-end NVIDIA GPU required due to model complexity and data volume",
 "mlm:name": "Global Solar Farm Detector",
-"mlm:architecture": "3D-UNet with Temporal Attention",
-"mlm:tasks": ["semantic-segmentation", "change-detection"],
+"mlm:architecture": "U-Net",
+"mlm:tasks": ["Image Segmentation", "Object Detection"],
 "mlm:input": [{
-"name": "Multi-year Satellite Imagery",
+"name": "Multi-source Satellite Data",
 "type": ["RGB", "NIR", "SWIR"],
 "input": {"shape": [-1, 5, 12, 256, 256], "dim_order": ["batch", "channel", "time", "height", "width"], "data_type": "float32"},
 "norm_by_channel": true, "norm_type": "min-max"
@@ -647,7 +647,7 @@ ARRAY[-180.0, -90.0, 180.0, 90.0]::double precision[],
 ]
 }],
 "mlm:total_parameters": 120000000, "mlm:pretrained": true,
-"mlm:pretrained_source": "Global satellite imagery time series and crowdsourced annotations",
+"mlm:pretrained_source": "Multi-source Satellite Data",
 "datetime": "2025-03-10T08:45:00Z"
 }',
 ARRAY[
