@@ -90,10 +90,10 @@
                                 <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
                                     <form id="registerForm">
                                         <div class="mb-3">
-                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Vorname">
+                                            <input type="text" class="form-control overlay-input" id="register-prename" placeholder="Vorname">
                                         </div>
                                         <div class="mb-3">
-                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nachname">
+                                            <input type="text" class="form-control overlay-input" id="register-lastname" placeholder="Nachname">
                                         </div>
                                         <div class="mb-3">
                                             <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nutzername">
@@ -157,16 +157,9 @@
                             <!-- Sidebar: Footer -->
                             <div id="sidebar-footer" class="mt-auto">
                                 <hr>
-                                <li class="nav-item">
                                     <a id="sidebar-footerlink-login" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal" href="#">
                                         Login
                                     </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a id="sidebar-footerlink-settings" class="nav-link" href="#">
-                                        Settings
-                                    </a>
-                                </li>
                             </div>
                         </ul>
                     </div>  
@@ -206,12 +199,12 @@
                     <a id="topbar-option" href="howto.html" class="text-decoration-none fw-bold px-3 py-2">
                         How-To
                     </a>
-                    <a id="topbar-logo" class="d-lg-block d-md-none d-none" href="welcome.html">
+                    <a id="topbar-logo" class="d-xl-block d-lg-none d-md-none d-none" href="welcome.html">
                         <img id="topbar-logo" src="wthrdicon.svg" style="right:52%;"height="40px" width="40px">
                     </a>
                     <div id="topbar-menuoptions" class="ms-auto d-flex justify-content-end px-3 py-2">
                           <!-- Topbar: Collection hinzufügen -->
-                          <div id="topbar-search" class="d-none d-lg-block text-decoration-none px-3 py-2 position-relative" style="margin-top: 13px">
+                        <div id="topbar-search" class="d-none d-md-block text-decoration-none px-3 py-2 position-relative" style="margin-top: 12px;">
                             <a id="topbar-option" href="addcollection.html" class="text-decoration-none fw-bold px-3 py-2">
                                 Collection hinzufügen
                             </a>
@@ -227,17 +220,6 @@
                                 </svg>
                                 </span>
                             </button>
-                        <!-- Topbar: Settingselement -->
-                        <span id="topbar-settings" class="text-dark text-decoration-none fw-bold px-3 py-2 d-flex ms-auto">
-                            <!-- Settingsbutton -->
-                            <button id="settings-button"class="d-none d-md-block border-0 bg-transparent" type="button">
-                                <span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#1C3D86" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
-                                        <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
-                                    </svg>
-                                </span>
-                            </button>
-                        </span>
                     </div>
                 </div>
 

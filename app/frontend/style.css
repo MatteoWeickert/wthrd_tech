@@ -212,7 +212,7 @@
     border: 2px solid #9ec4f2;
     border-radius: 8px;
     background-color: #c6dbf7;
-    color: #d4d4d4;
+    color: #000000;
     outline: none;
     transition: border-color 0.3s ease;
   }
@@ -223,8 +223,8 @@
   }
 
   #topbar-welcome {
-    background-color:#9ec4f2; /* Replace with your desired color */
-    color: white; /* Adjust text color if necessary */
+    background-color:#9ec4f2;
+    color: white; 
   }
 
 

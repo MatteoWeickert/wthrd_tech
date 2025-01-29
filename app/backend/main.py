@@ -35,7 +35,8 @@ Base = declarative_base()
 app = FastAPI()
 app.include_router(auth.router)
 
-origins = ["http://localhost:8082"]
+origins = ["http://localhost:8082",
+           "http://localhost:8083"]
 
 app.add_middleware(
     CORSMiddleware,
