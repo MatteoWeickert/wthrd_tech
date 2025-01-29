@@ -64,8 +64,8 @@ class ItemCreate(BaseModel):
         if not isinstance(value["mlm:name"], str):
             raise ValueError(f"Invalid value for 'mlm:name'. It must be a string.")
         
-        if not isinstance(value["mlm:batch_size_suggestion"], int):
-            raise ValueError(f"Die Batchgröße muss ein Integer sein!")
+        # if not isinstance(value["mlm:batch_size_suggestion"], int):
+        #     raise ValueError(f"Die Batchgröße muss ein Integer sein!")
 
         return value
     
