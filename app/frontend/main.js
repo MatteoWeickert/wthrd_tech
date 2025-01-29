@@ -2118,6 +2118,22 @@ function downloadItemAsJSON(itemId) {
     downloadAnchorNode.remove();
 }
 
+// Funktion um Modell download zu starten 
+function downloadDocument(filePath, fileName) {
+
+    // Erstelle ein dynamisches <a>-Element
+    const downloadAnchorNode = document.createElement('a');
+
+    downloadAnchorNode.setAttribute("href", filePath); // Setzt den Dateipfad (z. B. "/path/to/file.py")
+    downloadAnchorNode.setAttribute("download", fileName); // Setzt den Dateinamen für den Download
+
+    // Füge das Element temporär zum DOM hinzu, klicke darauf und entferne es danach
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    document.body.removeChild(downloadAnchorNode); 
+
+}
+
 // Funktion um Modellparameter Schnellansicht je nach Auswahl der Filterparameter anpassen
 function fillInParameters(item, data){
     const parameterMapping = [
