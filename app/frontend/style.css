@@ -557,3 +557,24 @@
 .modell-itemamount-button input:checked + .button-visual {
   font-weight: 800;
 }
+
+.copy-button {
+  display: block;
+  margin-top: 5px;
+  padding: 8px 12px;
+  background-color: #1C3D86;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.copy-button:hover {
+  background-color: #162E66;
+}
+
+.copy-button:active {
+  background-color: #0F204D;
+}

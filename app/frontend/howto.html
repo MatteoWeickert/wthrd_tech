@@ -20,6 +20,30 @@
         <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+        <style>
+            .copy-button {
+              display: block;
+              margin-top: 5px;
+              padding: 8px 12px;
+              background-color: #9ec4f2; /* Dezenterer Blauton */
+              color: white;
+              border: none;
+              border-radius: 5px;
+              font-size: 14px;
+              cursor: pointer;
+              transition: background-color 0.3s ease, transform 0.2s ease;
+            }
+          
+            .copy-button:hover {
+              background-color: #3571A4; /* Deutlich heller und intensiverer Blauton */
+              transform: scale(1.05); /* Leichte Vergrößerung beim Hover */
+            }
+          
+            .copy-button:active {
+              background-color: #2B4D75; /* Dezenterer Blauton im aktiven Zustand */
+              transform: scale(1); /* Zurück zur Originalgröße im aktiven Zustand */
+            }
+          </style>                    
     </head>
 
     <!-- IDs for JS and CSS:
@@ -386,7 +410,8 @@ try:
     print("Katalog erfolgreich geladen")
 except Exception as e:
     print(f"Fehler beim Laden des Katalogs: {e}")</code></pre>
-                        
+                                    <button class = "copy-button" onclick="copyCodeToClipboard(this)">Code kopieren</button>
+
                                     <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Konformität des STAC abrufen</h3>
                                     <p>Die Konformitätsklassen, mit denen der STAC übereinstimmt, lassen sich über die <code>/conformance</code>-Route abfragen:</p>
                                     <pre><code>try:
@@ -399,6 +424,8 @@ except Exception as e:
         print(f"Fehler beim Abrufen der Conformance-Daten: {response.status_code}")
 except Exception as e:
     print(f"Fehler beim Abrufen der Conformance-Informationen: {e}")</code></pre>
+                                    <button class = "copy-button" onclick="copyCodeToClipboard(this)">Code kopieren</button>
+
                                     <!-- <p>Response:</p>
                                     <pre><code>API Conformance Informationen:
 {
@@ -420,6 +447,7 @@ except Exception as e:
         collection.describe()
 except Exception as e:
     print(f"Fehler beim Abrufen der Collections: {e}")</code></pre>
+                                    <button class = "copy-button" onclick="copyCodeToClipboard(this)">Code kopieren</button>
 
                                     <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Eine spezifische Collection abrufen</h3>
                                     <p>Collections lassen sich anhand ihrer ID abrufen. Hier holen wir eine Collection mit der ID <code>"MLM_Collection"</code>:</p>
@@ -430,6 +458,7 @@ try:
     collection.describe()
 except Exception as e:
     print(f"Fehler beim Abrufen der Collection {collection_id}: {e}")</code></pre>
+                                    <button class = "copy-button" onclick="copyCodeToClipboard(this)">Code kopieren</button>
                         
                                     <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Items aus der Collection abrufen</h3>
                                     <p>Nach dem Abrufen einer Collection können Sie alle enthaltenen Items durchsuchen. Hier werden bereits die wichtigsten Attribute Selektiert und in die Konsole ausgegeben:</p>
@@ -449,6 +478,7 @@ try:
         print(json.dumps(item_summary, indent=4) )
 except Exception as e:
     print(f"Fehler beim Abrufen der Items: {e}")</code></pre>
+                                    <button class = "copy-button" onclick="copyCodeToClipboard(this)">Code kopieren</button>
                         
                                     <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Suche nach bestimmten Items</h3>
                                     <p>Als erstes definiert man die Suchparameter. Dabei stehen eine Boundingbox, Collection-Namen, ein bestimmtes Zeitintervall und Item-IDs als Parameter zur Verfügung. Außerdem lässt sich die Suche auf eine bestimmte Anzahl an Ergebnissen limitieren:</p>
@@ -457,6 +487,8 @@ datetime = "2020-01-01T00:00:00/2025-01-15T23:59:59"
 collections = ["MLM_Collection"]
 ids = ["solar_satlas_sentinel2"]
 limit = 10</code></pre>
+                                    <button class = "copy-button" onclick="copyCodeToClipboard(this)">Code kopieren</button>
+
                                     <p>Die Suchanfrage wird dann an den STAC-Server gesendet und die Ergebnisse werden in der Konsole ausgegeben:</p>
                                     <pre><code>search_query = {
     "bbox": bbox,
@@ -475,7 +507,9 @@ try:
         print(f"Fehler bei der Suche: {response.status_code} - {response.text}")
 except Exception as e:
     print(f"Fehler bei der Suche nach Items: {e}")</code></pre>
-                        
+                                    <button class = "copy-button" onclick="copyCodeToClipboard(this)">Code kopieren</button>
+                    
+
                                     <h3 style="color: #1C3D86;font-size: 22px;font-weight: 500;margin-top: 25px;margin-bottom: 15px;border-left: 3px solid #1C3D86;padding-left: 10px;">Assets eines Items abrufen</h3>
                                     <p>Nachdem Sie ein spezifisches Item gefunden haben, können Sie dessen Assets anzeigen:</p>
                                     <pre><code>item_id = "solar_satlas_sentinel2"
@@ -486,6 +520,8 @@ for item in items:
         for key, asset in item.assets.items():
             print(f"Asset: {key}")
             print(json.dumps(asset.to_dict(), indent=4))</code></pre>
+                                <button class = "copy-button" onclick="copyCodeToClipboard(this)">Code kopieren</button>
+
                                 </section>
                                 <section>
                                     <h2 id="fourthscroll" style="color: #1C3D86; font-size: 28px;font-weight: 600;margin-top: 30px;margin-bottom: 20px;border-bottom: 2px solid #1C3D86;padding-bottom: 10px;">Zusammenfassung</h2>

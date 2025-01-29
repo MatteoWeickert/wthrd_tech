@@ -2316,3 +2316,17 @@ function successfulLoggedIn(user){
 
     `
 }
+
+function copyCodeToClipboard(button) {
+    const codeBlock = button.previousElementSibling.querySelector("code");
+    const text = codeBlock.innerText;
+
+    navigator.clipboard.writeText(text).then(() => {
+        button.textContent = "Kopiert!";
+        setTimeout(() => {
+            button.textContent = "Code kopieren";
+        }, 2000);
+    }).catch(err => {
+        console.error("Fehler beim Kopieren: ", err);
+    });
+}
