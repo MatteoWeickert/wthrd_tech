@@ -111,7 +111,6 @@ async function startWebsite(){
                         opens: 'left',
                         autoApply:true
                     }, function(start, end, label) {
-                        console.log("Neue Range: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
                         startDatum = start;
                         endDatum = end;
                     });
@@ -124,7 +123,6 @@ async function startWebsite(){
                     const layer = event.layer;
                     drawnItems.addLayer(layer);
                     const bounds = layer.getBounds();
-                    console.log(bounds);
                     setBounds(bounds.toBBoxString())
                     getBounds()
                 });
@@ -196,7 +194,6 @@ async function startWebsite(){
                     opens: 'left',
                     autoApply:true
                 }, function(start, end, label) {
-                    console.log("Neue Range: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
                     startDatum = start;
                     endDatum = end;
                 });
@@ -209,7 +206,6 @@ async function startWebsite(){
                 const layer = event.layer;
                 drawnItems.addLayer(layer);
                 const bounds = layer.getBounds();
-                console.log(bounds);
                 setBounds(bounds.toBBoxString())
                 getBounds()
             });
@@ -322,16 +318,11 @@ async function recentItems() {
 
 
 async function displayRecentItems() {
-    console.log("hier kommer rein")
-
     const lastItems = await recentItems(); // Hol die letzten 3 Items
-
-    console.log(lastItems)
     
     // Container für die Ausgabe finden
     const container = document.getElementById('recent-items');
     if (!container) {
-        console.error("Container mit ID 'recent-items' wurde nicht gefunden.");
         return;
     }
 
@@ -367,12 +358,8 @@ async function displayRecentItems() {
 function filterItemsForSearch(searchTerm) { 
     if (!Array.isArray(allItems) || allItems.length === 0) 
         {
-            console.error("allItems is not loaded or is empty"); 
             return []; 
         } 
-
-    console.log("FilterItems called with:", searchTerm); 
-    console.log("AllItems:", allItems); 
     
     if (!Array.isArray(allItems)) { console.error("allItems is not an array"); return []; } 
     
@@ -399,9 +386,7 @@ function filterItemsForSearch(searchTerm) {
         (item?.['created_at'] ? new Date(item['created_at']).toISOString() : '').toLowerCase().includes(searchTermLower) ||
         (item?.['updated_at'] ? new Date(item['updated_at']).toISOString() : '').toLowerCase().includes(searchTermLower)
         ); 
-        
-        console.log("Filtered Items" + filtered); 
-        
+                
         return filtered; 
 }
 
@@ -584,7 +569,6 @@ async function getAuthData() {
 // Funktion fragt den Authorisierungsstatus ab
 async function isLoggedIn() {
     const logged = await getAuthData();
-    console.log("Logged data:", logged);
     if (logged && logged.username && logged.id) {
         successfulLoggedIn(logged.username)
         return true;
@@ -617,7 +601,6 @@ function createStandardView(){
                         <div id="sidebar-footer" class="mt-auto" style="height: 25%;">
                             <hr>
                             <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
-                            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
                         </div>
                     </div>  
                 </nav>
@@ -655,7 +638,6 @@ function createStandardView(){
                         <div id="sidebar-footer" class="mt-auto" style="height: 25%;">
                             <hr>
                             <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
-                            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
                         </div>
                     </div>  
                 </nav>
@@ -708,7 +690,6 @@ async function registerUser(){
         }
     }
     catch(error){
-        console.log(error)
         showAlert(4, "Fehler", "aus registerUser")
     }
 }
@@ -730,7 +711,6 @@ async function fetchItems() {
             showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
         }
     } catch (error) {
-        console.log(error)
         showAlert(4, "Fehler beim Abrufen der Items oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.")
     }
 }
@@ -738,7 +718,6 @@ async function fetchItems() {
 // Adden des Items aus Eingabemaske
 async function addItems() {
     const input = getUserInputs();
-    console.log(input)
     const token = sessionStorage.getItem("token");
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
@@ -811,8 +790,6 @@ async function addItems() {
         } else if (data.detail){
             if (Array.isArray(data.detail)){
                 data.detail.forEach((error) => {
-                    console.log("Detail:", data.detail);
-
                     if (error.loc.includes("geometry") && error.msg === "The geometry must have 'type' and 'coordinates' keys.") {
                         showAlert(4, "Geometrie muss ein valides JSON sein und 'type' sowie 'coordinates' enthalten!");
                     } else if(error.loc.includes("geometry") && error.msg.includes("Invalid geometry type")) {
@@ -844,7 +821,6 @@ async function addItems() {
         }
                    
     } catch (error) {
-        console.log("Error aus addItems", error);
         showAlert(4, "Item konnte nicht hinzugefügt werden.", "");
     }
 }
@@ -864,7 +840,6 @@ async function fetchCollections(){
             showAlert(4, "Fehler beim Abrufen der Collections.", "Interner Fehler.")
         }
     } catch (error) {
-        console.log(error)
         showAlert(4, "Fehler beim Abrufen der Collections oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.")
     }
 }
@@ -939,8 +914,6 @@ async function addCollections(){
         } else if (data.detail){
             if (Array.isArray(data.detail)){
                 data.detail.forEach((error) => {
-                    console.log("Detail:", data.detail);
-
                     if (error.loc.includes("title") && error.msg === "title must be provided") {
                         showAlert(4, "Bitte einen Titel angeben!", "");
                     } else if(error.loc.includes("id") && error.msg.includes("id must be provided")) {
@@ -965,7 +938,6 @@ async function addCollections(){
             showAlert(4, "Ein unbekannter Fehler ist aufgetreten.", "");
         }    
     } catch (error) {
-        console.log("Error aus addCollection", error);
         showAlert(4, "Collection konnte nicht hinzugefügt werden.", "");
     }
 
@@ -980,7 +952,6 @@ function getGeometry() {
         return result
     }
     catch(error){
-        console.log("error")
         showAlert(4, "Die Geometrie ist kein valides JSON. Achte auf korrekte Syntax.")
     }
 
@@ -1175,7 +1146,6 @@ async function createDynamicInputs() {
 
     await fetchCollections();
     const collections = Array.isArray(allCollections) ? allCollections : Object.values(allCollections).flat();
-    console.log(collections)
 
     inputFieldCol.setAttribute('class', 'main-inputwindow');
     inputFieldCol.setAttribute('id', 'input-collections');
@@ -1246,8 +1216,6 @@ function getUserInputs() {
         case('/addcollection.html'):
             expected = getExpectedCollectionInputs();
         break;
-        default:
-            console.log('Aus getUserInputs(): Keine Userinputs auf dieser Seite gefunden')
     }
 
     const input = {};
@@ -1279,7 +1247,6 @@ function analyzeInput(expected){
             const hex = document.getElementById("main-inputelem-color").value;
             const date = getDateRange();
             if (bounding === undefined || bounding === null || bounding === "") {
-                console.log(bounding)
                 missing.push('Bounding')
             }
             if (hex === undefined || hex === null || hex === "" || hex === '#000000') {
@@ -1293,7 +1260,6 @@ function analyzeInput(expected){
             const boundingCol = getBounds();
             const dateCol = getDateRange();
             if (boundingCol === undefined || boundingCol === null || boundingCol === "") {
-                console.log(boundingCol)
                 missing.push('Bounding')
             }
             if (dateCol === undefined || dateCol === null || dateCol === "") {
@@ -1329,7 +1295,6 @@ function sendInput(expected){
 function getSelectedColor() {
     const colorInput = document.getElementById('main-inputelem-color');
     if (colorInput) {
-        console.log("Farbcode:" + colorInput.value)
         return colorInput.value.toUpperCase();
     }
 }
@@ -1619,7 +1584,6 @@ function printAllFilters(items){
         <div id="sidebar-footer" class="mt-auto">
             <hr>
             <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
-            <a id="sidebar-footerlink-settings" href="#" class="nav-link">Settings</a>
         </div>
     `;
 
@@ -1765,8 +1729,6 @@ function checkDateOverlap(itemStart, itemEnd, filterStart, filterEnd){
 function filterItems(items, filters){
     showAlert(0);
     let selectedItems = [];
-    console.log("filters:", filters);
-
 
     if (!filters || Object.keys(filters).length === 0) {
         return items;
