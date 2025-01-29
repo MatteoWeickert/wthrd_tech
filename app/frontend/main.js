@@ -1290,6 +1290,15 @@ function analyzeInput(expected){
             }
         break;
         case('/addcollection.html'):
+            const boundingCol = getBounds();
+            const dateCol = getDateRange();
+            if (boundingCol === undefined || boundingCol === null || boundingCol === "") {
+                console.log(boundingCol)
+                missing.push('Bounding')
+            }
+            if (dateCol === undefined || dateCol === null || dateCol === "") {
+                missing.push('Date')
+            }
         break;
     }
     changeInputTOC(parameters, missing);
@@ -1480,6 +1489,46 @@ function changeInputTOC(data, pois){
             }
         break;
         case('/addcollection.html'):
+            if (changeList.includes('Bounding')){
+                sidebarList.innerHTML += `
+                            <li class="nav-item d-flex align-items-center">
+                                <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                                </svg>
+                                <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
+                            </li>
+                `;
+            }
+            else{
+                sidebarList.innerHTML += `
+                <li class="nav-item d-flex align-items-center">
+                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                    <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
+                </li>
+            `;
+            }
+            if (changeList.includes('Date')){
+                sidebarList.innerHTML += `
+                            <li class="nav-item d-flex align-items-center">
+                                <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
+                                </svg>
+                                <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                            </li>
+                `;
+            }
+            else{
+                sidebarList.innerHTML += `
+                <li class="nav-item d-flex align-items-center">
+                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                    <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                </li>
+            `;
+            }
         break;
     }
 }
@@ -2116,6 +2165,22 @@ function downloadItemAsJSON(itemId) {
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
+}
+
+// Funktion um Modell download zu starten 
+function downloadDocument(filePath, fileName) {
+
+    // Erstelle ein dynamisches <a>-Element
+    const downloadAnchorNode = document.createElement('a');
+
+    downloadAnchorNode.setAttribute("href", filePath); // Setzt den Dateipfad (z. B. "/path/to/file.py")
+    downloadAnchorNode.setAttribute("download", fileName); // Setzt den Dateinamen für den Download
+
+    // Füge das Element temporär zum DOM hinzu, klicke darauf und entferne es danach
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    document.body.removeChild(downloadAnchorNode); 
+
 }
 
 // Funktion um Modellparameter Schnellansicht je nach Auswahl der Filterparameter anpassen
