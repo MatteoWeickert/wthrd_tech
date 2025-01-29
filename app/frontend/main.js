@@ -1148,7 +1148,7 @@ async function createDynamicInputs() {
     const collections = Array.isArray(allCollections) ? allCollections : Object.values(allCollections).flat();
 
     inputFieldCol.setAttribute('class', 'main-inputwindow');
-    inputFieldCol.setAttribute('id', 'input-collections');
+    inputFieldCol.setAttribute('id', 'input-collectionid');
     inputFieldCol.setAttribute('placeholder', 'Collections..');
     inputFieldCol.setAttribute('readonly', 'true');
     collectionDiv.appendChild(inputFieldCol);
@@ -1201,7 +1201,7 @@ function updateSelectedCollections(event){
         }
     });
     const selectedCollection = event.target.checked ? event.target.value : '';
-    document.getElementById('input-collections').value = selectedCollection;
+    document.getElementById('input-collectionid').value = selectedCollection;
 }
 
 // Funktion um alle User Eingaben abzugreifen und in ein Array zu bündeln
