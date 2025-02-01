@@ -546,6 +546,7 @@ function logoutUser(){
     closeLoginTab();
     isLoggedIn();
     successfulLoggedOut();
+    startWebsite();
     setTimeout(function(){
         showAlert(3, "Account abgemeldet. Bis zum nächsten Mal!", "");
     }, 1) 
@@ -1073,29 +1074,16 @@ function createInputForm(data, inputinfo) {
             createDynamicInputs();
         break;
         case('/addcollection.html'):
-            // Bounding Box-Option
-            tableBody.innerHTML += `
-            <tr id="main-inputgroup">
-                <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box<br><span class="main-inputinfo">Markiere auf der Karte den Bereich, für den die Collection gedacht ist.</span></td>
-                <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                    <div id="map" style="width:120%;height:100%;"></div>
-                </td>
-                <td id="" class="main-inputalert"></td>
-            </tr>
-            `;
-            count += 1;
-
-            // Zeitraumauswahl
+            // Datenschutz-Auswahl
             tableBody.innerHTML += `
                 <tr id="main-inputgroup">
-                    <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum die Collection Modelle halten soll.</span></td>
+                    <td id="inputexp-public" class="main-inputexp">${count}) Öffentlich<br><span class="main-inputinfo">Gebe an, ob deine Collection öffentlich sein soll, sodass alle Nutzer ein Modell zu deiner Collection hinzufügen können.</span></td>
                     <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
-                        <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
+                        <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
                     </td>
                     <td id="" class="main-inputalert"></td>
                 </tr>
             `;
-
             count += 1;
 
             // Buttons zum absenden un analysieren
@@ -1268,14 +1256,6 @@ function analyzeInput(expected){
             }
         break;
         case('/addcollection.html'):
-            const boundingCol = getBounds();
-            const dateCol = getDateRange();
-            if (boundingCol === undefined || boundingCol === null || boundingCol === "") {
-                missing.push('Bounding')
-            }
-            if (dateCol === undefined || dateCol === null || dateCol === "") {
-                missing.push('Date')
-            }
         break;
     }
     changeInputTOC(parameters, missing);
@@ -1350,10 +1330,7 @@ async function createInputTOC(data) {
         case('/addcollection.html'):
             sidebarList.innerHTML += `
                 <li class="nav-item">
-                    <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-map">Bounding Box</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                    <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-public">Öffentlich</a>
                 </li>
             `
         break;
