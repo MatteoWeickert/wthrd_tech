@@ -2295,12 +2295,15 @@ function extractUniqueFilterValues(items) {
 
 // Funktion um Anmeldetabs bei erfolgreicher Anmeldung anzupassen
 function successfulLoggedIn(user){
-    const name = user.username
+    const username = user.username
+    const lastname = user.lastname
+    const prename = user.prename
+    const email = user.email
     const sidebarlogin = document.getElementById('sidebar-footerlink-login')
     const topbarlogin = document.getElementById('login-button')
     const tabContent = document.getElementById('authModal')
     sidebarlogin.innerHTML = ' '
-    sidebarlogin.innerHTML = `<span>Bereits angemeldet: <strong style="text-transform: uppercase;">${name}</strong></span>`
+    sidebarlogin.innerHTML = `<span>Bereits angemeldet: <strong style="text-transform: uppercase;">${username}</strong></span>`
     topbarlogin.innerHTML = ' '
     topbarlogin.innerHTML = `
             <button style="margin-top: 5px;" class="d-none d-md-block border-0 bg-transparent" type="button">
@@ -2309,7 +2312,7 @@ function successfulLoggedIn(user){
             <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548 1.17-1.951a.5.5 0 1 1 .858.514M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
             <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
             </svg>
-            <span style="font-weight: bold; font-size:10px; color: #1C3D86;">${name}</span>
+            <span style="font-weight: bold; font-size:10px; color: #1C3D86;">${username}</span>
         </span>
         </button>
     `
@@ -2323,15 +2326,18 @@ function successfulLoggedIn(user){
                                 <!-- Login Form -->
                                 <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
                                     <div class="mb-4" style="font-weight: 300; font-size:20px; text-align: center; text-transform: uppercase; color: #1C3D86">
-                                        Willkommen zurück, ${name}!
+                                        Willkommen zurück, ${username}!
                                     </div>
                                     <hr>
                                     <form id="loginForm" style="text-align: center;">
                                         <div class="mb-3">
-                                            <span>Accountinfo 1</span>
+                                            <span>Nachname: ${lastname}</span>
                                         </div>
-                                        <div class="mb-3">
-                                            <span>Accountinfo 2</span>
+                                       <div class="mb-3">
+                                            <span>Vorname: ${prename}</span>
+                                        </div>
+                                         <div class="mb-3">
+                                            <span>E-Mail: ${email}</span>
                                         </div>
                                         <hr>
                                         <button type="button" onclick="logoutUser()" class="btn-login p-2 w-100">Abmelden</button>
