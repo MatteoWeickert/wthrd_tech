@@ -540,6 +540,17 @@ async function loginUser(){
     }
 }
 
+// Funktion um den aktuellen Nutzer abzumelden
+function logoutUser(){
+    sessionStorage.setItem('token', null)
+    closeLoginTab();
+    isLoggedIn();
+    successfulLoggedOut();
+    setTimeout(function(){
+        showAlert(3, "Account abgemeldet. Bis zum nächsten Mal!", "");
+    }, 1) 
+}
+
 // Funktion um Authentifizierungsdaten abzufragen
 async function getAuthData() {
     const token = sessionStorage.getItem('token');
@@ -570,7 +581,7 @@ async function getAuthData() {
 async function isLoggedIn() {
     const logged = await getAuthData();
     if (logged && logged.username && logged.id) {
-        successfulLoggedIn(logged.username)
+        successfulLoggedIn(logged)
         return true;
     } else {
         return false;
@@ -2307,9 +2318,10 @@ function extractUniqueFilterValues(items) {
 
 // Funktion um Anmeldetabs bei erfolgreicher Anmeldung anzupassen
 function successfulLoggedIn(user){
-    const name = user
+    const name = user.username
     const sidebarlogin = document.getElementById('sidebar-footerlink-login')
     const topbarlogin = document.getElementById('login-button')
+    const tabContent = document.getElementById('authModal')
     sidebarlogin.innerHTML = ' '
     sidebarlogin.innerHTML = `<span>Bereits angemeldet: <strong style="text-transform: uppercase;">${name}</strong></span>`
     topbarlogin.innerHTML = ' '
@@ -2323,7 +2335,118 @@ function successfulLoggedIn(user){
             <span style="font-weight: bold; font-size:10px; color: #1C3D86;">${name}</span>
         </span>
         </button>
+    `
+    tabContent.innerHTML = ''
+    tabContent.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <!-- Tab Content -->
+                            <div class="tab-content mt-3" id="authTabContent">
+                                <!-- Login Form -->
+                                <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                                    <div class="mb-4" style="font-weight: 300; font-size:20px; text-align: center; text-transform: uppercase; color: #1C3D86">
+                                        Willkommen zurück, ${name}!
+                                    </div>
+                                    <hr>
+                                    <form id="loginForm" style="text-align: center;">
+                                        <div class="mb-3">
+                                            <span>Accountinfo 1</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <span>Accountinfo 2</span>
+                                        </div>
+                                        <hr>
+                                        <button type="button" onclick="logoutUser()" class="btn-login p-2 w-100">Abmelden</button>
+                                    </form>
+                                    <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
+                                        <span>Made by <img href="#" src="wthrdicon.svg" width="30px" height="30px"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
+    `
+}
+
+// Funktion um Frontend nach dem Logout zurückzusetzen
+function successfulLoggedOut(){
+    const topbarlogin = document.getElementById('login-button')
+    const tabContent = document.getElementById('authModal')
+    const sidebarlogin = document.getElementById('sidebar-footerlink-login')
+
+    topbarlogin.innerHTML =`
+                                <button id="login-button" class="d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">
+                                <span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-person-circle" viewBox="0 0 16 16">
+                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                                </svg>
+                                </span>
+                            </button>
+    `
+    sidebarlogin.innerHTML=`
+                <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
+
+    `
+
+    tabContent.innerHTML =`
+                    <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <!-- Nav tabs innerhalb des Overlays -->
+                            <ul class="nav nav-tabs nav-justified" id="authTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Anmelden</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Registrieren</button>
+                                </li>
+                            </ul>
+                            <!-- Tab Content -->
+                            <div class="tab-content mt-3" id="authTabContent">
+                                <!-- Login Form -->
+                                <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                                    <form id="loginForm">
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="login-username" placeholder="Nutzername">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="password" class="form-control overlay-input" id="login-password" placeholder="Passwort">
+                                        </div>
+                                        <button type="button" onclick="closeLoginTab(); loginUser()" class="btn-login p-2 w-100">Anmelden</button>
+                                    </form>
+                                    <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
+                                        <span>Made by <img href="#" src="wthrdicon.svg" width="30px" height="30px"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Register Form -->
+                                <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
+                                    <form id="registerForm">
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-prename" placeholder="Vorname">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-lastname" placeholder="Nachname">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nutzername">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="email" class="form-control overlay-input" id="register-email" placeholder="E-Mail">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="password" class="form-control overlay-input" id="register-password" placeholder="Passwort">
+                                        </div>
+                                        <button onclick="closeLoginTab(); registerUser()"class="btn-login p-2 w-100">Registrieren</button>
+                                    </form>
+                                    <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
+                                        <span>Mit dem Registrieren bestätigt der Nutzer die geltenen <a href="#">AGB</a> sowie <a href="#">Nutzungsbedingungen</a> der jeweiligen Unterprodukte.</span><br>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
     `
 }
