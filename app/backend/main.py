@@ -130,6 +130,9 @@ def add_collection(collection: CollectionCreate, user: user_dependency):
             license=collection_data["license"],
             extent=collection_data["extent"],
             catalog_id=collection_data["catalog_id"],
+            creator_id=user["id"],
+            creator_username=user["username"],
+            ispublic=collection_data["ispublic"],
             created_at=collection_data["created_at"],
             updated_at=collection_data["updated_at"]
         )
@@ -181,6 +184,8 @@ def add_item(item: ItemCreate, user: user_dependency):
             links=item_data["links"],
             assets=item_data["assets"],  # assets ist jetzt ein JSON-serialisierbares Dictionary
             collection_id=item_data["collection_id"],
+            creator_id=user["id"],
+            creator_username=user["username"],
             created_at=item_data["created_at"],
             updated_at=item_data["updated_at"],
             color=item_data["color"]
