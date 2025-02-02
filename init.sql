@@ -9,6 +9,20 @@ CREATE TABLE catalogs (
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update des Katalogs
 );
 
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    prename VARCHAR(20) NOT NULL,
+    lastname VARCHAR(20) NOT NULL,
+    email VARCHAR(30) NOT NULL,
+    hashed_password VARCHAR(200) NOT NULL,
+    created_collections JSONB,
+    created_items JSONB
+);
+
+ALTER SEQUENCE users_id_seq RESTART WITH 2;
+
+
 CREATE TABLE collections (
     id VARCHAR(50) PRIMARY KEY,                          -- Eindeutige ID für die Collection
     type TEXT NOT NULL CHECK (type = 'Collection'),  -- Der Typ der Collection, sollte immer 'Collection' sein
@@ -19,6 +33,9 @@ CREATE TABLE collections (
     license TEXT NOT NULL,                          -- Lizenz der Daten-Collection als SPDX Lizenzbezeichner oder Ausdruck
     extent JSONB NOT NULL,                          -- Spatial und Temporal Extent (als JSON-Objekt)
     catalog_ID VARCHAR(50) REFERENCES catalogs(id),         -- Die ID des Katalogs, zu dem diese Collection gehört
+    creator_id INTEGER REFERENCES users(id),        -- User der die Collection erstellt hat
+    creator_username VARCHAR(50),                              -- User der die Collection erstellt hat
+    ispublic BOOLEAN NOT NULL,                                  -- ist die Collection Public?
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum der Collection
     updated_at TIMESTAMPTZ DEFAULT NOW()             -- Letztes Update der Collection
 );
@@ -33,19 +50,12 @@ CREATE TABLE items (
     properties JSONB NOT NULL,                       -- Ein JSONB-Objekt, das zusätzliche Metadaten enthält
     links JSONB[] NOT NULL,                           -- Eine Liste von Links (im JSON-Format)
     assets JSONB NOT NULL,                          -- Eine Karte von Asset-Objekten (im JSON-Format) (required: href)
-    collection_id VARCHAR(50) REFERENCES collections(id),                               -- Die ID der Collection, auf die dieses Item verweist
+    collection_id VARCHAR(50) REFERENCES collections(id),          -- Die ID der Collection, auf die dieses Item verweist
+    creator_id INTEGER REFERENCES users(id),        -- User der das Item erstellt hat
+    creator_username VARCHAR(50),                              -- User der die Collection erstellt hat
     created_at TIMESTAMPTZ DEFAULT NOW(),            -- Erstellungsdatum des Items
     updated_at TIMESTAMPTZ DEFAULT NOW(),             -- Letztes Update des Items
     color VARCHAR(50) 
-);
-
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    prename VARCHAR(20) NOT NULL,
-    lastname VARCHAR(20) NOT NULL,
-    email VARCHAR(30) NOT NULL,
-    hashed_password VARCHAR(200) NOT NULL
 );
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -64,8 +74,31 @@ VALUES (
     NOW()
 );
 
+INSERT INTO users (id, username, prename, lastname, email, hashed_password, created_collections, created_items)
+VALUES (
+    1, 
+    'wthrd_user', 
+    'wthrd', 
+    'technologies', 
+    'wthrd@support.de', 
+    '$2b$12$eImiTXuWVxfM37uY4JANj.e8T7XR0C6fDFOZfHTgHME4snR/zlTjW', 
+    '{"collection_ids": ["MLM_Collection", "MLM_Collection_2"]}',
+    '{"item_ids": 
+        [
+            "forest_classification_landsat", 
+            "crop_yield_prediction_sentinel", 
+            "solar_satlas_sentinel2", 
+            "crop_yield_prediction_modis", 
+            "urban_change_detection_landsat", 
+            "forest_fire_risk_assessment", 
+            "solar_deeplearning_landsat", 
+            "solar_uav_multispectral", "solar_satellite_timeseries"
+        ]
+    }'
+);
+
 -- Insert into `collections` table
-INSERT INTO collections (id, type, stac_version, stac_extensions, title, description, license, extent, catalog_ID, created_at, updated_at)
+INSERT INTO collections (id, type, stac_version, stac_extensions, title, description, license, extent, catalog_ID, creator_id, creator_username, ispublic, created_at, updated_at)
 VALUES 
 (
     'MLM_Collection',
@@ -75,7 +108,7 @@ VALUES
     'Example Collection', 
     'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
     '{"spatial": {"bbox": [[36.72418053653766, 36.04608406198559, -37.1751413641512, -29.414448517025097]]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
-    (SELECT id FROM catalogs WHERE title = 'Example Catalog'), NOW(), NOW()
+    (SELECT id FROM catalogs WHERE title = 'Example Catalog'), 1, 'wthrd_user', TRUE, NOW(), NOW()
 ),
 (
     'MLM_Collection_2', -- Neue eindeutige ID
@@ -87,13 +120,16 @@ VALUES
     'CC BY 4.0', 
     '{"spatial": {"bbox": [[51.49732237251003, -56.43988855665618, -29.354629936450973, -113.66884303505508]]}, "temporal": {"interval": [["2023-01-01T00:00:00Z", "2023-12-31T23:59:59Z"]]}}', 
     (SELECT id FROM catalogs WHERE title = 'Example Catalog'), 
+    1,
+    'wthrd_user',
+    TRUE,
     NOW(), 
     NOW()
  );
 -- Example data for items
 INSERT INTO items (
     id, type, stac_version, stac_extensions, geometry, bbox, properties, 
-    links, assets, collection_id, created_at, updated_at, color
+    links, assets, collection_id, creator_id, creator_username, created_at, updated_at, color
 )
 VALUES (
     'forest_classification_landsat', 
@@ -161,6 +197,8 @@ VALUES (
         }
     }'::jsonb, 
     (SELECT id FROM collections WHERE title = 'Example Collection 2'), 
+    1,
+    'wthrd_user',
     '2023-06-15T08:30:00Z'::timestamptz, 
     '2023-06-15T08:30:00Z'::timestamptz,
     '#2D9CDB'
@@ -226,6 +264,8 @@ VALUES (
         }
     }'::jsonb, 
     (SELECT id FROM collections WHERE title = 'Example Collection 2'), 
+    1,
+    'wthrd_user',
     '2023-09-01T14:45:00Z'::timestamptz, 
     '2023-09-01T14:45:00Z'::timestamptz,
     '#6FCF97'
@@ -295,6 +335,8 @@ VALUES (
         }
     }'::jsonb, 
     (SELECT id FROM collections WHERE title = 'Example Collection'), 
+    1,
+    'wthrd_user',
     NOW(), 
     NOW(),
     '#8B572A'
@@ -360,6 +402,8 @@ ARRAY[
 }
 }'::jsonb,
 (SELECT id FROM collections WHERE title = 'Example Collection'),
+1,
+'wthrd_user',
 '2025-01-15T10:30:00Z'::timestamptz,
 '2025-01-15T10:30:00Z'::timestamptz,
 '#4A90E2'
@@ -428,6 +472,8 @@ ARRAY[
 }
 }'::jsonb,
 (SELECT id FROM collections WHERE title = 'Example Collection'),
+1,
+'wthrd_user',
 '2024-11-30T16:45:00Z'::timestamptz,
 '2024-11-30T16:45:00Z'::timestamptz,
 '#BD10E0'
@@ -504,6 +550,8 @@ ARRAY[
 }
 }'::jsonb,
 (SELECT id FROM collections WHERE title = 'Example Collection'),
+1,
+'wthrd_user',
 '2024-06-01T09:00:00Z'::timestamptz,
 '2024-06-01T09:00:00Z'::timestamptz,
 '#68838B'
@@ -559,6 +607,8 @@ ARRAY[
         }
     }'::jsonb, 
     (SELECT id FROM collections WHERE title = 'Example Collection'), 
+    1,
+    'wthrd_user',
     NOW(), 
     NOW(),
     '#2D9CDB'
@@ -606,6 +656,8 @@ ARRAY[
         }
     }'::jsonb, 
     (SELECT id FROM collections WHERE title = 'Example Collection'), 
+    1,
+    'wthrd_user',
     NOW(), 
     NOW(),
     '#F5A623'
@@ -667,7 +719,9 @@ ARRAY[
 }
 }'::jsonb,
 (SELECT id FROM collections WHERE title = 'Example Collection'),
+1,
+'wthrd_user',
 NOW(),
 NOW(),
 '#7ED321'
-)
+);
