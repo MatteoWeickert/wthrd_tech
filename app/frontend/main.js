@@ -2363,17 +2363,20 @@ function successfulLoggedIn(user){
                                 <!-- Login Form -->
                                 <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
                                     <div class="mb-4" style="font-weight: 300; font-size:20px; text-align: center; text-transform: uppercase; color: #1C3D86">
-                                        Willkommen zurück, ${username}!
+                                        Willkommen zurück, ${prename}!
                                     </div>
                                     <hr>
                                     <form id="loginForm" style="text-align: center;">
                                         <div class="mb-3">
-                                            <span>Nachname: ${lastname}</span>
-                                        </div>
-                                       <div class="mb-3">
                                             <span>Vorname: ${prename}</span>
                                         </div>
-                                         <div class="mb-3">
+                                        <div class="mb-3">
+                                            <span>Nachname: ${lastname}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <span>Nutzername: ${username}</span>
+                                        </div>
+                                        <div class="mb-3">
                                             <span>E-Mail: ${email}</span>
                                         </div>
                                         <hr>
