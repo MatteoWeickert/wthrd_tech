@@ -261,7 +261,6 @@ async function startWebsite(){
                         displayItems(filteredItems);        }
                 }
             });
-
             setTimeout(function(){
                 isLoggedIn()
             }, 50) 
@@ -527,10 +526,10 @@ async function loginUser(){
         });
         if(response.ok){
                 const data = await response.json()
-                showAlert(3, "Erfolgreich angemeldet. Willkommen zurück ", username)
+                showAlert(3, "Erfolgreich angemeldet. Willkommen zurück ", `${username}, aktualisiere nun die Website.`)
                 sessionStorage.setItem('token', data.access_token)
                 successfulLoggedIn(username)
-                startWebsite();
+                startWebsite()
         } else{
             showAlert(4, "Ungültige Anmeldedaten. Probiere es erneut.", "")
         }
@@ -1074,6 +1073,30 @@ function createInputForm(data, inputinfo) {
             createDynamicInputs();
         break;
         case('/addcollection.html'):
+            // Bounding Box-Option
+            tableBody.innerHTML += `
+            <tr id="main-inputgroup">
+                <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box<br><span class="main-inputinfo">Markiere auf der Karte den Bereich, für den die Collection gedacht ist.</span></td>
+                <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
+                    <div id="map" style="width:120%;height:100%;"></div>
+                </td>
+                <td id="" class="main-inputalert"></td>
+            </tr>
+            `;
+         count += 1;
+
+            // Zeitraumauswahl
+            tableBody.innerHTML += `
+            <tr id="main-inputgroup">
+                <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum die Collection Modelle halten soll.</span></td>
+                    <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                        <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
+                    </td>
+                <td id="" class="main-inputalert"></td>
+            </tr>
+            `;
+
+            count += 1;
             // Datenschutz-Auswahl
             tableBody.innerHTML += `
                 <tr id="main-inputgroup">
@@ -1256,6 +1279,14 @@ function analyzeInput(expected){
             }
         break;
         case('/addcollection.html'):
+            const boundingCol = getBounds();
+            const dateCol = getDateRange();
+            if (boundingCol === undefined || boundingCol === null || boundingCol === "") {
+                missing.push('Bounding')
+            }
+            if (dateCol === undefined || dateCol === null || dateCol === "") {
+                missing.push('Date')
+            }
         break;
     }
     changeInputTOC(parameters, missing);
@@ -1329,6 +1360,12 @@ async function createInputTOC(data) {
         break;
         case('/addcollection.html'):
             sidebarList.innerHTML += `
+                <li class="nav-item">
+                    <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-map">Bounding Box</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-public">Öffentlich</a>
                 </li>
