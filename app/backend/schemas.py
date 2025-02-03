@@ -1,10 +1,24 @@
 # Datei zur Implementierung der Eingabe und Antwort Restriktionen an die Datenbank
 # SQLAlchmey macht Vorgaben für die Datenbank (Eigenschaften etc.), Pydantic prüft die Eingaben des Nutzers an FastAPI und die Rückgabe an den Nutzer
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, root_validator
 import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+from models import Item, Catalog, Collection, User
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import create_engine
+import os
+
+
+# Get database connection info from environment variables
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@postgres/metadata_database")
+
+# Initialize SQLAlchemy components
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
 
 class Asset(BaseModel):
     href: str = Field(..., description="URI to the asset object. Relative and absolute URIs are allowed.")
@@ -93,6 +107,41 @@ class ItemCreate(BaseModel):
                 raise ValueError("The 'rel' value in each object must be a string.")
 
         return value
+    
+
+    @root_validator
+    def validate_bbox_and_collection(cls, values):
+        bbox = values.get("bbox")
+        collection_id = values.get("collection_id")
+
+        if not bbox or not collection_id:
+            return values  # prüfe ob bbox oder collection_id fehlen
+
+        # Datenbankverbindung herstellen
+        db = SessionLocal()
+        collection = db.query(Collection).filter(Collection.id == collection_id).first()
+        db.close()
+
+        if not collection:
+            raise ValueError(f"Collection with ID '{collection_id}' not found.")
+        
+        # Zugriff auf die Bounding Box der Collection
+        try:
+            collection_extent = collection.extent["spatial"]["bbox"][0]  # [west, south, east, north]
+        except (KeyError, TypeError, IndexError):
+            raise ValueError("Invalid extent format in collection.")
+        
+        # Extrahiere die Werte aus bbox und extent
+        item_west, item_south, item_east, item_north = bbox
+        coll_west, coll_south, coll_east, coll_north = collection_extent
+
+        # Prüfen, ob bbox innerhalb der extent-Bounds liegt
+        if not (coll_west <= item_west <= coll_east and coll_west <= item_east <= coll_east and
+                coll_south <= item_south <= coll_north and coll_south <= item_north <= coll_north):
+            raise ValueError(f"Bounding box {bbox} is outside the extent {collection_extent} of the collection.")
+
+        return values
+
     
     def dict(self, *args, **kwargs):
         # Überschreiben der dict-Methode, um assets zu serialisieren

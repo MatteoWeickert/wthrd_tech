@@ -822,10 +822,10 @@ async function addItems() {
                     }
                     else {
                         // Generische Fehlermeldung für alles andere
-                        showAlert(4, `Fehler bei Feld '${error.loc.join(" -> ")}': ${error.msg}`);
+                        showAlert(4, `Fehler beim Hinzufügen:  ${error.msg}`), "";
                     }
                 });
-            }
+            } 
             else {
                 showAlert(4, `${data.detail}`);
             }
@@ -940,7 +940,7 @@ async function addCollections(){
                     }
                     else {
                         // Generische Fehlermeldung für alles andere
-                        showAlert(4, `Fehler bei Feld '${error.loc.join(" -> ")}': ${error.msg}`);
+                        showAlert(4, `Fehler beim Hinzufügen: ${error.msg}`);
                     }
                 });
             }
