@@ -261,7 +261,6 @@ async function startWebsite(){
                         displayItems(filteredItems);        }
                 }
             });
-
             setTimeout(function(){
                 isLoggedIn()
             }, 50) 
@@ -527,10 +526,10 @@ async function loginUser(){
         });
         if(response.ok){
                 const data = await response.json()
-                showAlert(3, "Erfolgreich angemeldet. Willkommen zurück ", username)
+                showAlert(3, "Erfolgreich angemeldet. Willkommen zurück ", `${username}, aktualisiere nun die Website.`)
                 sessionStorage.setItem('token', data.access_token)
                 successfulLoggedIn(username)
-                startWebsite();
+                startWebsite()
         } else{
             showAlert(4, "Ungültige Anmeldedaten. Probiere es erneut.", "")
         }
@@ -538,6 +537,18 @@ async function loginUser(){
     catch(error){
         showAlert(4, "Fehler beim Anmelden.", "Passwort oder Nutzername falsch.")
     }
+}
+
+// Funktion um den aktuellen Nutzer abzumelden
+function logoutUser(){
+    sessionStorage.setItem('token', null)
+    closeLoginTab();
+    isLoggedIn();
+    successfulLoggedOut();
+    startWebsite();
+    setTimeout(function(){
+        showAlert(3, "Account abgemeldet. Bis zum nächsten Mal!", "");
+    }, 1) 
 }
 
 // Funktion um Authentifizierungsdaten abzufragen
@@ -570,7 +581,7 @@ async function getAuthData() {
 async function isLoggedIn() {
     const logged = await getAuthData();
     if (logged && logged.username && logged.id) {
-        successfulLoggedIn(logged.username)
+        successfulLoggedIn(logged)
         return true;
     } else {
         return false;
@@ -719,6 +730,7 @@ async function fetchItems() {
 async function addItems() {
     const input = getUserInputs();
     const token = sessionStorage.getItem("token");
+    const userdata = await getAuthData();
     try {
         const response = await fetch('http://localhost:8000/addItem/', {
             method: 'POST',
@@ -776,12 +788,15 @@ async function addItems() {
                     data: { href: "https://example.com/data" }
                 },
                 collection_id: input.collectionid,
+                creator_id: userdata.id,
+                creator_username: userdata.username,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 color: getSelectedColor()
             })
         });
         const data = await response.json();
+        console.log(data)
 
         // Verarbeiten der Nachricht aus der API-Antwort
         if (data.message === "Item added successfully") {
@@ -807,10 +822,10 @@ async function addItems() {
                     }
                     else {
                         // Generische Fehlermeldung für alles andere
-                        showAlert(4, `Fehler bei Feld '${error.loc.join(" -> ")}': ${error.msg}`);
+                        showAlert(4, `Fehler beim Hinzufügen:  ${error.msg}`), "";
                     }
                 });
-            }
+            } 
             else {
                 showAlert(4, `${data.detail}`);
             }
@@ -925,7 +940,7 @@ async function addCollections(){
                     }
                     else {
                         // Generische Fehlermeldung für alles andere
-                        showAlert(4, `Fehler bei Feld '${error.loc.join(" -> ")}': ${error.msg}`);
+                        showAlert(4, `Fehler beim Hinzufügen: ${error.msg}`);
                     }
                 });
             }
@@ -1072,19 +1087,30 @@ function createInputForm(data, inputinfo) {
                 <td id="" class="main-inputalert"></td>
             </tr>
             `;
-            count += 1;
+         count += 1;
 
             // Zeitraumauswahl
             tableBody.innerHTML += `
-                <tr id="main-inputgroup">
-                    <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum die Collection Modelle halten soll.</span></td>
+            <tr id="main-inputgroup">
+                <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum die Collection Modelle halten soll.</span></td>
                     <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
                         <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
+                    </td>
+                <td id="" class="main-inputalert"></td>
+            </tr>
+            `;
+
+            count += 1;
+            // Datenschutz-Auswahl
+            tableBody.innerHTML += `
+                <tr id="main-inputgroup">
+                    <td id="inputexp-public" class="main-inputexp">${count}) Öffentlich<br><span class="main-inputinfo">Gebe an, ob deine Collection öffentlich sein soll, sodass alle Nutzer ein Modell zu deiner Collection hinzufügen können.</span></td>
+                    <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
+                        <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
                     </td>
                     <td id="" class="main-inputalert"></td>
                 </tr>
             `;
-
             count += 1;
 
             // Buttons zum absenden un analysieren
@@ -1343,6 +1369,9 @@ async function createInputTOC(data) {
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-public">Öffentlich</a>
                 </li>
             `
         break;
@@ -1984,11 +2013,21 @@ function displayItems(items, filters) {
             information.innerHTML = `
                 <div class="collapse" id="collapse-${item.id}">
                     <div class="card card-body">
-                        <div class="card-body-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
-                                <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
-                            </svg>
-                            <span style="font-size: 10px;">${item.collection_id} /   </span><span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
+                        <div class="card-body-title" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-braces" viewBox="0 0 16 16">
+                                    <path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/>
+                                </svg>
+                                <span style="font-size: 10px;">${item.collection_id} / </span>
+                                <span style="font-size:20px; color:${item.color}">${item.properties['mlm:name']}</span>
+                            </div>
+                            <div style="text-align: right; font-size: 10px;">
+                                Erstellt von:
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+                                    <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                                </svg>
+                                ${item.creator_username}
+                            </div>
                         </div>
                         <hr>
                         <div class="card-body-download">
@@ -2307,11 +2346,15 @@ function extractUniqueFilterValues(items) {
 
 // Funktion um Anmeldetabs bei erfolgreicher Anmeldung anzupassen
 function successfulLoggedIn(user){
-    const name = user
+    const username = user.username
+    const lastname = user.lastname
+    const prename = user.prename
+    const email = user.email
     const sidebarlogin = document.getElementById('sidebar-footerlink-login')
     const topbarlogin = document.getElementById('login-button')
+    const tabContent = document.getElementById('authModal')
     sidebarlogin.innerHTML = ' '
-    sidebarlogin.innerHTML = `<span>Bereits angemeldet: <strong style="text-transform: uppercase;">${name}</strong></span>`
+    sidebarlogin.innerHTML = `<span>Bereits angemeldet: <strong style="text-transform: uppercase;">${username}</strong></span>`
     topbarlogin.innerHTML = ' '
     topbarlogin.innerHTML = `
             <button style="margin-top: 5px;" class="d-none d-md-block border-0 bg-transparent" type="button">
@@ -2320,10 +2363,127 @@ function successfulLoggedIn(user){
             <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548 1.17-1.951a.5.5 0 1 1 .858.514M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
             <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
             </svg>
-            <span style="font-weight: bold; font-size:10px; color: #1C3D86;">${name}</span>
+            <span style="font-weight: bold; font-size:10px; color: #1C3D86;">${username}</span>
         </span>
         </button>
+    `
+    tabContent.innerHTML = ''
+    tabContent.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <!-- Tab Content -->
+                            <div class="tab-content mt-3" id="authTabContent">
+                                <!-- Login Form -->
+                                <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                                    <div class="mb-4" style="font-weight: 300; font-size:20px; text-align: center; text-transform: uppercase; color: #1C3D86">
+                                        Willkommen zurück, ${prename}!
+                                    </div>
+                                    <hr>
+                                    <form id="loginForm" style="text-align: center;">
+                                        <div class="mb-3">
+                                            <span>Vorname: ${prename}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <span>Nachname: ${lastname}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <span>Nutzername: ${username}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <span>E-Mail: ${email}</span>
+                                        </div>
+                                        <hr>
+                                        <button type="button" onclick="logoutUser()" class="btn-login p-2 w-100">Abmelden</button>
+                                    </form>
+                                    <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
+                                        <span>Made by <img href="#" src="wthrdicon.svg" width="30px" height="30px"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
+    `
+}
+
+// Funktion um Frontend nach dem Logout zurückzusetzen
+function successfulLoggedOut(){
+    const topbarlogin = document.getElementById('login-button')
+    const tabContent = document.getElementById('authModal')
+    const sidebarlogin = document.getElementById('sidebar-footerlink-login')
+
+    topbarlogin.innerHTML =`
+                                <button id="login-button" class="d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">
+                                <span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#1C3D86" class="bi bi-person-circle" viewBox="0 0 16 16">
+                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                                </svg>
+                                </span>
+                            </button>
+    `
+    sidebarlogin.innerHTML=`
+                <a id="sidebar-footerlink-login" href="#" class="nav-link d-none d-md-block border-0 bg-transparent" type="button" data-bs-toggle="modal" data-bs-target="#authModal">Login</a>
+
+    `
+
+    tabContent.innerHTML =`
+                    <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <!-- Nav tabs innerhalb des Overlays -->
+                            <ul class="nav nav-tabs nav-justified" id="authTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Anmelden</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Registrieren</button>
+                                </li>
+                            </ul>
+                            <!-- Tab Content -->
+                            <div class="tab-content mt-3" id="authTabContent">
+                                <!-- Login Form -->
+                                <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+                                    <form id="loginForm">
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="login-username" placeholder="Nutzername">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="password" class="form-control overlay-input" id="login-password" placeholder="Passwort">
+                                        </div>
+                                        <button type="button" onclick="closeLoginTab(); loginUser()" class="btn-login p-2 w-100">Anmelden</button>
+                                    </form>
+                                    <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
+                                        <span>Made by <img href="#" src="wthrdicon.svg" width="30px" height="30px"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Register Form -->
+                                <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
+                                    <form id="registerForm">
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-prename" placeholder="Vorname">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-lastname" placeholder="Nachname">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control overlay-input" id="register-username" placeholder="Nutzername">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="email" class="form-control overlay-input" id="register-email" placeholder="E-Mail">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="password" class="form-control overlay-input" id="register-password" placeholder="Passwort">
+                                        </div>
+                                        <button onclick="closeLoginTab(); registerUser()"class="btn-login p-2 w-100">Registrieren</button>
+                                    </form>
+                                    <div class="text-center text-muted" style="font-size:10px;margin-top:5px;">
+                                        <span>Mit dem Registrieren bestätigt der Nutzer die geltenen <a href="#">AGB</a> sowie <a href="#">Nutzungsbedingungen</a> der jeweiligen Unterprodukte.</span><br>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
     `
 }

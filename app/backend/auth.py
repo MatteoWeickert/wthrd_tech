@@ -108,7 +108,9 @@ async def get_current_user(token: Optional[str] = Depends(oauth2_bearer)) -> Opt
         user_id: int = payload.get('id')
         if username is None or user_id is None:
             return None
-        return {'username': username, 'id': user_id}
+        db = SessionLocal()
+        user = db.query(User).filter(User.username == username).first()
+        return {'id': user_id, 'username': username, 'prename': user.prename, 'lastname': user.lastname, 'email': user.email}
     
     except JWTError:
     # Token konnte nicht validiert werden

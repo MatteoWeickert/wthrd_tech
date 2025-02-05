@@ -130,6 +130,9 @@ def add_collection(collection: CollectionCreate, user: user_dependency):
             license=collection_data["license"],
             extent=collection_data["extent"],
             catalog_id=collection_data["catalog_id"],
+            creator_id=user["id"],
+            creator_username=user["username"],
+            ispublic=collection_data["ispublic"],
             created_at=collection_data["created_at"],
             updated_at=collection_data["updated_at"]
         )
@@ -181,6 +184,8 @@ def add_item(item: ItemCreate, user: user_dependency):
             links=item_data["links"],
             assets=item_data["assets"],  # assets ist jetzt ein JSON-serialisierbares Dictionary
             collection_id=item_data["collection_id"],
+            creator_id=user["id"],
+            creator_username=user["username"],
             created_at=item_data["created_at"],
             updated_at=item_data["updated_at"],
             color=item_data["color"]
@@ -226,7 +231,6 @@ def get_catalog():
         catalog = db.query(Catalog).first()
         if catalog is None:
             return {"error": "Catalog not found"}
-        # Fügt conformsTo dynamisch als Attribut hinzu
         conforms_to = [
             "http://api.stacspec.org/v1.0.0/core",
             "http://api.stacspec.org/v1.0.0/collections",
@@ -276,7 +280,6 @@ def get_conformance():
         }
     )
 
-
 @app.get("/collections/{collection_id}/items/{item_id}")
 def get_collection_item(collection_id: str, item_id: str):
 
@@ -288,9 +291,6 @@ def get_collection_item(collection_id: str, item_id: str):
         return item
     finally:
         db.close()
-
-
-# get "search"-Route is required
 
 @app.get("/search")
 def search(
@@ -502,7 +502,6 @@ def search(
     finally:
         db.close()
 
-
 class SearchQuery(BaseModel):
     bbox: Optional[List[float]] = [-180,-90,180,90]
     datetime: Optional[str] = None
@@ -590,6 +589,27 @@ def get_all_collections():
                 collection.links.append(
                     {"rel": "item", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}/items/{item.id}"}
                 )
+            
+            if items:
+                west, south, east, north = items[0].bbox
+                item_time = item.properties["datetime"]
+                start_time = item_time
+                end_time = item_time
+
+                for item in items[1:]:
+                    bbox = item.bbox
+                    west = min(west, bbox[0])
+                    south = min(south, bbox[1])
+                    east = max(east, bbox[2])
+                    north = max(north, bbox[3])
+
+                    start_time = min(item.properties["datetime"], start_time)
+                    end_time = max(item.properties["datetime"], end_time)
+                spatial_extent = [west, south, east, north]
+                temporal_extent = [start_time, end_time]
+                collection.extent = {"spatial": spatial_extent, "temporal": temporal_extent}
+
+            
         return {"collections": collections}
     except Exception as e:
         return {"error: " + str(e)}
@@ -614,12 +634,30 @@ def get_collections(collection_id: str):
             collection.links.append(
                 {"rel": "item", "type": "application/json", "href": f"http://localhost:8000/collections/{collection.id}/items/{item.id}"}
             )
+        
+        if items:
+            west, south, east, north = items[0].bbox
+            item_time = item.properties["datetime"]
+            start_time = item_time
+            end_time = item_time
+
+            for item in items[1:]:
+                bbox = item.bbox
+                west = min(west, bbox[0])
+                south = min(south, bbox[1])
+                east = max(east, bbox[2])
+                north = max(north, bbox[3])
+
+                start_time = min(item.properties["datetime"], start_time)
+                end_time = max(item.properties["datetime"], end_time)
+            spatial_extent = [west, south, east, north]
+            temporal_extent = [start_time, end_time]
+            collection.extent = {"spatial": spatial_extent, "temporal": temporal_extent}
         return collection
     except Exception as e:
         return {"error: " + str(e)}
     finally:
         db.close()
-
 
 @app.get("/collections/{collection_id}/items")
 def get_collection_items(collection_id: str):
