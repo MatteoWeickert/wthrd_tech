@@ -2444,12 +2444,12 @@ async function successfulLoggedIn(user){
                                                     <tr>
                                                         <td>
                                                             <ul>
-                                                                ${usercollections.map(col => `<li style="list-style-type: none;">${col.id}</li>`).join('') || 'Füge zunächst eine eigene Collection hinzu!'}
+                                                                ${usercollections.map(col => `<li style="margin-top: 10px;list-style-type: none;">${col.id}<br><div style="margin-left: 10px;font-size:10px;">${col.description}</div></li>`).join('') || 'Füge zunächst eine <a href="addcollection.html">eigene Collection</a> hinzu!'}
                                                             </ul>
                                                         </td>
                                                         <td>
                                                             <ul>
-                                                                ${useritems.map(item => `<li style="list-style-type: none; color:${item.color};">${item.properties['mlm:name'] || item.name}</li>`).join('')|| 'Füge zunächst ein eigenes Modell hinzu!'}
+                                                                ${useritems.map(item => `<li style="margin-top: 10px; list-style-type: none; color:${item.color};">${item.properties['mlm:name']}<br><div style="margin-left: 10px;font-size:10px;">${item.properties['description']}</div></li>`).join('')|| 'Füge zunächst ein <a href="addmodel.html">eigenes Modell</a> hinzu!'}
                                                             </ul>
                                                         </td>
                                                     </tr>
