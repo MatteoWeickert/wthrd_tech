@@ -107,7 +107,7 @@ VALUES
     ARRAY[]::text[],
     'Example Collection', 
     'Eine Beispiel-Collection, die innerhalb des Beispielkatalogs enthalten ist.', 'CC BY 4.0', 
-    '{"spatial": {"bbox": [[36.72418053653766, 36.04608406198559, -37.1751413641512, -29.414448517025097]]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
+    '{"spatial": {"bbox": [[-37.1751413641512, -29.414448517025097, 36.72418053653766, 36.04608406198559]]}, "temporal": {"interval": [["2022-01-01T00:00:00Z", "2022-12-31T23:59:59Z"]]}}', 
     (SELECT id FROM catalogs WHERE title = 'Example Catalog'), 1, 'wthrd_user', TRUE, NOW(), NOW()
 ),
 (
