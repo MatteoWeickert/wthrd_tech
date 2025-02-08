@@ -707,22 +707,29 @@ async function registerUser(){
 
 // Fetchen aller Modelle
 async function fetchItems() {
+    const file = window.location.pathname.trim().toLowerCase();
+
     try {
         const response = await fetch('http://localhost:8000/items');
         if (!response.ok) {
-            showAlert(4, "Fehler beim verbinden zum STAC.", "Überprüfe die Netzwerkverbindung.")
+            showAlert(4, "Fehler beim Verbinden zum STAC.", "Überprüfe die Netzwerkverbindung.");
         }
-        const data = await response.json();
 
-        if (Array.isArray(data) && data.length > 0) {
-            allItems = data;
-            printAllFilters(data);
-            displayItems(data, undefined);
-        } else {
-            showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.")
+        const data = await response.json();
+        allItems = data;
+
+        if (file === '/catalog.html') {
+            if (Array.isArray(data) && data.length > 0) {
+                printAllFilters(data);
+                displayItems(data, undefined);
+            } else {
+                showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.");
+            }
         }
+
+        allItems = data
     } catch (error) {
-        showAlert(4, "Fehler beim Abrufen der Items oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.")
+        showAlert(4, "Fehler beim Abrufen der Items oder bei der Verbindung zum STAC.", "Überprüfe die Netzwerkverbindung.");
     }
 }
 
@@ -862,6 +869,7 @@ async function fetchCollections(){
 // Adden von Collections aus Eingabemaske
 async function addCollections(){
     const input = getUserInputs();
+    const userdata = await getAuthData();
     const token = sessionStorage.getItem("token");
     try {
         const response = await fetch('http://localhost:8000/addCollection/', {
@@ -887,6 +895,9 @@ async function addCollections(){
                       getBounds()
                     ]
                   },
+                  "ispublic": getPublicChoice(),
+                  "creator_id":userdata.id,
+                  "creator_username":userdata.username,
                   "temporal": {
                     "interval": [
                       [
@@ -1106,7 +1117,7 @@ function createInputForm(data, inputinfo) {
                 <tr id="main-inputgroup">
                     <td id="inputexp-public" class="main-inputexp">${count}) Öffentlich<br><span class="main-inputinfo">Gebe an, ob deine Collection öffentlich sein soll, sodass alle Nutzer ein Modell zu deiner Collection hinzufügen können.</span></td>
                     <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
-                        <input id="input-pretrained" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
+                        <input id="input-public" style="border:2px solid; border-radius: 3px;" type="checkbox"/>
                     </td>
                     <td id="" class="main-inputalert"></td>
                 </tr>
@@ -1172,6 +1183,7 @@ async function createDynamicInputs() {
 
     await fetchCollections();
     const collections = Array.isArray(allCollections) ? allCollections : Object.values(allCollections).flat();
+    const userdata = await getAuthData();
 
     inputFieldCol.setAttribute('class', 'main-inputwindow');
     inputFieldCol.setAttribute('id', 'input-collectionid');
@@ -1186,15 +1198,16 @@ async function createDynamicInputs() {
 
     collections.forEach(col => {
         if (col && col.id) {
-            const checkboxItemCol = document.createElement('div');
-            checkboxItemCol.style.cssText = 'padding: 5px; cursor: pointer;';
-            checkboxItemCol.innerHTML = `
-                <input type="checkbox" id="collection-${col.id}" value="${col.id}" style="margin-right: 5px;" />
-                <label for="collection-${col.id}">${col.id}</label>
-            `;
-    
-            checkboxItemCol.querySelector('input').addEventListener('change', updateSelectedCollections);
-            dropdownCol.appendChild(checkboxItemCol);
+            if (col.ispublic || userdata.id === col.creator_id) {
+                const checkboxItemCol = document.createElement('div');
+                checkboxItemCol.style.cssText = 'padding: 5px; cursor: pointer;';
+                checkboxItemCol.innerHTML = `
+                    <input type="checkbox" id="collection-${col.id}" value="${col.id}" style="margin-right: 5px;" />
+                    <label for="collection-${col.id}">${col.id}</label>
+                `;
+                checkboxItemCol.querySelector('input').addEventListener('change', updateSelectedCollections);
+                dropdownCol.appendChild(checkboxItemCol);
+            }        
         }
     });
     
@@ -1886,6 +1899,16 @@ function getPretrained(){
     }
 }
 
+// Funktion zum Checken ob User eine öffentliche Collection hochladen will
+function getPublicChoice(){
+    const pretrained = document.getElementById('input-public')
+    if(pretrained.checked){
+        return true;
+    } else{
+        return false;
+    }
+}
+
 // Funktion zum Erstellen der individuellen Kartenansicht für jedes Modell
 function createMapOnModell(data) {
     const item = data;
@@ -2345,14 +2368,27 @@ function extractUniqueFilterValues(items) {
 }
 
 // Funktion um Anmeldetabs bei erfolgreicher Anmeldung anzupassen
-function successfulLoggedIn(user){
+async function successfulLoggedIn(user){
+    let usercollections = [];
+    let useritems = [];
     const username = user.username
     const lastname = user.lastname
     const prename = user.prename
     const email = user.email
+    const id = user.id
     const sidebarlogin = document.getElementById('sidebar-footerlink-login')
     const topbarlogin = document.getElementById('login-button')
     const tabContent = document.getElementById('authModal')
+    await fetchCollections();
+    await fetchItems();
+    if (allCollections && allCollections.collections) {
+        usercollections = allCollections.collections.filter(col => col.creator_id === id);
+    }
+      
+    if (allItems && Array.isArray(allItems)) {
+        useritems = allItems.filter(item => item.creator_id === id);
+    } 
+
     sidebarlogin.innerHTML = ' '
     sidebarlogin.innerHTML = `<span>Bereits angemeldet: <strong style="text-transform: uppercase;">${username}</strong></span>`
     topbarlogin.innerHTML = ' '
@@ -2393,6 +2429,32 @@ function successfulLoggedIn(user){
                                         <div class="mb-3">
                                             <span>E-Mail: ${email}</span>
                                         </div>
+                                        <hr>
+                                        <div class="mb-4" style="font-weight: 300; font-size:20px; text-align: center; text-transform: uppercase; color: #1C3D86">
+                                            Dein Inhalt:
+                                        </div>
+                                            <table>
+                                                <thead>
+                                                    <tr style="font-weight: 300; width: 100%; font-size:10px;text-transform: uppercase; color: #1C3D86">
+                                                        <th style="width:50%;">Collections</th>
+                                                        <th style="width:50%;">Modelle</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody style="font-weight: 300; text-align:left;">
+                                                    <tr>
+                                                        <td>
+                                                            <ul>
+                                                                ${usercollections.map(col => `<li style="list-style-type: none;">${col.id}</li>`).join('') || 'Füge zunächst eine eigene Collection hinzu!'}
+                                                            </ul>
+                                                        </td>
+                                                        <td>
+                                                            <ul>
+                                                                ${useritems.map(item => `<li style="list-style-type: none; color:${item.color};">${item.properties['mlm:name'] || item.name}</li>`).join('')|| 'Füge zunächst ein eigenes Modell hinzu!'}
+                                                            </ul>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         <hr>
                                         <button type="button" onclick="logoutUser()" class="btn-login p-2 w-100">Abmelden</button>
                                     </form>
