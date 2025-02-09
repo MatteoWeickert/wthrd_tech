@@ -120,6 +120,7 @@ def add_collection(collection: CollectionCreate, user: user_dependency):
     try:
         # Serialisieren der Eingabedaten, einschließlich der Assets
         collection_data = collection.dict()  # Die überschriebenen `dict`-Methode sorgt für korrekte Serialisierung
+        print(collection_data)
         new_collection = Collection(
             id=collection_data["id"],
             type=collection_data["type"],

@@ -895,9 +895,6 @@ async function addCollections(){
                       getBounds()
                     ]
                   },
-                  "ispublic": getPublicChoice(),
-                  "creator_id":userdata.id,
-                  "creator_username":userdata.username,
                   "temporal": {
                     "interval": [
                       [
@@ -907,29 +904,10 @@ async function addCollections(){
                     ]
                   }
                 },
+                "ispublic": getPublicChoice(),
+                "creator_id":userdata.id,
+                "creator_username":userdata.username,
                 "created_at": new Date().toISOString(),
-                "links": [
-                  {
-                    "rel": "self",
-                    "type": "application/json",
-                    "href": `http://localhost:8000/collections/${input.id}`
-                  },
-                  {
-                    "rel": "items",
-                    "type": "application/json",
-                    "href": `http://localhost:8000/collections/${input.id}/items`
-                  },
-                  {
-                    "rel": "parent",
-                    "type": "application/json",
-                    "href": "http://localhost:8000/"
-                  },
-                  {
-                    "rel": "root",
-                    "type": "application/json",
-                    "href": "http://localhost:8000/"
-                  }
-                ]
               })
         });
         const data = await response.json();
@@ -951,7 +929,7 @@ async function addCollections(){
                     }
                     else {
                         // Generische Fehlermeldung für alles andere
-                        showAlert(4, `Fehler beim Hinzufügen: ${error.msg}`);
+                        showAlert(4, `Fehler beim Hinzufügen: ${error.msg}`, "");
                     }
                 });
             }
