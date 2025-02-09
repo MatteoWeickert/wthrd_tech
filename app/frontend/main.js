@@ -1823,13 +1823,6 @@ function filterItems(items, filters){
                 }
             }
 
-            // Batch Size filtern
-            if (filters.batchSize && filters.batchSize.length > 0) {
-                if (!filters.batchSize.includes(properties['mlm:batch_size_suggestion'])) {
-                    matchingValues = false;
-                }
-            }
-
             // Pretrained Source filtern
             if (filters.pretrainedSource && filters.pretrainedSource.length > 0) {
                 if (!filters.pretrainedSource.includes(properties['mlm:pretrained_source'])) {
@@ -2314,7 +2307,6 @@ function extractUniqueFilterValues(items) {
         accelerators: new Set(),
         inputName: new Set(),
         architecture: new Set(),
-        batchSize: new Set(),
         pretrainedSource: new Set()
     };
 
@@ -2348,10 +2340,6 @@ function extractUniqueFilterValues(items) {
         if (properties['mlm:architecture']) {
             filters.architecture.add(properties['mlm:architecture']);
         }
-
-        if (properties['mlm:batch_size_suggestion']) {
-            filters.batchSize.add(properties['mlm:batch_size_suggestion']);
-        }
     });
 
     return {
@@ -2362,8 +2350,7 @@ function extractUniqueFilterValues(items) {
         accelerators: Array.from(filters.accelerators),
         collection: Array.from(filters.collection),
         inputName: Array.from(filters.inputName),
-        architecture: Array.from(filters.architecture),
-        batchSize: Array.from(filters.batchSize)
+        architecture: Array.from(filters.architecture)
     };
 }
 
@@ -2382,7 +2369,7 @@ async function successfulLoggedIn(user){
     await fetchCollections();
     await fetchItems();
     if (allCollections && allCollections.collections) {
-        usercollections = allCollections.collections.filter(col => col.creator_id === id);
+        usercollections = allCollections.collections.filter(col => col.creator_id === id );
     }
       
     if (allItems && Array.isArray(allItems)) {
