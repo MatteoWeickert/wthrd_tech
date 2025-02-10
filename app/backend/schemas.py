@@ -149,3 +149,15 @@ class UserCreate(BaseModel):
     lastname: str
     email: str
     hashed_password: str
+
+class CreateUserRequest(BaseModel):
+    username: str
+    prename: str
+    lastname: str
+    email: str
+    password: str
+
+    
+class Token(BaseModel):
+    access_token: str
+    token_type: str

@@ -10,6 +10,7 @@ from models import User
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
+from schemas import CreateUserRequest, Token
 
 router = APIRouter(
     prefix="/auth",
@@ -21,19 +22,6 @@ ALGORITHM = 'HS256'
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token', auto_error=False)
-
-# Pydantic Modell, um User-Eingabe auf Richtigkeit zu prüfen, bevor er angelegt wird (=> in Schemas auslagern?)
-class CreateUserRequest(BaseModel):
-    username: str
-    prename: str
-    lastname: str
-    email: str
-    password: str
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
 
 def get_db():
     db = SessionLocal()
