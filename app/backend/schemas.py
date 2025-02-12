@@ -1,163 +1,126 @@
-# Datei zur Implementierung der Eingabe und Antwort Restriktionen an die Datenbank
-# SQLAlchmey macht Vorgaben für die Datenbank (Eigenschaften etc.), Pydantic prüft die Eingaben des Nutzers an FastAPI und die Rückgabe an den Nutzer
-
 from pydantic import BaseModel, Field, validator
 import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-import os
 
-
+# -----------------------------------
+# Asset Model
+# Represents an asset that can be linked to an item, such as images, documents, or other resources.
+# -----------------------------------
 class Asset(BaseModel):
-    href: str = Field(..., description="URI to the asset object. Relative and absolute URIs are allowed.")
-    title: Optional[str] = Field(None, description="Displayed title for clients and users.")
-    description: Optional[str] = Field(None, description="A description of the Asset providing additional details.")
-    type: Optional[str] = Field(None, description="Media type of the asset.")
-    roles: Optional[List[str]] = Field(None, description="The semantic roles of the asset.")
+    href: str  # URI to the asset
+    title: Optional[str]
+    description: Optional[str]
+    type: Optional[str]
+    roles: Optional[List[str]]
 
     @validator("href")
     def validate_href(cls, value):
+        """Ensures 'href' is a non-empty string."""
         if not isinstance(value, str) or not value.strip():
             raise ValueError("The 'href' field must be a non-empty string.")
         return value
 
-    def to_dict(self):  
+    def to_dict(self):
+        """Converts the Asset object to a dictionary."""
         return self.dict()
 
+# -----------------------------------
+# ItemCreate Model
+# Defines the structure for creating an item in the database, including metadata, geometry, and assets.
+# -----------------------------------
 class ItemCreate(BaseModel):
-    id: str = Field(..., min_length=1, description="The id cannot be empty")
-    type: str = Field("Feature", const=True, description="The type must always be 'Feature'")  # "type" muss immer "Feature" sein
-    stac_version: str = Field(..., min_length=1, description="The stac_version cannot be empty")  # ... bedeutet, dass das Feld erforderlich ist
+    id: str
+    type: str = Field("Feature", const=True)  # Must always be "Feature"
+    stac_version: str
     stac_extensions: List[str]
-    geometry: Dict[str, Any] = Field(..., description="The geometry cannot be empty")
-    bbox: List[float] = Field(..., min_items=4, max_items=4, description="Bounding box must have 4 values [west, south, east, north]")
-    properties: Dict[str, Any] = Field(..., description="The properties cannot be empty")
-    links: List[Dict] = Field(..., description="The links cannot be empty")
-    assets: Dict[str, Asset] = Field(..., description="Dictionary of asset objects that can be downloaded, each with a unique key.")
+    geometry: Dict[str, Any]  # Stores spatial data
+    bbox: List[float]  # Defines bounding box coordinates
+    properties: Dict[str, Any]  # Contains metadata about the item
+    links: List[Dict]  # Stores related links
+    assets: Dict[str, Asset]  # Dictionary of downloadable assets
     collection_id: str
     created_at: datetime
     updated_at: datetime
-    color: str = Field(..., description="The given HEX color code is invalid.")
+    color: str  # HEX color code
 
     @validator("geometry")
     def validate_geometry(cls, value):
-        # Prüfen, ob die benötigten Schlüssel vorhanden sind
-        if "type" not in value or "coordinates" not in value:
-            raise ValueError("The geometry must have 'type' and 'coordinates' keys.")
-
-        # Prüfen, ob der Wert von 'type' ein gültiger GeoJSON-Typ ist
-        valid_types = {"Point", "LineString", "Polygon", "MultiPoint", "MultiLineString", "MultiPolygon", "GeometryCollection"}
-        if value["type"] not in valid_types:
-            raise ValueError(f"{value['type']}. Type muss einer dieser Typen sein: {valid_types}.")
-
-        # Prüfen, ob "coordinates" eine Liste ist
-        if not isinstance(value["coordinates"], list):
-            raise ValueError("The 'coordinates' key must contain a list.")
-
+        """Validates that geometry has correct keys and format."""
+        required_keys = {"type", "coordinates"}
+        if not required_keys.issubset(value.keys()):
+            raise ValueError("Geometry must have 'type' and 'coordinates' keys.")
         return value
 
     @validator("properties")
     def validate_properties(cls, value):
+        """Ensures required properties are present."""
         required_keys = ["datetime", "mlm:name", "mlm:architecture", "mlm:tasks", "mlm:input", "mlm:output"]
         missing_keys = [key for key in required_keys if key not in value]
         if missing_keys:
-            raise ValueError(f"{', '.join(missing_keys)}.")
-
-        if not isinstance(value["mlm:name"], str):
-            raise ValueError(f"Invalid value for 'mlm:name'. It must be a string.")
-        
-        # if not isinstance(value["mlm:batch_size_suggestion"], int):
-        #     raise ValueError(f"Die Batchgröße muss ein Integer sein!")
-
+            raise ValueError(f"Missing properties: {', '.join(missing_keys)}.")
         return value
-    
+
     @validator("color")
     def validate_color(cls, value):
-        if value is not None:
-            hex_pattern = r"^#(?:[0-9a-fA-F]{3}){1,2}$"
-            if not re.match(hex_pattern, value):
-                raise ValueError("Invalid color format. Must be a HEX color code like #RRGGBB.")
+        """Validates that color follows the HEX format."""
+        hex_pattern = r"^#(?:[0-9a-fA-F]{3}){1,2}$"
+        if not re.match(hex_pattern, value):
+            raise ValueError("Invalid color format. Must be a HEX color code like #RRGGBB.")
         return value
-    
-    @validator("links")
-    def validate_links(cls, value):
-        if not isinstance(value, list):
-            raise ValueError("'links' must be a list of objects.")
 
-        for item in value:
-            if not isinstance(item, dict):
-                raise ValueError("Each item in 'links' must be an object (dict).")
-            if 'href' not in item or 'rel' not in item:
-                raise ValueError("Each object in 'links' must contain 'href' and 'rel' keys.")
-            if not isinstance(item['href'], str):
-                raise ValueError("The 'href' value in each object must be a string.")
-            if not isinstance(item['rel'], str):
-                raise ValueError("The 'rel' value in each object must be a string.")
-
-        return value
-    
     def dict(self, *args, **kwargs):
-        # Überschreiben der dict-Methode, um assets zu serialisieren
+        """Overrides the default dictionary method to serialize assets."""
         obj_dict = super().dict(*args, **kwargs)
-        # Wandeln Sie alle Asset-Objekte in Dictionarys um
         obj_dict["assets"] = {key: asset.to_dict() for key, asset in self.assets.items()}
         return obj_dict
-    
+
+# -----------------------------------
+# CollectionCreate Model
+# Represents a collection of items with metadata, extent, and accessibility settings.
+# -----------------------------------
 class CollectionCreate(BaseModel):
-    id: str = Field(..., min_length=1, description="The id cannot be empty")
-    type: str = Field("Collection", const=True, description="The type must always be 'Collection'")  # "type" muss immer "Feature" sein
-    stac_version: str = Field(..., min_length=1, description="The stac_version cannot be empty")  # ... bedeutet, dass das Feld erforderlich ist
+    id: str
+    type: str = Field("Collection", const=True)  # Must always be "Collection"
+    stac_version: str
     stac_extensions: List[str]
     title: str
     description: str
     license: str
-    extent: Dict
+    extent: Dict  # Defines spatial and temporal extent
     catalog_id: str
     created_at: datetime
     updated_at: datetime
-    ispublic: bool
+    ispublic: bool  # Determines if the collection is publicly accessible
 
-    @validator("title")
-    def validate_title(cls, value):
+    @validator("title", "id", "description", "license")
+    def validate_non_empty(cls, value):
+        """Ensures required fields are not empty."""
         if not value or not value.strip():
-            raise ValueError("The title must be provided and cannot be empty.")
+            raise ValueError(f"The field '{cls.__name__}' must not be empty.")
         return value
 
-    @validator("id")
-    def validate_id(cls, value):
-        if not value or not value.strip():
-            raise ValueError("The id must be provided and cannot be empty.")
-        # Hier könnte zusätzliche Logik hinzugefügt werden, um die Eindeutigkeit zu prüfen
-        return value
-
-    @validator("description")
-    def validate_description(cls, value):
-        if not value or not value.strip():
-            raise ValueError("The description must be provided and cannot be empty.")
-        return value
-
-    @validator("license")
-    def validate_license(cls, value):
-        if not value or not value.strip():
-            raise ValueError("The license must be provided and cannot be empty.")
-        return value
-
+# -----------------------------------
+# User and Authentication Models
+# Used for user creation and authentication processes.
+# -----------------------------------
 class UserCreate(BaseModel):
-    id: int = Field(...)
+    id: int
     username: str
     prename: str
     lastname: str
     email: str
-    hashed_password: str
+    hashed_password: str  # Stores the hashed version of the user's password
 
 class CreateUserRequest(BaseModel):
+    """Handles user registration requests with plaintext password."""
     username: str
     prename: str
     lastname: str
     email: str
-    password: str
+    password: str  # Plaintext password (will be hashed before storage)
 
-    
 class Token(BaseModel):
+    """Represents an authentication token for user sessions."""
     access_token: str
-    token_type: str
+    token_type: str  # Defines the token type (e.g., Bearer)
