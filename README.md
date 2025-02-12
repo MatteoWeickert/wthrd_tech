@@ -1,9 +1,11 @@
-# wthrd_tech
+# Introduction
 
-This README provides instructions on how to start, connect to, and stop the Docker container for the `wthrd_tech` project.
+This repository is the result of the wthrd_tech() team for the project "Web Catalogue for User-Friendly Search and Retrieval of Machine Learning Models for EO Datacubes", developed as part of the Geosoftware II module in the Winter semester 2024/2025.
+
+The following sections explain how to set up and run the project.
 
 ### 1: Clone the Repository
-First, clone the `wthrd_tech` repository to your local machine and navigate to the backend branch:
+First, clone the `wthrd_tech` repository to your local machine and navigate to the main branch:
 ```bash
 git clone https://github.com/MatteoWeickert/wthrd_tech.git
 ```
@@ -28,37 +30,34 @@ In your project directory, run:
 docker-compose up -d --build
 ```
 
-### 4: Access the Server
+### 4: Access the Webcatalog:
 
-To access the server, open your web browser and navigate to:
+To access the Webkatalog, open your web browser and navigate to:
 
 ```
-http://localhost:8000
+http://localhost:8082
 ```
 
-This will bring up the application interface where you can interact with the server.
+This will bring up the Welcome-page of the Webcatalog where you receive further information on how to use the catalog.
 
-### 5 (Optional): Connect to the Database Manually 
+### 5 (Optional): Connect to the Database via Adminer
 
-Run this command to connect to the database:
+Adminer is a lightweight database management tool that allows you to interact directly with the PostgreSQL database. To access Adminer, open your browser and navigate to:
 
-```bash
-docker exec -it postgres-container psql -U admin -d metadata_database
+```
+http://localhost:8081
 ```
 
-Here you can run SQL queries like:
+Once there, enter the following credentials:
 
-```bash
-SELECT name FROM items;
-```
+    System: PostgreSQL
+    Server: database (or localhost if accessing directly)
+    Username: admin (as defined in your .env file)
+    Password: The password you set in the .env file
+    Database: metadata_database
 
-Use:
+After logging in, you can explore the database, run SQL queries, and manage tables directly through the Adminer interface.
 
-```bash
-\q
-```
-
-to quit the connection to the database.
 
 ### 6: Stopping the Container
 
