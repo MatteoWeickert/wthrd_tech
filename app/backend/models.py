@@ -72,6 +72,9 @@ class Item(Base):
     collection = relationship("Collection", back_populates="items")
 
 class User(Base):
+    """
+    Represents the 'users' table in the database.
+    """
 
     __tablename__ = "users"
 
