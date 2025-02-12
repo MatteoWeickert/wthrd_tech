@@ -1,5 +1,4 @@
-# Datei zur Implementierung der Eingabe und Antwort Restriktionen an die Datenbank
-# SQLAlchmey macht Vorgaben für die Datenbank (Eigenschaften etc.), Pydantic prüft die Eingaben des Nutzers an FastAPI und die Rückgabe an den Nutzer
+# pydantic-file to check and create the data type of the inputs of POST and authentication routes 
 
 from pydantic import BaseModel, Field, validator
 import re
@@ -7,14 +6,15 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import os
 
-
+# definition of the expected Asset structure
 class Asset(BaseModel):
     href: str = Field(..., description="URI to the asset object. Relative and absolute URIs are allowed.")
     title: Optional[str] = Field(None, description="Displayed title for clients and users.")
     description: Optional[str] = Field(None, description="A description of the Asset providing additional details.")
     type: Optional[str] = Field(None, description="Media type of the asset.")
     roles: Optional[List[str]] = Field(None, description="The semantic roles of the asset.")
-
+    
+    #verification of the "href"-attribute
     @validator("href")
     def validate_href(cls, value):
         if not isinstance(value, str) or not value.strip():
@@ -24,6 +24,7 @@ class Asset(BaseModel):
     def to_dict(self):  
         return self.dict()
 
+# definition of the expected Item structure
 class ItemCreate(BaseModel):
     id: str = Field(..., min_length=1, description="The id cannot be empty")
     type: str = Field("Feature", const=True, description="The type must always be 'Feature'")  # "type" muss immer "Feature" sein
@@ -39,6 +40,7 @@ class ItemCreate(BaseModel):
     updated_at: datetime
     color: str = Field(..., description="The given HEX color code is invalid.")
 
+    #verification of the "geometry"-attribute
     @validator("geometry")
     def validate_geometry(cls, value):
         # Prüfen, ob die benötigten Schlüssel vorhanden sind
@@ -55,7 +57,8 @@ class ItemCreate(BaseModel):
             raise ValueError("The 'coordinates' key must contain a list.")
 
         return value
-
+    
+    #verification of the "properties"-attribute
     @validator("properties")
     def validate_properties(cls, value):
         required_keys = ["datetime", "mlm:name", "mlm:architecture", "mlm:tasks", "mlm:input", "mlm:output"]
@@ -71,6 +74,7 @@ class ItemCreate(BaseModel):
 
         return value
     
+    #verification of the "colors"-attribute
     @validator("color")
     def validate_color(cls, value):
         if value is not None:
@@ -79,6 +83,7 @@ class ItemCreate(BaseModel):
                 raise ValueError("Invalid color format. Must be a HEX color code like #RRGGBB.")
         return value
     
+    #verification of the "links"-attribute
     @validator("links")
     def validate_links(cls, value):
         if not isinstance(value, list):
@@ -96,6 +101,7 @@ class ItemCreate(BaseModel):
 
         return value
     
+    # function to convert the created asset-class into dictionaries
     def dict(self, *args, **kwargs):
         # Überschreiben der dict-Methode, um assets zu serialisieren
         obj_dict = super().dict(*args, **kwargs)
@@ -103,6 +109,7 @@ class ItemCreate(BaseModel):
         obj_dict["assets"] = {key: asset.to_dict() for key, asset in self.assets.items()}
         return obj_dict
     
+# definition of the expected Collection structure
 class CollectionCreate(BaseModel):
     id: str = Field(..., min_length=1, description="The id cannot be empty")
     type: str = Field("Collection", const=True, description="The type must always be 'Collection'")  # "type" muss immer "Feature" sein
@@ -117,31 +124,36 @@ class CollectionCreate(BaseModel):
     updated_at: datetime
     ispublic: bool
 
+    #verification of the "title"-attribute
     @validator("title")
     def validate_title(cls, value):
         if not value or not value.strip():
             raise ValueError("The title must be provided and cannot be empty.")
         return value
-
+    
+    #verification of the "id"-attribute
     @validator("id")
     def validate_id(cls, value):
         if not value or not value.strip():
             raise ValueError("The id must be provided and cannot be empty.")
         # Hier könnte zusätzliche Logik hinzugefügt werden, um die Eindeutigkeit zu prüfen
         return value
-
+    
+    #verification of the "description"-attribute
     @validator("description")
     def validate_description(cls, value):
         if not value or not value.strip():
             raise ValueError("The description must be provided and cannot be empty.")
         return value
-
+    
+    #verification of the "license"-attribute
     @validator("license")
     def validate_license(cls, value):
         if not value or not value.strip():
             raise ValueError("The license must be provided and cannot be empty.")
         return value
-
+    
+# definition of the expected User structure
 class UserCreate(BaseModel):
     id: int = Field(...)
     username: str
@@ -150,6 +162,7 @@ class UserCreate(BaseModel):
     email: str
     hashed_password: str
 
+# definition of the expected user request structure
 class CreateUserRequest(BaseModel):
     username: str
     prename: str
@@ -157,7 +170,7 @@ class CreateUserRequest(BaseModel):
     email: str
     password: str
 
-    
+# definition of the expected Token structure    
 class Token(BaseModel):
     access_token: str
     token_type: str

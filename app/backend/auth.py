@@ -12,17 +12,21 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from schemas import CreateUserRequest, Token
 
+# define router with new route /auth
 router = APIRouter(
     prefix="/auth",
     tags=['auth']
 )
 
+# hashing secrets
 SECRET_KEY = '901234803984309809809890bdf09vf9dvfd09v8df908v90fd8vf09v809f'
 ALGORITHM = 'HS256'
 
+# create OAuth2-Bearer
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token', auto_error=False)
 
+# connect to the database
 def get_db():
     db = SessionLocal()
     try:
@@ -32,6 +36,7 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
+# route for creating a new user - beforehand: check if the username already exists
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     # Überprüfen, ob der Benutzername bereits existiert
@@ -59,7 +64,7 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
 
     
 
-# Route zur Erstellung eines Tokens, wenn der Login (Eingegebener Username und Passwort stimmen mit DB überein) erfolgreich war
+# route for creating a token if the login (username and password match with the saved ones in db) was successful
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
     user = authenticate_user(form_data.username, form_data.password, db)
@@ -70,7 +75,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
 
     return {"access_token": token, "token_type": "bearer"}
 
-
+# function to check if the provided password is the same as in the db and the user is registrated
 def authenticate_user(username: str, password: str, db):
     user = db.query(User).filter(User.username == username).first()
     if not user:
@@ -79,12 +84,14 @@ def authenticate_user(username: str, password: str, db):
         return False
     return user
 
+# function to create a token with a specific expiration date
 def create_access_token(username: str, user_id: int, expires_delta: timedelta):
     encode = {'sub': username, 'id': user_id}
     expires = datetime.now() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
+# function to identify the current user with his token to receive user data
 async def get_current_user(token: Optional[str] = Depends(oauth2_bearer)) -> Optional[str]:
 
     if not token:
