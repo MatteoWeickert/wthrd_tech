@@ -1,7 +1,6 @@
 from datetime import timedelta, datetime
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from starlette import status
@@ -39,10 +38,10 @@ db_dependency = Annotated[Session, Depends(get_db)]
 # route for creating a new user - beforehand: check if the username already exists
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
-    # Überprüfen, ob der Benutzername bereits existiert
+
     existing_user = db.query(User).filter(User.username == create_user_request.username).first()
 
-    if existing_user:  # Falls ein Benutzer mit dem gleichen Benutzernamen existiert
+    if existing_user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Username already used.")
     
     create_user_model = User(
@@ -56,8 +55,8 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
         db.add(create_user_model)
         db.commit()
 
-    except IntegrityError:  # Falls die Datenbank eine Integritätsverletzung feststellt
-        db.rollback()  # Änderungen zurücksetzen
+    except IntegrityError: 
+        db.rollback()  
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database integrity error.")
     
     return {"message": "User created successfully"}
@@ -108,5 +107,4 @@ async def get_current_user(token: Optional[str] = Depends(oauth2_bearer)) -> Opt
         return {'id': user_id, 'username': username, 'prename': user.prename, 'lastname': user.lastname, 'email': user.email}
     
     except JWTError:
-    # Token konnte nicht validiert werden
         return None
