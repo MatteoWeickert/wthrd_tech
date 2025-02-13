@@ -1,15 +1,20 @@
+// Speichert die zuletzt gezeichnete Bounding Box beim Filtern / Erstellen um diese in den Modellen anzuzeigen 
 let sharedDrawnItems = null;
-let bboxString = null;
-let selectedFilters = {};
-let usedFilters= null;
 let lastSearchedBbox= null;
+// Setzt die zuletzt gezeichnete Bounding Box zum Suchen (spezielle Form) 
+let bboxString = null;
+// Speichert die augewählten Filter in global angewandter Form, sodass mehrere Funktion davon profitieren können
+let selectedFilters = {};
 
+// Globales speichern von Start und Enddatum, da in mehreren Funktionen gleich benötigt
 let startDatum = null;
 let endDatum = null;
+// Speicherung von allen Items und Collections nach einmaliger Abfrage, erspart unnötige Mehrfachabfagen
 let allItems = [];
 let allCollections = [];
 
 // Singleton-Fkt speichert die angegebenen Daten (range)
+// Wird angewandt um beim Hinzufügen von Modellen und Collections einheitliche Antworten zu generieren
 function getDateRange() {
     if (startDatum && endDatum) {
         return [
@@ -22,6 +27,7 @@ function getDateRange() {
 }
 
 // Funktion um den ausgwählten Itemamount aus der Radiobox zu extrahieren
+// Wird im Pageing angewandt
 function getItemAmount() {
     const selectedRadio = document.querySelector('input[name="itemAmount"]:checked');
     if (selectedRadio) {
@@ -31,6 +37,7 @@ function getItemAmount() {
 }
 
 // Singleton-Fkt um gezeichnete Elemente zu verwalten
+// Anwendung in der Generierung der Itemanzeige
 function getDrawnItems() {
     if (!sharedDrawnItems) {
         sharedDrawnItems = new L.FeatureGroup();
@@ -64,6 +71,7 @@ function getSearchedBbox(){
 }
 
 // Fassadenfunktion welche alle zum Start benötigten Funktionen ausführt
+// Unterscheidet je nach aktueller html, default ist welcome-seite
 async function startWebsite(){
     lastSearchedBbox = null;
     const data = window.location.pathname.trim().toLowerCase();
@@ -286,9 +294,12 @@ async function startWebsite(){
         break;
     }
 }
+
+// Startet den Service
 startWebsite();
 
-
+// Funktion zum Fetchen der aktuellen und neu hinzugefügten Items
+// Anwendung beim Anzeigen der aktuellen und neu hinzugefügten Items
 async function recentItems() {
     // Überprüfen, ob allItems ein Array ist
 
@@ -315,7 +326,8 @@ async function recentItems() {
     return sortedItems.slice(0, 5);
 }
 
-
+// Funktion zum Anzeigen der aktuellen und neu hinzugefügten Items auf der Welcome Page
+// Anwendung beim Starten des Services
 async function displayRecentItems() {
     const lastItems = await recentItems(); // Hol die letzten 3 Items
     
@@ -354,6 +366,7 @@ async function displayRecentItems() {
 }
 
 // Funktion zum Filtern von Items (Suchleiste)
+// Wendet displayItems zur Anzeige der Suchergebnisse an
 function filterItemsForSearch(searchTerm) { 
     if (!Array.isArray(allItems) || allItems.length === 0) 
         {
@@ -390,6 +403,7 @@ function filterItemsForSearch(searchTerm) {
 }
 
 // Schließt beim klicken des Anmelde/Register Buttons das Fenster ohne zu refreshen
+// Anwendung in diversen Teilanwendungen zum Schließen des Loginoverlays
 function closeLoginTab(){
     const modalElement = document.getElementById('authModal');
     if (modalElement) {
@@ -398,11 +412,12 @@ function closeLoginTab(){
             modal.hide();
         } 
     } else {
-        console.error("Modal-Element nicht gefunden!");
+        console.error("Modal-Element nicht gefunden");
     }
 }
 
 // Funktion zum Verwalten der gewollten Item-Userinputs
+// Alle weiteren Inputs (Bbox etc.) werden später einzeln hinzugefügt
 function getExpectedItemInputs(){
     return [    'name',
                 'tasks',
@@ -424,6 +439,7 @@ function getExpectedItemInputs(){
 }
 
 // Funktion zum Verwalten der gewollten Collection-Userinputs
+// Auswahl der Sichtbarkeit der Collection ('Öffentlich') wird später eingefügt
 function getExpectedCollectionInputs(){
     return [    'id',
                 'title',
@@ -510,6 +526,7 @@ function getPredefinedTasks(){
 }
 
 // Funktion um Anmeldedaten vom Server anzufragen
+// Anwendung beim Starten des Services oder beim Anmeldefenster
 async function loginUser(){
     const username = document.getElementById('login-username').value
     const password = document.getElementById('login-password').value
@@ -540,8 +557,11 @@ async function loginUser(){
 }
 
 // Funktion um den aktuellen Nutzer abzumelden
+// Anwendung nur durch Abmelden-Button in Userinfo
 function logoutUser(){
+    // Vorzeitiges clearen des Sessionstorage
     sessionStorage.setItem('token', null)
+    // Dann Neuaufbau der Website, automatische Generierung ohne Anmeldetoken
     closeLoginTab();
     isLoggedIn();
     successfulLoggedOut();
@@ -553,6 +573,7 @@ function logoutUser(){
 
 // Funktion um Authentifizierungsdaten abzufragen
 async function getAuthData() {
+    // Token aus dem Sessionstorage, wird beim anmelden hinterlegt (ca. 30min valid)
     const token = sessionStorage.getItem('token');
 
     try {
@@ -581,6 +602,7 @@ async function getAuthData() {
 async function isLoggedIn() {
     const logged = await getAuthData();
     if (logged && logged.username && logged.id) {
+        // Veränderung des Frontend wenn eingeloggt
         successfulLoggedIn(logged)
         return true;
     } else {
@@ -589,11 +611,13 @@ async function isLoggedIn() {
 }
 
 // Funktion um Standardansicht ohne Anmeldung zu generieren.
+// Wird bei nicht angemeldeter Session beim Starten des Services angewandt
 function createStandardView(){
     const file = window.location.pathname.trim().toLowerCase();
     const sidebar = document.getElementById('sidebar')
     const main = document.getElementById('main-contentdesc')
 
+    // Nur addmodels und addcollections, da diese nur mit Anmeldung funktionieren
     switch(file){
         case('/addmodel.html'):
             sidebar.innerHTML = ''
@@ -632,7 +656,7 @@ function createStandardView(){
                         <a class="text-muted button-input" style="font-size: 11px; font-weight: 200;" href="addcollection.html" data-bs-toggle="modal" data-bs-target="#authModal">Oder neu registrieren.</a>
                     </div>`
     break;
-    case('/addcollection.html'):
+        case('/addcollection.html'):
             sidebar.innerHTML = ''
             sidebar.innerHTML = `
                 <nav id="sidebar" class="col-md-3 col-lg-3 d-md-block collapse">                  
@@ -674,6 +698,7 @@ function createStandardView(){
 
 // Funktion um Registrierungsdaten an den Server zu senden
 async function registerUser(){
+    // Über alle Seiten aus dem Template gleich, daher ohne Unterscheidung in file
     const username = document.getElementById('register-username').value
     const prename = document.getElementById('register-prename').value
     const lastname = document.getElementById('register-lastname').value
@@ -718,9 +743,12 @@ async function fetchItems() {
         const data = await response.json();
         allItems = data;
 
+        // Nur im Catalog werden die Ergebnisse aus FetchItems in die zum Anzeigen vorgesehenen Funktionen weitergegeben
         if (file === '/catalog.html') {
             if (Array.isArray(data) && data.length > 0) {
+                // Anzeige der aktuellen Filter in der Sidebar
                 printAllFilters(data);
+                // Anzeige der Items im Catalog
                 displayItems(data, undefined);
             } else {
                 showAlert(4, "Fehler beim Abrufen der Items.", "Interner Fehler.");
@@ -807,8 +835,8 @@ async function addItems() {
 
         // Verarbeiten der Nachricht aus der API-Antwort
         if (data.message === "Item added successfully") {
-
             showAlert(3, "Neues Modell erfolgreich hinzugefügt.", "");
+        // Verarbeitung aller Error-Messages aus dem Backend
         } else if (data.detail){
             if (Array.isArray(data.detail)){
                 data.detail.forEach((error) => {
@@ -912,8 +940,8 @@ async function addCollections(){
         });
         const data = await response.json();
 
+        // Verarbeitung der API-Rückgaben
         if (data.message === "Collection added successfully") {
-
             showAlert(3, "Neue Collection erfolgreich hinzugefügt.", "");
         } else if (data.detail){
             if (Array.isArray(data.detail)){
@@ -977,6 +1005,7 @@ function createInputForm(data, inputinfo) {
     const parameters = data;
     const container = document.getElementById('main-inputcontainer');
     const info = inputinfo
+    // Erstellt initial die erwarteten Eingaben in der Sidebar
     createInputTOC(data);
     container.innerHTML = '';
     var count = 0
@@ -990,6 +1019,7 @@ function createInputForm(data, inputinfo) {
     const tableBody = document.getElementById('input-table-body');
 
     parameters.forEach(parameter => {
+        // Count für die Nummerierung
         count += 1
         tableBody.innerHTML += `
             <tr id="main-inputgroup">
@@ -1005,6 +1035,7 @@ function createInputForm(data, inputinfo) {
     });
     count += 1;
 
+    // Unterscheidung je nach Modell oder Collection 
     switch(file){
         case('/addmodel.html'): 
             // Bounding Box-Option
@@ -1090,12 +1121,15 @@ function createInputForm(data, inputinfo) {
 }
 
 // Funktion um Tasks mit Dropdownmenü anzureichern
+// Anwendung nur in addmodels
+// Anwendung der Sichtbarkeit einer Collections ('Öffentlich'); Ist eine Collection privat, wird sie nur dem Ersteller als Option angezeigt
 async function createDynamicInputs() {
+    // Dropdown für die Tasks
     const taskDiv = document.getElementById('input-tasks-div');
     taskDiv.innerHTML = ''
     const inputFieldTask = document.createElement('input');
     const dropdown = document.createElement('div');
-    const tasks = getPredefinedTasks();
+    const tasks = getPredefinedTasks(); // Erweiterbare ausgelagerte Liste
 
     inputFieldTask.setAttribute('class', 'main-inputwindow');
     inputFieldTask.setAttribute('id', 'input-tasks');
@@ -1107,6 +1141,7 @@ async function createDynamicInputs() {
     dropdown.setAttribute('class', 'main-inputdynamic');
     dropdown.style.cssText = 'position: inherit; top: 100%; left: 0; max-height: 350px; overflow-y: auto; display: none;';
     taskDiv.appendChild(dropdown);
+    // Hinzufügen jeder einzelnen Task
     tasks.forEach(task => {
         const checkboxItem = document.createElement('div');
         checkboxItem.style.cssText = 'padding: 5px; cursor: pointer;';
@@ -1117,18 +1152,19 @@ async function createDynamicInputs() {
         checkboxItem.querySelector('input').addEventListener('change', updateSelectedTasks);
         dropdown.appendChild(checkboxItem);
     });
-
+    // Eventlistener, falls das Inputfeld ausgewählt wird
     inputFieldTask.addEventListener('click', () => {
         dropdown.style.cssText = 'max-width: 150px;'
         dropdown.style.display = dropdown.style.display === 'inherit' ? 'none' : 'inherit';
     });
-
+    // Eventlistener, falls eine dert Tasks ausgewählt wird
     document.addEventListener('click', event => {
         if (!taskDiv.contains(event.target)) {
             dropdown.style.display = 'none';
         }
     });
 
+    // Dropdown für die verfügbaren Collections
     const collectionDiv = document.getElementById('input-collectionid-div');
     collectionDiv.innerHTML = '';
 
@@ -1152,6 +1188,7 @@ async function createDynamicInputs() {
 
     collections.forEach(col => {
         if (col && col.id) {
+            // Überprüft ob Collection public, oder ob aktueller User mit Creator (ID für bessere Überprüfung) übereinstimmen
             if (col.ispublic || userdata.id === col.creator_id) {
                 const checkboxItemCol = document.createElement('div');
                 checkboxItemCol.style.cssText = 'padding: 5px; cursor: pointer;';
@@ -1165,7 +1202,7 @@ async function createDynamicInputs() {
         }
     });
     
-
+    // Eventlisteners siehe wie bei Tasks
     inputFieldCol.addEventListener('click', () => {
         dropdownCol.style.display = dropdownCol.style.display === 'block' ? 'none' : 'block';
     });
@@ -1181,13 +1218,14 @@ async function createDynamicInputs() {
 function updateSelectedTasks(){
     const checkboxes = document.querySelectorAll('#dropdown-options input:checked');
     const selectedTasks = Array.from(checkboxes).map(checkbox => checkbox.value);
+    // Auswahl mehrerer Tasks möglich, daher Backend-freundliche Trennung der Tasks durch ' , '
     document.getElementById('input-tasks').value = selectedTasks.join(', ');
 }
 
 // Funktion um die ausgewählte Collection in die Eingabemaske einzufügen
 function updateSelectedCollections(event){
     const checkboxes = document.querySelectorAll('#dropdown-collections input[type="checkbox"]');
-
+    // Auswahl von genau einer Collection ermöglichen
     checkboxes.forEach(checkbox => {
         if (checkbox !== event.target) {
             checkbox.checked = false;
@@ -1212,6 +1250,8 @@ function getUserInputs() {
     }
 
     const input = {};
+    // Vergleich mit erwartetem Input und getätigtem Input
+    // Durch konsitente Benennung der Inputfelder mit 'input-(expected input name)' durch for möglich
     for (const p of expected) {
         const element = document.getElementById('input-' + p);
         if (element) {
@@ -1222,11 +1262,13 @@ function getUserInputs() {
 }
 
 //Funktion um den Inhalt des Input forms vor dem Abschicken zu analysieren
+// Anwendung in changeInputTOC, da so ein Array (missing) entsteht, mit fehlendem Input, was die Sidebar dann ändert (grün/rot)
 function analyzeInput(expected){
     const file = window.location.pathname.trim().toLowerCase();
     const parameters = expected;
     const data = getUserInputs(); 
     const missing = [];
+    // Geht alle erwarteten Parameter durch und prüft, ob diese ausgefüllt sind
     parameters.forEach(parameter =>{
         if (data[parameter] === undefined || data[parameter] === null || data[parameter] === "") {
             missing.push(parameter)
@@ -1234,6 +1276,7 @@ function analyzeInput(expected){
             return;
         }
     });
+    // Geht alle später eingefügten Parameter durch und prüft, ob diese ausgefüllt sind
     switch(file){
         case('/addmodel.html'):
             const bounding = getBounds();
@@ -1250,29 +1293,27 @@ function analyzeInput(expected){
             }
         break;
         case('/addcollection.html'):
-            const boundingCol = getBounds();
-            const dateCol = getDateRange();
-            if (boundingCol === undefined || boundingCol === null || boundingCol === "") {
-                missing.push('Bounding')
-            }
-            if (dateCol === undefined || dateCol === null || dateCol === "") {
-                missing.push('Date')
-            }
+            // Erweiterbar in möglicher Weiterentwicklung
         break;
     }
+    // Aufruf zum ändern der Sidebar
     changeInputTOC(parameters, missing);
     return missing;
 }
 
 // Funktion um den Inputform abzusenden, falls korrekt gefüllt
+// Anwendung sowohl in addcollections als auch additems
 function sendInput(expected){
     const file = window.location.pathname.trim().toLowerCase();
 
+    // Analysiert zunächst nochmal die Eingabe
+    // Daher: Parameter wie 'Öffentlich' oder 'Pretrained' werden nicht analysiert, da diese keine zwingend benötigte Eingabe ist
     const missing = analyzeInput(expected);
 
     if (missing.length > 0) {
         showAlert(4, "Bitte füllen Sie alle Eingabefelder korrekt aus.", "");
     } else {
+        // Unterscheidung je nach gesendetem Input
         switch(file){
             case('/addmodel.html'):
                 addItems(); 
@@ -1356,6 +1397,7 @@ function changeInputTOC(data, pois){
     
     // Dynamisch alle Parameter hinzufügen
     parameters.forEach(parameter => {
+        // Wenn ein Parameter als Missing gilt, wird dieser in der Sidebar rot angepasst
         if (changeList.includes(parameter)) {
                     sidebarList.innerHTML += `
                         <li class="nav-item d-flex align-items-center">
@@ -1365,7 +1407,8 @@ function changeInputTOC(data, pois){
                             <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-${parameter}">${parameter}</a>
                         </li>
                     `;
-            } 
+            }
+        // Sonst grün
         else {
             sidebarList.innerHTML += `
             <li class="nav-item d-flex align-items-center">
@@ -1378,6 +1421,7 @@ function changeInputTOC(data, pois){
         }
     });
 
+    // Je nach TOC Type müssen einzeln die später eingefügten Parameter geprüft und geändert werden
     switch(file){
         case('/addmodel.html'):
             if (changeList.includes('Bounding')){
@@ -1450,7 +1494,9 @@ function changeInputTOC(data, pois){
 }
 
 // Funktion zum anzeigen aller verfügbaren unique Filtervalues in der Sidebar
+// Anwendung im Modellkatalog
 function printAllFilters(items){
+    // Extrahiert alle mögichen Values in den verschiedenen Klassen, die aktuell als Modell verfügbar sind
     const filters = extractUniqueFilterValues(items);
     let filterContent = '';
     const sidebar = document.getElementById("sidebar");
@@ -1482,6 +1528,7 @@ function printAllFilters(items){
         </div>
     `;
 
+    // Ausgabe der Standardfiltervalues innerhalb der Gruppen (Tasks, Accelerators etc.)
     Object.keys(filters).forEach(group => {
         let options = '';
         const collapseId = `collapse-${group}`;
@@ -1531,6 +1578,7 @@ function printAllFilters(items){
         </div>
     `;
 
+    // Anpassung des Footers dynamisch je nach Anmeldestatus in succesfulLoggedIn / Out
     const footer = `
         <div id="sidebar-footer" class="mt-auto">
             <hr>
@@ -1540,7 +1588,7 @@ function printAllFilters(items){
 
     sidebar.innerHTML += header + toggleButton + filterContent + footer;
 
-    // Observer für bessere Performance
+    // Observer für bessere Performance: Map wird nur geladen, wenn entsprechender Container auch geöffnet
     const mapContainer = document.getElementById("sidebar-map");
     const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
@@ -1579,6 +1627,7 @@ function printAllFilters(items){
                     });
 
                     const bounds = drawnRectangle.getBounds();
+                    // Setzt gezeichnete Bbox als Filteroption Bbox in SelectedFilters
                     selectedFilters['bbox'] = [
                         bounds.getWest(),
                         bounds.getSouth(),
@@ -1591,7 +1640,9 @@ function printAllFilters(items){
                         bounds.getEast(),
                         bounds.getNorth()
                     ]);
+                    // Anzeige der Items mit der gemalten und gesuchten Bbox
                     displayItems(items, selectedFilters);
+                    // Dann gesuchte Bbox wieder löschen 
                     setSearchedBbox(null)
                 });;
 
@@ -1605,6 +1656,7 @@ function printAllFilters(items){
 
     observer.observe(mapContainer);
 
+    // Eventlistener um ausgewählte Filter additiv in globales Array selectedFitlers zu speichern und direkt anzuwenden in displayItems
     const checkboxes = document.querySelectorAll('.form-check-input');
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
@@ -1624,6 +1676,7 @@ function printAllFilters(items){
         });
     });
     
+    // Einstellungen für Kalender (Deutsch)
     $(function() {
         $('input[name="daterange"]').daterangepicker({
             "locale": {
@@ -1644,10 +1697,12 @@ function printAllFilters(items){
                 "firstDay": 1
             },
             opens: 'left',
+            // Anpassung des Startzeitraums möglich
             startDate: '01/01/2000',
             drops: "up",
             autoApply: true
         }, function(start, end, label) {
+            // Hinzufügen des daterangs zu den Filtern, dann Anzeige aller Modelle inklusive alle anderen ausgewählten filter
             selectedFilters['daterange'] = [start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD')];
             displayItems(items, selectedFilters);
         });
@@ -1659,6 +1714,9 @@ function checkBBoxOverlap(itemBBox, filterBBox){
     const [itemWest, itemSouth, itemEast, itemNorth] = itemBBox;
     const [filterWest, filterSouth, filterEast, filterNorth] = filterBBox;
 
+    // Für Weiterentwicklung: Auswagl einer komplexeren Overlap-Logik, zB nur wenn 50% der Flächengröße überlappen
+
+    // Anwendung bei der Suche nach einer speziellen Bbox (Modellkatalog Filterung)
     return !(itemEast < filterWest || itemWest > filterEast || itemNorth < filterSouth || itemSouth > filterNorth);
 }
 
@@ -1669,6 +1727,7 @@ function checkDateOverlap(itemStart, itemEnd, filterStart, filterEnd){
     const filterStartDate = new Date(filterStart);
     const filterEndDate = new Date(filterEnd);
 
+    // Sobald ein Tage überlappend ist, wird das Modell angezeigt
     return (
         (itemStartDate <= filterEndDate && itemStartDate >= filterStartDate) ||
         (itemEndDate >= filterStartDate && itemEndDate <= filterEndDate) ||
@@ -1677,6 +1736,7 @@ function checkDateOverlap(itemStart, itemEnd, filterStart, filterEnd){
 }
  
 // Items anhand der angekreuzten Filterparameter filtern
+// Anwendung in displayItems(), wenn filters undefined, werden alle items zurückgegeben
 function filterItems(items, filters){
     showAlert(0);
     let selectedItems = [];
@@ -1760,6 +1820,7 @@ function filterItems(items, filters){
                 selectedItems.push(item);
             }
         } catch (error) {
+            // Im Backend ausgeschlossen, wenn dennoch ein Modell ein leeres aber benötigtes Feld hat, Anzeige des betroffenden Items im Alert
             showAlert(1, "Nicht alle Modelle wurden betrachtet. Fehlerhaftes Modell: ", item.id);
         }
     });
@@ -1772,9 +1833,10 @@ function filterItems(items, filters){
 }
 
 // Funktion zum Anzeigen der Pretrained Variale im Frontend Modellkatalog
+// Anwendung bei der Anzeige von Modellen im Katalog
 function isPretrained(bool,source){
     const boolean = bool
-    const text = source
+    // Wenn Modell vortrainiert, zeige Check-Symbol und Quelle der Vortrainierung
     if(boolean){
         return `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
@@ -1792,6 +1854,7 @@ function isPretrained(bool,source){
 }
 
 // Funktion zum Checken ob User ein vortrainiertes Modell hochgeladen hat
+// Anwendung beim hinzufügen von Modellen
 function getPretrained(){
     const pretrained = document.getElementById('input-pretrained')
     if(pretrained.checked){
@@ -1802,6 +1865,7 @@ function getPretrained(){
 }
 
 // Funktion zum Checken ob User eine öffentliche Collection hochladen will
+// Anwendung beim hinzufügen von Collections
 function getPublicChoice(){
     const pretrained = document.getElementById('input-public')
     if(pretrained.checked){
@@ -1812,10 +1876,14 @@ function getPublicChoice(){
 }
 
 // Funktion zum Erstellen der individuellen Kartenansicht für jedes Modell
+// Anwendung beim anzeigen von allen Modellen im Catalog
 function createMapOnModell(data) {
     const item = data;
+    // Für jedes Modell im Katalog existiert ein konsistener Container mit 'map-(item.id)'
     const mapContainer = document.getElementById(`map-${item.id}`);
-    // Observer für langsames Laden
+
+    // Obersrver, damit nur die Map von einem Modell geladen wird, welches auch gerade geöffnet ist
+    // Sonst: Leaflet lädt keine Karte da zu viele Anfragen auf einmal (Problem bei einer Einseiten-Lösung)
     const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
@@ -1844,6 +1912,7 @@ function createMapOnModell(data) {
                         map.fitBounds(bounds, { padding: [40, 40] });
                     }
 
+                    // Anzeige der gesuchten Bbox als Filteroption
                     if (searchedBbox) {
                         const searchedBounds = [
                             [searchedBbox[1], searchedBbox[0]],
@@ -1852,6 +1921,7 @@ function createMapOnModell(data) {
                         L.rectangle(searchedBounds, { color: "#0000ff", weight: 1, fillOpacity: 0.1 }).addTo(map);
                         
                         // Wenn keine item.bbox vorhanden ist, zentrieren wir auf die gesuchte bbox
+                        // Keine bbox eigentlich durch Backend ausgeschlossen
                         if (bbox.length === 0) {
                             map.fitBounds(searchedBounds, { padding: [40, 40] });
                         }
@@ -1870,15 +1940,20 @@ function createMapOnModell(data) {
 }
 
 // Funktion zum Anzeigen aller Modelle
+// Anwendung im Catalog
 function displayItems(items, filters) {
     const itemAmountContainer = document.getElementById('modell-itemamount-container');
     const container = document.getElementById('modell-container');
     container.innerHTML = '';
     const selectedFilters = filters;
+    // Vorfilterung der Items unter Anwendung der angewählten Fiter
     const filteredItems = filterItems(items, filters);
+    // Anwendung des Pageings
     const itemsPerPage = getItemAmount();
+    // Anzahl der benötigten Seiten
     const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
+    // Anzeige der möglichen Items-Per-Page Auswahl
     if (!document.getElementById('modell-itemamount')) {
         const amountItemsPerPage = document.createElement('div');
         amountItemsPerPage.id = 'modell-itemamount';
@@ -1903,6 +1978,7 @@ function displayItems(items, filters) {
         itemAmountContainer.appendChild(amountItemsPerPage);
     }
 
+    // Anwendung Pageing
     for (let page = 1; page <= totalPages; page++) {
         const pageDiv = document.createElement('div');
         pageDiv.id = `page-${page}`;
@@ -1912,6 +1988,7 @@ function displayItems(items, filters) {
         const startIndex = (page - 1) * itemsPerPage;
         const endIndex = Math.min(startIndex + itemsPerPage, filteredItems.length);
 
+        // Modelle je nach Seite einfügen
         for (let i = startIndex; i < endIndex; i++) {
             const item = filteredItems[i];
             const itemDiv = document.createElement('div');
@@ -1924,6 +2001,7 @@ function displayItems(items, filters) {
             const parameters = document.createElement('div');
             parameters.classList.add('modell-itemparameter');
             parameters.id = `modell-itemparameter-${item.id}`;
+            // fillInParameters für angepasste Schnellinformationen zu den Modellen je nach ausgewählten Filtern
             parameters.innerHTML = `
                 ${fillInParameters(item, selectedFilters)}
                 <button type="button" class="btn-expand" data-bs-toggle="collapse" data-bs-target="#collapse-${item.id}" aria-expanded="false" aria-controls="collapse-${item.id}">
@@ -1935,6 +2013,7 @@ function displayItems(items, filters) {
 
             const information = document.createElement('div');
             information.id = 'modell-itemcollapse';
+            // Anzeige Tab von jedem Modell
             information.innerHTML = `
                 <div class="collapse" id="collapse-${item.id}">
                     <div class="card card-body">
@@ -2011,6 +2090,7 @@ function displayItems(items, filters) {
             itemDiv.appendChild(information);
             pageDiv.appendChild(itemDiv);
 
+            // Listener um Modell auf/zu zuklappen
             const button = parameters.querySelector('.btn-expand');
             button.addEventListener('click', () => {
                 const svg = button.querySelector('svg');
@@ -2032,12 +2112,14 @@ function displayItems(items, filters) {
 
         container.appendChild(pageDiv);
 
+        // Anwendung der Kartenfunktion auf jedes Modell
         for (let i = startIndex; i < endIndex; i++) {
             const item = filteredItems[i];
             createMapOnModell(item);
         }
     }
 
+    // Wenn mehr als eine Seite, dann Buttons über dem Footer im main-Bereich zur Auswahl der Seiten
     if (totalPages > 1) {
         const paginationButtons = document.createElement('div');
         paginationButtons.id = 'paginationButtons';
@@ -2045,6 +2127,7 @@ function displayItems(items, filters) {
         for (let i = 1; i <= totalPages; i++) {
             const pageButton = document.createElement('button');
             pageButton.textContent = i;
+            // Anwendung der showPage je nach Auswahl durch Listener
             pageButton.addEventListener('click', () => showPage(i));
             pageButton.classList.add('pageButton');
             pageButton.id = `pageButton-${i}`;
@@ -2058,7 +2141,9 @@ function displayItems(items, filters) {
     }
 
     // Funktion um eine gewisse Seite anzuzeigen
+    // Anwendung nur innerhalb der displayItems, kein äußerer Zugriff möglich/notwendig
     function showPage(pageNumber) {
+        // Auswahl aller erstellten Pages
         const pages = document.querySelectorAll('.page');
         pages.forEach(page => {
             page.style.display = page.id === `page-${pageNumber}` ? 'block' : 'none';
@@ -2077,6 +2162,7 @@ function displayItems(items, filters) {
 }
 
 // Funktion um Modell download zu starten 
+// Anwendung bei jedem Modell im Modellkatalog
 function downloadItemAsJSON(itemId) {
     const item = allItems.find(i => i.id === itemId);
     if (!item) {
@@ -2095,7 +2181,6 @@ function downloadItemAsJSON(itemId) {
 
 // Funktion um Modell download zu starten 
 function downloadDocument(filePath, fileName) {
-
     // Erstelle ein dynamisches <a>-Element
     const downloadAnchorNode = document.createElement('a');
 
@@ -2110,23 +2195,29 @@ function downloadDocument(filePath, fileName) {
 }
 
 // Funktion um Modellparameter Schnellansicht je nach Auswahl der Filterparameter anpassen
+// Anwendugng bei der Anzeige der Modelle im Catalog, je nach Filterung
 function fillInParameters(item, data){
+    // Mögliche Parameter zur Anzeige in der Schnellansicht direkt unter dem Modellnamen
     const parameterMapping = [
         { mlmKey: 'mlm:tasks', filterKey: 'tasks' },
         { mlmKey: 'mlm:accelerator', filterKey: 'accelerators' },
         { mlmKey: 'mlm:framework', filterKey: 'frameworks' },
         { mlmKey: 'mlm:architecture', filterKey: 'architecture' },
         { mlmKey: 'mlm:pretrained_source', filterKey: 'pretrainedSource' }
+        // Erweiterung möglich, bisher begrenzt, da andere Parameter teiweise viel Text haben
     ];
 
     if (data !== undefined) {
         const activeFilters = Object.keys(data);
+        // Entfernt alle parameterMapping-Objekte aus dem Array, wenn nach dieser Gruppe bereits gefiltert wurde
         const notFiltered = parameterMapping
             .filter(mapping => !activeFilters.includes(mapping.filterKey))
             .map(mapping => mapping.mlmKey);
 
+        // Aus Gruppe der nicht gefilterten die ersten 3 auswählen
         const displayParameters = notFiltered.slice(0, 3);
 
+        // Anzeige bis anzuzeigende Menge >0
         if(displayParameters.length > 0){
             return `
             <span>
@@ -2135,7 +2226,9 @@ function fillInParameters(item, data){
                     .join(' - ')}
             </span>
         `;
-        } else{
+        } 
+        // Sonst Anzeige der Standardparamteer
+        else{
             return `
             <span>
                 ${item.properties['mlm:architecture'] || 'Unbekannt'} - 
@@ -2158,13 +2251,15 @@ function fillInParameters(item, data){
 
 // Funktion um alle Filter zu clearen
 function clearFilters(){
+    // Clearen der Filter, dann neustarten der Website um im Hintergrund alle Filterungen zurückzusetzen
     selectedFilters = {}
     startWebsite()
     setTimeout(function(){
-        showAlert(3, "Alle Filter entfernt.", "")}, 100)
+        showAlert(3, "Alle Filter entfernt.", "")}, 1)
 }
 
 // Funktion zum kopieren von Informationen in die Zwischenablage
+// Anwendung in allen Modellen im Katalog
 function copyToClipboard(url_text, model_name) {
     navigator.clipboard.writeText(url_text).then(() => {
         showAlert(2, `Link des Modells <i>${model_name}</i> erfolgreich in die Zwischenablage kopiert.`, "");
@@ -2174,7 +2269,9 @@ function copyToClipboard(url_text, model_name) {
 }
 
 // Funktion zum erstellen von dynmaischen Clean 0 Alerts 1 Warnung 2 Info 3 Erfolg 4 Error
+// Anwendung in allen Teilseiten und Teilfunktionen
 function showAlert(type, text, optional){
+    // Durch konsistente Benennung über alle Templateseite ermöglicht
     alertContainer = document.getElementById('main-alert')
     switch(type){
         case(0): // CLEAN
@@ -2209,6 +2306,7 @@ function showAlert(type, text, optional){
 
 // Funktion um einzigartige Werte aus Items zu extrahieren
 function extractUniqueFilterValues(items) {
+    // Parameter nach den später gefiltert werden können soll
     const filters = {
         collection: new Set(),
         tasks: new Set(),
@@ -2219,6 +2317,7 @@ function extractUniqueFilterValues(items) {
         pretrainedSource: new Set()
     };
 
+    // Hinzufügen der Werte in den Items in die zugehörige Gruppe
     items.forEach(item => {
         const properties = item.properties;
 
@@ -2264,6 +2363,8 @@ function extractUniqueFilterValues(items) {
 }
 
 // Funktion um Anmeldetabs bei erfolgreicher Anmeldung anzupassen
+// Anwendung beim Starten des Services
+// Anzeige von User-eigenen Informationen sowie Collections und Modelle
 async function successfulLoggedIn(user){
     let usercollections = [];
     let useritems = [];
@@ -2277,16 +2378,18 @@ async function successfulLoggedIn(user){
     const tabContent = document.getElementById('authModal')
     await fetchCollections();
     await fetchItems();
+    // Sucht alle Collections, welche vom angemeldeten User erstellt wurden
     if (allCollections && allCollections.collections) {
         usercollections = allCollections.collections.filter(col => col.creator_id === id );
     }
-      
+    // Sucht alle Modelle, welche bom angemeldeten User erstellt wurden
     if (allItems && Array.isArray(allItems)) {
         useritems = allItems.filter(item => item.creator_id === id);
     } 
-
+    // Anpassung der Sidebar, wenn angemeldet
     sidebarlogin.innerHTML = ' '
     sidebarlogin.innerHTML = `<span>Bereits angemeldet: <strong style="text-transform: uppercase;">${username}</strong></span>`
+    // Anpassung der Topbar
     topbarlogin.innerHTML = ' '
     topbarlogin.innerHTML = `
             <button style="margin-top: 5px;" class="d-none d-md-block border-0 bg-transparent" type="button">
@@ -2299,6 +2402,7 @@ async function successfulLoggedIn(user){
         </span>
         </button>
     `
+    // Anzeige der User-eigenen Informationen sowie Inhalte
     tabContent.innerHTML = ''
     tabContent.innerHTML = `
                 <div class="modal-dialog">
@@ -2365,6 +2469,7 @@ async function successfulLoggedIn(user){
 }
 
 // Funktion um Frontend nach dem Logout zurückzusetzen
+// Anwendung nur beim Abmelden eines Nutzers außerhalb des Session Timeouts
 function successfulLoggedOut(){
     const topbarlogin = document.getElementById('login-button')
     const tabContent = document.getElementById('authModal')
@@ -2446,6 +2551,7 @@ function successfulLoggedOut(){
     `
 }
 
+// Anwendung nur im Howto um Code zu kopieren
 function copyCodeToClipboard(button) {
     const codeBlock = button.previousElementSibling.querySelector("code");
     const text = codeBlock.innerText;
