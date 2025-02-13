@@ -161,87 +161,12 @@ async function startWebsite(){
             }
             break;
         case('/addcollection.html'):
-        const loggedInCo = await isLoggedIn();
-        if (loggedInCo) {
-            $(function() {
-                $('input[name="daterange"]').daterangepicker({
-                    "locale": {
-                        "format": "MM/DD/YYYY",
-                        "separator": " - ",
-                        "applyLabel": "Anwenden",
-                        "cancelLabel": "Abbrechen",
-                        "fromLabel": "Von",
-                        "toLabel": "bis",
-                        "customRangeLabel": "Custom",
-                        "weekLabel": "W",
-                        "daysOfWeek": [
-                            "So",
-                            "Mo",
-                            "Di",
-                            "Mi",
-                            "Do",
-                            "Fr",
-                            "Sa"
-                        ],
-                        "monthNames": [
-                            "Januar",
-                            "Februar",
-                            "März",
-                            "April",
-                            "Mai",
-                            "Juni",
-                            "Juli",
-                            "August",
-                            "September",
-                            "Oktober",
-                            "November",
-                            "Dezember"
-                        ],
-                        "firstDay": 1
-                    },
-                    opens: 'left',
-                    autoApply:true
-                }, function(start, end, label) {
-                    startDatum = start;
-                    endDatum = end;
-                });
-            });
-            const drawnItems = getDrawnItems();
-            createInputForm(getExpectedCollectionInputs(), getExpectedCollectionInputsInfo())
-            const map = L.map('map').setView([0, 0], 2);
-
-            map.on('draw:created', function (event) {
-                const layer = event.layer;
-                drawnItems.addLayer(layer);
-                const bounds = layer.getBounds();
-                setBounds(bounds.toBBoxString())
-                getBounds()
-            });
-
-            L.tileLayer('https://tile.openstreetmap.bzh/ca/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
-        
-                map.addLayer(drawnItems);
-        
-                const drawControl = new L.Control.Draw({
-                draw: {
-                    polyline: false,
-                    polygon: false,
-                    circle: false,
-                    marker: false,
-                    circlemarker: false,
-                    rectangle: true
-                },
-                edit: {
-                    featureGroup: drawnItems,
-                    remove: true
-                }
-                });
-                map.addControl(drawControl);
-        } else {
-            createStandardView();
-        }
+            const loggedInCo = await isLoggedIn();
+            if (loggedInCo) {
+                createInputForm(getExpectedCollectionInputs(), getExpectedCollectionInputsInfo())
+            } else {
+                createStandardView();
+            }
         break;
         case('/catalog.html'):
             document.addEventListener('DOMContentLoaded', () => {
@@ -831,7 +756,6 @@ async function addItems() {
             })
         });
         const data = await response.json();
-        console.log(data)
 
         // Verarbeiten der Nachricht aus der API-Antwort
         if (data.message === "Item added successfully") {
