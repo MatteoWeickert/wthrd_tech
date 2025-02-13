@@ -1066,30 +1066,6 @@ function createInputForm(data, inputinfo) {
             createDynamicInputs();
         break;
         case('/addcollection.html'):
-            // Bounding Box-Option
-            tableBody.innerHTML += `
-            <tr id="main-inputgroup">
-                <td id="inputexp-map" class="main-inputexp">${count}) Bounding Box<br><span class="main-inputinfo">Markiere auf der Karte den Bereich, für den die Collection gedacht ist.</span></td>
-                <td id="main-inputelem" class="main-inputelem flex-grow-1 justify-content-center">
-                    <div id="map" style="width:120%;height:100%;"></div>
-                </td>
-                <td id="" class="main-inputalert"></td>
-            </tr>
-            `;
-         count += 1;
-
-            // Zeitraumauswahl
-            tableBody.innerHTML += `
-            <tr id="main-inputgroup">
-                <td id="inputexp-date" class="main-inputexp">${count}) Zeitraum<br><span class="main-inputinfo">Wähle aus, für welchen Zeitraum die Collection Modelle halten soll.</span></td>
-                    <td style="margin-top: 20px; display: flex;" class="main-inputelem flex-grow-1 justify-content-center">
-                        <input style="width: 75%; text-align:center; border: solid 2px black; border-radius: 3px;" type="text" name="daterange" value="01/01/2000 - 01/01/2100" />
-                    </td>
-                <td id="" class="main-inputalert"></td>
-            </tr>
-            `;
-
-            count += 1;
             // Datenschutz-Auswahl
             tableBody.innerHTML += `
                 <tr id="main-inputgroup">
@@ -1356,12 +1332,6 @@ async function createInputTOC(data) {
         case('/addcollection.html'):
             sidebarList.innerHTML += `
                 <li class="nav-item">
-                    <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-map">Bounding Box</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" style="color:green; margin-top: -15px; " href="#inputexp-public">Öffentlich</a>
                 </li>
             `
@@ -1474,46 +1444,7 @@ function changeInputTOC(data, pois){
             }
         break;
         case('/addcollection.html'):
-            if (changeList.includes('Bounding')){
-                sidebarList.innerHTML += `
-                            <li class="nav-item d-flex align-items-center">
-                                <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
-                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
-                                </svg>
-                                <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
-                            </li>
-                `;
-            }
-            else{
-                sidebarList.innerHTML += `
-                <li class="nav-item d-flex align-items-center">
-                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                    </svg>
-                    <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-map">Bounding Box</a>
-                </li>
-            `;
-            }
-            if (changeList.includes('Date')){
-                sidebarList.innerHTML += `
-                            <li class="nav-item d-flex align-items-center">
-                                <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-exclamation-circle-fill" viewBox="0 0 16 16">
-                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4m.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2"/>
-                                </svg>
-                                <a class="nav-link me-2" style="color:red; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
-                            </li>
-                `;
-            }
-            else{
-                sidebarList.innerHTML += `
-                <li class="nav-item d-flex align-items-center">
-                    <svg style="margin-top: -10px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
-                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                    </svg>
-                    <a class="nav-link me-2" style="color:green; margin-top: -15px;" href="#inputexp-date">Zeitraum</a>
-                </li>
-            `;
-            }
+            //Bei einer Weiterentwicklung könnten hier, ähnlich wie bei addmodels, weitere Eingabemöglichkeiten in die Sidebar geschrieben wereden
         break;
     }
 }
