@@ -562,19 +562,21 @@
   display: block;
   margin-top: 5px;
   padding: 8px 12px;
-  background-color: #1C3D86;
+  background-color: #9ec4f2;
   color: white;
   border: none;
   border-radius: 5px;
   font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .copy-button:hover {
-  background-color: #162E66;
+  background-color: #3571A4;
+  transform: scale(1.05);
 }
 
 .copy-button:active {
-  background-color: #0F204D;
+  background-color: #2B4D75;
+  transform: scale(1);
 }
